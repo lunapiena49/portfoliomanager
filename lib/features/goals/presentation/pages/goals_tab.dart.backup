@@ -1,0 +1,1824 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../bloc/goals_bloc.dart';
+import '../../domain/entities/goals_entities.dart';
+import '../../../portfolio/domain/entities/portfolio_entities.dart';
+import '../../../portfolio/presentation/bloc/portfolio_bloc.dart';
+
+/// Complete Goals Tab implementation
+class GoalsTab extends StatefulWidget {
+  const GoalsTab({super.key});
+
+  @override
+  State<GoalsTab> createState() => _GoalsTabState();
+}
+
+class _GoalsTabState extends State<GoalsTab> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<GoalsBloc>().add(LoadGoalsEvent());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GoalsBloc, GoalsState>(
+      builder: (context, state) {
+        final portfolioState = context.watch<PortfolioBloc>().state;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('goals.title'.tr()),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.auto_awesome),
+                tooltip: 'navigation.analysis'.tr(),
+                onPressed: () => context.push(RouteNames.analysis),
+              ),
+              IconButton(
+                icon: const Icon(Icons.upload_file),
+                tooltip: 'portfolio.import_portfolio'.tr(),
+                onPressed: () => context.push('${RouteNames.home}/import'),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'navigation.settings'.tr(),
+                onPressed: () => context.push(RouteNames.settings),
+              ),
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: 'common.help'.tr(),
+                onPressed: () => context.push(RouteNames.guide),
+              ),
+              if (portfolioState is PortfolioLoaded)
+                IconButton(
+                  icon: const Icon(Icons.folder_open),
+                  tooltip: 'portfolio.manage_portfolios'.tr(),
+                  onPressed: () => _showPortfolioManager(context, portfolioState),
+                ),
+            ],
+          ),
+          body: _buildBody(context, state),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _showAddGoalDialog(context),
+            icon: const Icon(Icons.add),
+            label: Text('goals.add_goal'.tr()),
+          ),
+        );
+      },
+    );
+  }
+
+  // ... rest of the code remains the same ...
+
+  void _showPortfolioManager(BuildContext context, PortfolioLoaded state) {
+    final portfolios = [...state.allPortfolios];
+    final currentId = state.portfolio.id;
+    if (portfolios.every((p) => p.id != currentId)) {
+      portfolios.add(state.portfolio);
+    }
+    portfolios.sort((a, b) {
+      if (a.id == currentId) return -1;
+      if (b.id == currentId) return 1;
+      return a.accountName.compareTo(b.accountName);
+    });
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'portfolio.manage_portfolios'.tr(),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: 16.h),
+                ...portfolios.map((portfolio) => ListTile(
+                  title: Text(portfolio.accountName),
+                  subtitle: Text(portfolio.broker ?? ''),
+                  trailing: portfolio.id == currentId
+                      ? Icon(Icons.check, color: AppTheme.primaryColor)
+                      : null,
+                  onTap: () {
+                    context.read<PortfolioBloc>().add(
+                      SelectPortfolioEvent(portfolio.id),
+                    );
+                    Navigator.of(sheetContext).pop();
+                  },
+                )),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, GoalsState state) {
+    if (state is GoalsLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state is GoalsError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error, color: AppTheme.errorColor, size: 48.w),
+            SizedBox(height: 16.h),
+            Text(
+              'goals.error_loading'.tr(),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              state.message,
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: () => context.read<GoalsBloc>().add(LoadGoalsEvent()),
+              child: Text('common.retry'.tr()),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is GoalsLoaded) {
+      final goals = state.goals;
+      final activeGoals = goals.where((g) => g.status == GoalStatus.active).toList();
+
+      if (goals.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.flag_outlined, size: 64.w, color: Theme.of(context).disabledColor),
+              SizedBox(height: 16.h),
+              Text(
+                'goals.no_goals'.tr(),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'goals.no_goals_subtitle'.tr(),
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      }
+
+      return RefreshIndicator(
+        onRefresh: () async {
+          context.read<GoalsBloc>().add(LoadGoalsEvent());
+        },
+        child: ListView(
+          padding: EdgeInsets.all(16.w),
+          children: [
+            if (activeGoals.isNotEmpty) _buildOverviewCard(context, activeGoals, goals),
+            if (activeGoals.isNotEmpty) ...[
+              _buildSectionHeader(context, 'goals.active_goals'.tr()),
+              SizedBox(height: 8.h),
+              ...activeGoals.map((goal) => _buildGoalCard(context, goal)),
+            ],
+            if (goals.any((g) => g.status == GoalStatus.completed)) ...[
+              SizedBox(height: 24.h),
+              _buildSectionHeader(context, 'goals.completed_goals'.tr()),
+              SizedBox(height: 8.h),
+              ...goals
+                  .where((g) => g.status == GoalStatus.completed)
+                  .map((goal) => _buildGoalCard(context, goal)),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildOverviewCard(BuildContext context, List<InvestmentGoal> activeGoals, List<InvestmentGoal> goals) {
+    final totalTarget = activeGoals.fold(0.0, (sum, g) => sum + g.targetAmount);
+    final totalCurrent = activeGoals.fold(0.0, (sum, g) => sum + g.currentAmount);
+    final overallProgress = totalTarget > 0 ? (totalCurrent / totalTarget * 100) : 0;
+
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'goals.overview.title'.tr(),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 16.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSummaryItem(
+                    context,
+                    'goals.overview.active'.tr(),
+                    activeGoals.length.toString(),
+                    Icons.flag,
+                  ),
+                ),
+                Expanded(
+                  child: _buildSummaryItem(
+                    context,
+                    'goals.overview.completed'.tr(),
+                    goals.where((g) => g.status == GoalStatus.completed).length.toString(),
+                    Icons.check_circle,
+                  ),
+                ),
+                Expanded(
+                  child: _buildSummaryItem(
+                    context,
+                    'goals.overview.progress'.tr(),
+                    '${overallProgress.toStringAsFixed(0)}%',
+                    Icons.trending_up,
+                  ),
+                ),
+              ],
+            ),
+            if (activeGoals.isNotEmpty) ...[
+              SizedBox(height: 16.h),
+              LinearProgressIndicator(
+                value: overallProgress / 100,
+                backgroundColor: Theme.of(context).dividerColor,
+                color: AppTheme.primaryColor,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
+    return Column(
+      children: [
+        Icon(icon, color: AppTheme.primaryColor, size: 24.w),
+        SizedBox(height: 8.h),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+      ),
+    );
+  }
+
+  Widget _buildGoalCard(BuildContext context, InvestmentGoal goal) {
+    final isCompleted = goal.status == GoalStatus.completed;
+
+    return Card(
+      margin: EdgeInsets.only(bottom: 12.h),
+      child: InkWell(
+        onTap: () => _showGoalDetailSheet(context, goal),
+        borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildGoalTypeIcon(goal.type),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          goal.name,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        if (goal.targetDate != null)
+                          Text(
+                            'goals.target_prefix'.tr(
+                              namedArgs: {'date': _formatDate(goal.targetDate!)},
+                            ),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (isCompleted)
+                    Icon(
+                      Icons.check_circle,
+                      color: AppTheme.successColor,
+                      size: 24.w,
+                    )
+                  else
+                    PopupMenuButton(
+                      icon: const Icon(Icons.more_vert),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          child: ListTile(
+                            leading: const Icon(Icons.edit),
+                            title: Text('common.edit'.tr()),
+                            dense: true,
+                          ),
+                          onTap: () => Future.microtask(
+                            () => _showEditGoalDialog(context, goal),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          child: ListTile(
+                            leading: const Icon(Icons.sync),
+                            title: Text('goals.menu.sync_with_portfolio'.tr()),
+                            dense: true,
+                          ),
+                          onTap: () => _syncGoalWithPortfolio(context, goal),
+                        ),
+                        if (goal.targetAllocation != null)
+                          PopupMenuItem(
+                            child: ListTile(
+                              leading: const Icon(Icons.balance),
+                              title: Text('goals.menu.rebalance'.tr()),
+                              dense: true,
+                            ),
+                            onTap: () => Future.microtask(
+                              () => _showRebalanceSheet(context, goal),
+                            ),
+                          ),
+                        PopupMenuItem(
+                          child: ListTile(
+                            leading: Icon(Icons.delete, color: AppTheme.errorColor),
+                            title: Text(
+                              'common.delete'.tr(),
+                              style: TextStyle(color: AppTheme.errorColor),
+                            ),
+                            dense: true,
+                          ),
+                          onTap: () => Future.microtask(
+                            () => _confirmDeleteGoal(context, goal),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4.r),
+                child: LinearProgressIndicator(
+                  value: goal.progressPercent / 100,
+                  backgroundColor: Theme.of(context).dividerColor,
+                  color: isCompleted
+                      ? AppTheme.successColor
+                      : goal.isOnTrack
+                          ? AppTheme.primaryColor
+                          : AppTheme.warningColor,
+                  minHeight: 8.h,
+                ),
+              ),
+              SizedBox(height: 12.h),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'goals.current_value'.tr(),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text(
+                        _formatCurrency(goal.currentAmount, goal.currency),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'goals.progress'.tr(),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text(
+                        '${goal.progressPercent.toStringAsFixed(1)}%',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: isCompleted
+                                  ? AppTheme.successColor
+                                  : AppTheme.primaryColor,
+                            ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'goals.target_value'.tr(),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text(
+                        _formatCurrency(goal.targetAmount, goal.currency),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              if (!isCompleted && goal.monthsRemaining != null) ...[
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule,
+                      size: 14.w,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      'goals.months_remaining_text'.tr(
+                        namedArgs: {
+                          'count': goal.monthsRemaining.toString(),
+                        },
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const Spacer(),
+                    if (goal.requiredMonthlyContribution != null)
+                      Text(
+                        'goals.required_monthly_text'.tr(
+                          namedArgs: {
+                            'amount': _formatCurrency(
+                              goal.requiredMonthlyContribution!,
+                              goal.currency,
+                            ),
+                          },
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: goal.isOnTrack
+                                  ? AppTheme.successColor
+                                  : AppTheme.warningColor,
+                            ),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoalTypeIcon(GoalType type) {
+    IconData icon;
+    Color color;
+
+    switch (type) {
+      case GoalType.retirement:
+        icon = Icons.beach_access;
+        color = Colors.orange;
+        break;
+      case GoalType.education:
+        icon = Icons.school;
+        color = Colors.blue;
+        break;
+      case GoalType.house:
+        icon = Icons.home;
+        color = Colors.green;
+        break;
+      case GoalType.emergency:
+        icon = Icons.health_and_safety;
+        color = Colors.red;
+        break;
+      case GoalType.travel:
+        icon = Icons.flight;
+        color = Colors.purple;
+        break;
+      case GoalType.custom:
+        icon = Icons.flag;
+        color = AppTheme.primaryColor;
+        break;
+    }
+
+    return Container(
+      padding: EdgeInsets.all(8.w),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Icon(icon, color: color, size: 24.w),
+    );
+  }
+
+  void _showAddGoalDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final targetController = TextEditingController();
+    final contributionController = TextEditingController();
+    GoalType selectedType = GoalType.custom;
+    DateTime? targetDate;
+    String selectedCurrency = 'EUR';
+    bool showAllocation = false;
+    final allocationControllers = <String, TextEditingController>{};
+
+    final sheet = showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.72,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (context, scrollController) {
+                final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16.w,
+                    16.w,
+                    16.w,
+                    16.w + bottomInset,
+                  ),
+                  child: Form(
+                    key: formKey,
+                    child: ListView(
+                      controller: scrollController,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40.w,
+                            height: 4.h,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).dividerColor,
+                              borderRadius: BorderRadius.circular(2.r),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'goals.add_goal'.tr(),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        SizedBox(height: 24.h),
+                        Text(
+                          'goals.add_dialog.goal_type'.tr(),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        SizedBox(height: 8.h),
+                        Wrap(
+                          spacing: 8.w,
+                          runSpacing: 8.h,
+                          children: GoalType.values.map((type) {
+                            final isSelected = type == selectedType;
+                            return ChoiceChip(
+                              label: Text(_getGoalTypeName(type)),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setSheetState(() => selectedType = type);
+                                }
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        SizedBox(height: 16.h),
+                        TextFormField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            labelText: 'goals.add_dialog.goal_name'.tr(),
+                            hintText: 'goals.add_dialog.goal_name_hint'.tr(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'goals.add_dialog.goal_name_required'.tr();
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16.h),
+                        Row(
+                          children: [
+                            Flexible(
+                              flex: 3,
+                              child: DropdownButtonFormField<String>(
+                                value: selectedCurrency,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'goals.add_dialog.currency'.tr(),
+                                ),
+                                items: AppConstants.supportedCurrencies
+                                    .map((currency) => DropdownMenuItem(
+                                          value: currency,
+                                          child: Text(currency),
+                                        ))
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setSheetState(() => selectedCurrency = value);
+                                  }
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            Expanded(
+                              flex: 5,
+                              child: TextFormField(
+                                controller: targetController,
+                                decoration: InputDecoration(
+                                  labelText: 'goals.add_dialog.target_amount'.tr(),
+                                  hintText:
+                                      'goals.add_dialog.target_amount_hint'.tr(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'goals.add_dialog.amount_required'.tr();
+                                  }
+                                  final parsed = double.tryParse(
+                                    value.replaceAll(',', '.'),
+                                  );
+                                  if (parsed == null) {
+                                    return 'goals.add_dialog.invalid_number'.tr();
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('goals.add_dialog.target_date_optional'.tr()),
+                          subtitle: Text(
+                            targetDate != null
+                                ? _formatDate(targetDate!)
+                                : 'goals.add_dialog.not_set'.tr(),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.calendar_today),
+                            onPressed: () async {
+                              final selected = await showDatePicker(
+                                context: context,
+                                initialDate: targetDate ??
+                                    DateTime.now().add(
+                                      const Duration(days: 365),
+                                    ),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 365 * 50),
+                                ),
+                              );
+                              if (selected != null) {
+                                setSheetState(() => targetDate = selected);
+                              }
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        TextFormField(
+                          controller: contributionController,
+                          decoration: InputDecoration(
+                            labelText:
+                                'goals.add_dialog.monthly_contribution_optional'
+                                    .tr(),
+                            hintText: '500',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        SizedBox(height: 24.h),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title:
+                              Text('goals.add_dialog.set_target_allocation'.tr()),
+                          subtitle: Text(
+                            'goals.add_dialog.set_target_allocation_subtitle'.tr(),
+                          ),
+                          value: showAllocation,
+                          onChanged: (value) {
+                            setSheetState(() => showAllocation = value);
+                          },
+                        ),
+                        if (showAllocation) ...[
+                          SizedBox(height: 16.h),
+                          ..._buildAllocationInputs(
+                            context,
+                            allocationControllers,
+                          ),
+                        ],
+                        SizedBox(height: 24.h),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (!formKey.currentState!.validate()) {
+                              return;
+                            }
+
+                            TargetAllocation? allocation;
+                            if (showAllocation) {
+                              final targets = <String, double>{};
+                              var total = 0.0;
+                              for (final entry
+                                  in allocationControllers.entries) {
+                                final parsed = double.tryParse(
+                                  entry.value.text.replaceAll(',', '.'),
+                                );
+                                if (parsed != null && parsed > 0) {
+                                  targets[entry.key] = parsed;
+                                  total += parsed;
+                                }
+                              }
+                              if (targets.isNotEmpty) {
+                                if ((total - 100).abs() > 0.1) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'goals.add_dialog.asset_allocation_footer'
+                                            .tr(),
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                allocation = TargetAllocation(
+                                  assetTypeTargets: targets,
+                                );
+                              }
+                            }
+
+                            context.read<GoalsBloc>().add(
+                                  AddGoalEvent(
+                                    name: nameController.text.trim(),
+                                    type: selectedType,
+                                    targetAmount: double.parse(
+                                      targetController.text
+                                          .trim()
+                                          .replaceAll(',', '.'),
+                                    ),
+                                    currency: selectedCurrency,
+                                    targetDate: targetDate,
+                                    monthlyContribution:
+                                        contributionController.text.trim().isEmpty
+                                            ? null
+                                            : double.tryParse(
+                                                contributionController.text
+                                                    .trim()
+                                                    .replaceAll(',', '.'),
+                                              ),
+                                    targetAllocation: allocation,
+                                  ),
+                                );
+
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('common.save'.tr()),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+
+    sheet.whenComplete(() {
+      nameController.dispose();
+      targetController.dispose();
+      contributionController.dispose();
+      for (final controller in allocationControllers.values) {
+        controller.dispose();
+      }
+    });
+  }
+
+  List<Widget> _buildAllocationInputs(
+    BuildContext context,
+    Map<String, TextEditingController> controllers,
+  ) {
+    final assetTypes = [...AppConstants.assetTypes, 'cash'];
+    for (final type in assetTypes) {
+      controllers.putIfAbsent(type, () => TextEditingController());
+    }
+
+    return [
+      Text(
+        'goals.add_dialog.asset_allocation_title'.tr(),
+        style: Theme.of(context).textTheme.titleSmall,
+      ),
+      SizedBox(height: 8.h),
+      ...assetTypes.map((type) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 8.h),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 110.w,
+                child: Text(_assetTypeLabel(context, type)),
+              ),
+              Expanded(
+                child: TextFormField(
+                  controller: controllers[type],
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    suffixText: '%',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+      SizedBox(height: 8.h),
+      Text(
+        'goals.add_dialog.asset_allocation_footer'.tr(),
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+    ];
+  }
+
+  String _assetTypeLabel(BuildContext context, String assetType) {
+    switch (assetType.toLowerCase()) {
+      case 'stocks':
+        return 'portfolio.filters.stocks'.tr();
+      case 'etfs':
+        return 'portfolio.filters.etfs'.tr();
+      case 'crypto':
+        return 'portfolio.filters.crypto'.tr();
+      case 'bonds':
+        return 'portfolio.filters.bonds'.tr();
+      case 'options':
+        return 'portfolio.filters.options'.tr();
+      case 'futures':
+        return 'portfolio.filters.futures'.tr();
+      case 'cash':
+        return 'portfolio.filters.cash'.tr();
+      case 'commodities':
+        return 'portfolio.filters.commodities'.tr();
+      case 'forex':
+        return 'Forex';
+      default:
+        if (assetType.isEmpty) {
+          return assetType;
+        }
+        return assetType[0].toUpperCase() + assetType.substring(1);
+    }
+  }
+
+  void _showGoalDetailSheet(BuildContext context, InvestmentGoal goal) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (sheetContext) {
+        final progressValue = goal.progressPercent.clamp(0, 100);
+        final remainingValue = (100 - progressValue).clamp(0, 100);
+        final chartProgress = (progressValue == 0 ? 0.1 : progressValue).toDouble();
+        final chartRemaining = (remainingValue == 0 ? 0.1 : remainingValue).toDouble();
+        final isCompleted = goal.status == GoalStatus.completed;
+
+        return DraggableScrollableSheet(
+          initialChildSize: 0.75,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16.w,
+                16.w,
+                16.w,
+                16.w + bottomInset,
+              ),
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).dividerColor,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildGoalTypeIcon(goal.type),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              goal.name,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            Text(
+                              _getGoalTypeName(goal.type),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            if (goal.description != null &&
+                                goal.description!.trim().isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.only(top: 4.h),
+                                child: Text(
+                                  goal.description!,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (isCompleted)
+                        Icon(
+                          Icons.check_circle,
+                          color: AppTheme.successColor,
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                  SizedBox(
+                    height: 200.h,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        PieChart(
+                          PieChartData(
+                            startDegreeOffset: -90,
+                            sectionsSpace: 2,
+                            centerSpaceRadius: 45.r,
+                            sections: [
+                              PieChartSectionData(
+                                value: chartProgress,
+                                color: isCompleted
+                                    ? AppTheme.successColor
+                                    : AppTheme.primaryColor,
+                                showTitle: false,
+                                radius: 70.r,
+                              ),
+                              PieChartSectionData(
+                                value: chartRemaining,
+                                color: Theme.of(context).dividerColor,
+                                showTitle: false,
+                                radius: 70.r,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${progressValue.toStringAsFixed(0)}%',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'goals.progress'.tr(),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  _buildDetailRow(
+                    context,
+                    'goals.current_value'.tr(),
+                    _formatCurrency(goal.currentAmount, goal.currency),
+                  ),
+                  _buildDetailRow(
+                    context,
+                    'goals.target_value'.tr(),
+                    _formatCurrency(goal.targetAmount, goal.currency),
+                  ),
+                  _buildDetailRow(
+                    context,
+                    'goals.remaining'.tr(),
+                    _formatCurrency(goal.remainingAmount, goal.currency),
+                  ),
+                  if (goal.targetDate != null)
+                    _buildDetailRow(
+                      context,
+                      'goals.deadline'.tr(),
+                      _formatDate(goal.targetDate!),
+                    ),
+                  if (goal.monthsRemaining != null)
+                    _buildDetailRow(
+                      context,
+                      'goals.months_remaining_label'.tr(),
+                      goal.monthsRemaining.toString(),
+                    ),
+                  if (goal.monthlyContribution != null)
+                    _buildDetailRow(
+                      context,
+                      'goals.monthly_contribution'.tr(),
+                      _formatCurrency(goal.monthlyContribution!, goal.currency),
+                    ),
+                  if (goal.requiredMonthlyContribution != null)
+                    _buildDetailRow(
+                      context,
+                      'goals.required_monthly_label'.tr(),
+                      _formatCurrency(
+                        goal.requiredMonthlyContribution!,
+                        goal.currency,
+                      ),
+                    ),
+                  if (goal.targetAllocation != null) ...[
+                    SizedBox(height: 16.h),
+                    Text(
+                      'goals.target_allocation'.tr(),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    SizedBox(height: 8.h),
+                    ...goal.targetAllocation!.assetTypeTargets.entries.map(
+                      (entry) => _buildDetailRow(
+                        context,
+                        _assetTypeLabel(context, entry.key),
+                        '${entry.value.toStringAsFixed(0)}%',
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 24.h),
+                  Wrap(
+                    spacing: 8.w,
+                    runSpacing: 8.h,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(sheetContext).pop();
+                          _showEditGoalDialog(context, goal);
+                        },
+                        icon: const Icon(Icons.edit),
+                        label: Text('common.edit'.tr()),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => _syncGoalWithPortfolio(context, goal),
+                        icon: const Icon(Icons.sync),
+                        label: Text('goals.menu.sync_with_portfolio'.tr()),
+                      ),
+                      if (goal.targetAllocation != null)
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(sheetContext).pop();
+                            _showRebalanceSheet(context, goal);
+                          },
+                          icon: const Icon(Icons.balance),
+                          label: Text('goals.menu.rebalance'.tr()),
+                        ),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.of(sheetContext).pop();
+                          _confirmDeleteGoal(context, goal);
+                        },
+                        icon: Icon(Icons.delete, color: AppTheme.errorColor),
+                        label: Text(
+                          'common.delete'.tr(),
+                          style: TextStyle(color: AppTheme.errorColor),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.errorColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditGoalDialog(BuildContext context, InvestmentGoal goal) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController(text: goal.name);
+    final targetController =
+        TextEditingController(text: goal.targetAmount.toStringAsFixed(2));
+    final currentController =
+        TextEditingController(text: goal.currentAmount.toStringAsFixed(2));
+    final contributionController = TextEditingController(
+      text: goal.monthlyContribution?.toStringAsFixed(2) ?? '',
+    );
+    GoalType selectedType = goal.type;
+    DateTime? targetDate = goal.targetDate;
+    String selectedCurrency = goal.currency;
+    bool showAllocation = goal.targetAllocation != null;
+    final allocationControllers = <String, TextEditingController>{};
+
+    if (goal.targetAllocation != null) {
+      for (final entry in goal.targetAllocation!.assetTypeTargets.entries) {
+        allocationControllers[entry.key] =
+            TextEditingController(text: entry.value.toStringAsFixed(1));
+      }
+    }
+
+    final sheet = showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.8,
+              minChildSize: 0.55,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (context, scrollController) {
+                final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16.w,
+                    16.w,
+                    16.w,
+                    16.w + bottomInset,
+                  ),
+                  child: Form(
+                    key: formKey,
+                    child: ListView(
+                      controller: scrollController,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40.w,
+                            height: 4.h,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).dividerColor,
+                              borderRadius: BorderRadius.circular(2.r),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          'common.edit'.tr(),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        SizedBox(height: 24.h),
+                        Text(
+                          'goals.add_dialog.goal_type'.tr(),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        SizedBox(height: 8.h),
+                        Wrap(
+                          spacing: 8.w,
+                          runSpacing: 8.h,
+                          children: GoalType.values.map((type) {
+                            final isSelected = type == selectedType;
+                            return ChoiceChip(
+                              label: Text(_getGoalTypeName(type)),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setSheetState(() => selectedType = type);
+                                }
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        SizedBox(height: 16.h),
+                        TextFormField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            labelText: 'goals.add_dialog.goal_name'.tr(),
+                            hintText: 'goals.add_dialog.goal_name_hint'.tr(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'goals.add_dialog.goal_name_required'.tr();
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16.h),
+                        Row(
+                          children: [
+                            Flexible(
+                              flex: 3,
+                              child: DropdownButtonFormField<String>(
+                                value: selectedCurrency,
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'goals.add_dialog.currency'.tr(),
+                                ),
+                                items: AppConstants.supportedCurrencies
+                                    .map((currency) => DropdownMenuItem(
+                                          value: currency,
+                                          child: Text(currency),
+                                        ))
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setSheetState(() => selectedCurrency = value);
+                                  }
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16.w),
+                            Expanded(
+                              flex: 5,
+                              child: TextFormField(
+                                controller: targetController,
+                                decoration: InputDecoration(
+                                  labelText: 'goals.add_dialog.target_amount'.tr(),
+                                  hintText:
+                                      'goals.add_dialog.target_amount_hint'.tr(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'goals.add_dialog.amount_required'.tr();
+                                  }
+                                  final parsed = double.tryParse(
+                                    value.replaceAll(',', '.'),
+                                  );
+                                  if (parsed == null) {
+                                    return 'goals.add_dialog.invalid_number'.tr();
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('goals.add_dialog.target_date_optional'.tr()),
+                          subtitle: Text(
+                            targetDate != null
+                                ? _formatDate(targetDate!)
+                                : 'goals.add_dialog.not_set'.tr(),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.calendar_today),
+                            onPressed: () async {
+                              final selected = await showDatePicker(
+                                context: context,
+                                initialDate: targetDate ??
+                                    DateTime.now().add(
+                                      const Duration(days: 365),
+                                    ),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 365 * 50),
+                                ),
+                              );
+                              if (selected != null) {
+                                setSheetState(() => targetDate = selected);
+                              }
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+                        TextFormField(
+                          controller: contributionController,
+                          decoration: InputDecoration(
+                            labelText:
+                                'goals.add_dialog.monthly_contribution_optional'
+                                    .tr(),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        SizedBox(height: 24.h),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title:
+                              Text('goals.add_dialog.set_target_allocation'.tr()),
+                          subtitle: Text(
+                            'goals.add_dialog.set_target_allocation_subtitle'.tr(),
+                          ),
+                          value: showAllocation,
+                          onChanged: (value) {
+                            setSheetState(() => showAllocation = value);
+                          },
+                        ),
+                        if (showAllocation) ...[
+                          SizedBox(height: 16.h),
+                          ..._buildAllocationInputs(
+                            context,
+                            allocationControllers,
+                          ),
+                        ],
+                        SizedBox(height: 24.h),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (!formKey.currentState!.validate()) {
+                              return;
+                            }
+
+                            final parsedTarget = double.parse(
+                              targetController.text
+                                  .trim()
+                                  .replaceAll(',', '.'),
+                            );
+                            final parsedCurrent = double.tryParse(
+                                  currentController.text
+                                      .trim()
+                                      .replaceAll(',', '.'),
+                                ) ??
+                                goal.currentAmount;
+                            final parsedContribution = contributionController
+                                    .text
+                                    .trim()
+                                    .isEmpty
+                                ? null
+                                : double.tryParse(
+                                    contributionController.text
+                                        .trim()
+                                        .replaceAll(',', '.'),
+                                  );
+
+                            TargetAllocation? allocation;
+                            if (showAllocation) {
+                              final targets = <String, double>{};
+                              var total = 0.0;
+                              for (final entry
+                                  in allocationControllers.entries) {
+                                final parsed = double.tryParse(
+                                  entry.value.text.replaceAll(',', '.'),
+                                );
+                                if (parsed != null && parsed > 0) {
+                                  targets[entry.key] = parsed;
+                                  total += parsed;
+                                }
+                              }
+                              if (targets.isNotEmpty) {
+                                if ((total - 100).abs() > 0.1) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'goals.add_dialog.asset_allocation_footer'
+                                            .tr(),
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                allocation = TargetAllocation(
+                                  assetTypeTargets: targets,
+                                );
+                              }
+                            }
+
+                            var updatedStatus = goal.status;
+                            DateTime? completedAt = goal.completedAt;
+                            if (parsedCurrent >= parsedTarget) {
+                              updatedStatus = GoalStatus.completed;
+                              completedAt ??= DateTime.now();
+                            } else if (updatedStatus == GoalStatus.completed) {
+                              updatedStatus = GoalStatus.active;
+                              completedAt = null;
+                            }
+
+                            final updatedGoal = goal.copyWith(
+                              name: nameController.text.trim(),
+                              type: selectedType,
+                              targetAmount: parsedTarget,
+                              currentAmount: parsedCurrent,
+                              currency: selectedCurrency,
+                              targetDate: targetDate,
+                              monthlyContribution: parsedContribution,
+                              targetAllocation:
+                                  showAllocation ? allocation : null,
+                              status: updatedStatus,
+                              completedAt: completedAt,
+                            );
+
+                            context
+                                .read<GoalsBloc>()
+                                .add(UpdateGoalEvent(goal: updatedGoal));
+                            Navigator.of(sheetContext).pop();
+                          },
+                          child: Text('common.save'.tr()),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    sheet.whenComplete(() {
+      nameController.dispose();
+      targetController.dispose();
+      currentController.dispose();
+      contributionController.dispose();
+      for (final controller in allocationControllers.values) {
+        controller.dispose();
+      }
+    });
+  }
+
+  void _showRebalanceSheet(BuildContext context, InvestmentGoal goal) {
+    final portfolioState = context.read<PortfolioBloc>().state;
+    if (portfolioState is! PortfolioLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('goals.messages.import_portfolio_first'.tr()),
+        ),
+      );
+      return;
+    }
+
+    context.read<GoalsBloc>().add(
+          CalculateRebalanceEvent(
+            goalId: goal.id,
+            portfolio: portfolioState.portfolio,
+          ),
+        );
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.45,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: EdgeInsets.all(16.w),
+              child: BlocBuilder<GoalsBloc, GoalsState>(
+                builder: (context, state) {
+                  final suggestions = state is GoalsLoaded &&
+                          state.selectedGoalId == goal.id
+                      ? state.rebalanceSuggestions
+                      : null;
+
+                  return ListView(
+                    controller: scrollController,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).dividerColor,
+                            borderRadius: BorderRadius.circular(2.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'goals.rebalance.suggestions_title'.tr(),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'goals.rebalance.suggestions_subtitle'
+                            .tr(namedArgs: {'goal': goal.name}),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      SizedBox(height: 16.h),
+                      if (suggestions == null)
+                        const Center(child: CircularProgressIndicator())
+                      else if (suggestions.isEmpty)
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          child: Text(
+                            'goals.rebalance.balanced'.tr(),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        )
+                      else
+                        ...suggestions.map(
+                          (suggestion) => _buildRebalanceSuggestionCard(
+                            context,
+                            suggestion,
+                          ),
+                        ),
+                      SizedBox(height: 16.h),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRebalanceSuggestionCard(
+    BuildContext context,
+    RebalanceSuggestion suggestion,
+  ) {
+    String actionLabel;
+    Color actionColor;
+    switch (suggestion.action) {
+      case RebalanceAction.buy:
+        actionLabel = 'goals.rebalance.action_buy'.tr();
+        actionColor = AppTheme.successColor;
+        break;
+      case RebalanceAction.sell:
+        actionLabel = 'goals.rebalance.action_sell'.tr();
+        actionColor = AppTheme.errorColor;
+        break;
+      case RebalanceAction.hold:
+        actionLabel = 'goals.rebalance.action_hold'.tr();
+        actionColor = Theme.of(context).colorScheme.primary;
+        break;
+    }
+
+    final deviationText =
+        '${suggestion.deviation >= 0 ? '+' : ''}${suggestion.deviation.toStringAsFixed(1)}%';
+    final suggestedAction = suggestion.action == RebalanceAction.buy
+        ? 'goals.rebalance.verb_buy'.tr()
+        : 'goals.rebalance.verb_sell'.tr();
+    final suggestedText = suggestion.action == RebalanceAction.hold
+        ? null
+        : '${'goals.rebalance.suggested_prefix'.tr()}$suggestedAction '
+            '${_formatCurrency(suggestion.suggestedAmount, suggestion.currency)}';
+
+    return Card(
+      margin: EdgeInsets.only(bottom: 12.h),
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _assetTypeLabel(context, suggestion.assetType),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: actionColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    actionLabel,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: actionColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildRebalanceStat(
+                    context,
+                    'goals.rebalance.current'.tr(),
+                    '${suggestion.currentAllocation.toStringAsFixed(1)}%',
+                  ),
+                ),
+                Expanded(
+                  child: _buildRebalanceStat(
+                    context,
+                    'goals.rebalance.target'.tr(),
+                    '${suggestion.targetAllocation.toStringAsFixed(1)}%',
+                  ),
+                ),
+                Expanded(
+                  child: _buildRebalanceStat(
+                    context,
+                    'goals.rebalance.deviation'.tr(),
+                    deviationText,
+                  ),
+                ),
+              ],
+            ),
+            if (suggestedText != null) ...[
+              SizedBox(height: 12.h),
+              Text(
+                suggestedText,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: actionColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRebalanceStat(
+    BuildContext context,
+    String label,
+    String value,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
+    );
+  }
+
+  void _syncGoalWithPortfolio(BuildContext context, InvestmentGoal goal) {
+    final portfolioState = context.read<PortfolioBloc>().state;
+    if (portfolioState is! PortfolioLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('goals.messages.import_portfolio_first'.tr()),
+        ),
+      );
+      return;
+    }
+
+    context
+        .read<GoalsBloc>()
+        .add(SyncWithPortfolioEvent(portfolio: portfolioState.portfolio));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('goals.messages.synced_with_portfolio'.tr()),
+      ),
+    );
+  }
+
+  void _confirmDeleteGoal(BuildContext context, InvestmentGoal goal) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('goals.delete.title'.tr()),
+          content: Text(
+            'goals.delete.message'.tr(namedArgs: {'goal': goal.name}),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text('common.cancel'.tr()),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.errorColor,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                context
+                    .read<GoalsBloc>()
+                    .add(DeleteGoalEvent(goalId: goal.id));
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text('common.delete'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _getGoalTypeName(GoalType type) {
+    switch (type) {
+      case GoalType.retirement:
+        return 'goals.types.retirement'.tr();
+      case GoalType.education:
+        return 'goals.types.education'.tr();
+      case GoalType.house:
+        return 'goals.types.house'.tr();
+      case GoalType.emergency:
+        return 'goals.types.emergency'.tr();
+      case GoalType.travel:
+        return 'goals.types.travel'.tr();
+      case GoalType.custom:
+        return 'goals.types.custom'.tr();
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  String _formatCurrency(double value, String currency) {
+    final symbol = _getCurrencySymbol(currency);
+    return '$symbol${value.toStringAsFixed(2)}';
+  }
+
+  String _getCurrencySymbol(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'EUR':
+        return 'EUR ';
+      case 'USD':
+        return '\$';
+      case 'GBP':
+        return 'GBP ';
+      default:
+        return '$currency ';
+    }
+  }
+}

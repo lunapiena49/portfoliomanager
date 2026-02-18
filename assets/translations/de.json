@@ -1,0 +1,549 @@
+{
+  "app": {
+    "name": "Portfolio Manager",
+    "tagline": "Intelligente Investmentverwaltung"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "retry": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestaetigen",
+    "save": "Speichern",
+    "delete": "Loeschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufuegen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "back": "Zurueck",
+    "next": "Weiter",
+    "done": "Fertig",
+    "skip": "Ueberspringen",
+    "close": "Schliessen",
+    "yes": "Ja",
+    "no": "Nein",
+    "ok": "OK"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Willkommen bei Portfolio Manager",
+      "subtitle": "Ihr professioneller Investment-Begleiter"
+    },
+    "features": {
+      "import": {
+        "title": "Importieren Sie Ihr Portfolio",
+        "description": "Importieren Sie einfach Portfolios von fuehrenden Brokern wie Interactive Brokers, TD Ameritrade und mehr ueber CSV- oder PDF-Dateien."
+      },
+      "analysis": {
+        "title": "KI-gestuetzte Analyse",
+        "description": "Erhalten Sie intelligente Einblicke in Ihre Investitionen durch fortschrittliche KI-Technologie."
+      },
+      "tracking": {
+        "title": "Echtzeit-Verfolgung",
+        "description": "Ueberwachen Sie die Portfolio-Performance mit detaillierten Diagrammen und Statistiken."
+      },
+      "goals": {
+        "title": "Setzen Sie Ihre Ziele",
+        "description": "Definieren Sie Investitionsziele und verfolgen Sie Ihren Fortschritt zur finanziellen Freiheit."
+      },
+      "market": {
+        "title": "Live-Marktdaten — Kostenlos",
+        "description": "Top 20 Gewinner und Verlierer fuer 10 globale Maerkte, taeglich ueber kostenlosen serverlosen Feed aktualisiert. Kein API-Schluessel erforderlich. Optionaler EODHD-Schluessel fuer Echtzeit-Portfolio-Kurse."
+      }
+    },
+    "get_started": "Loslegen",
+    "already_user": "Haben Sie bereits Daten? Jetzt importieren"
+  },
+  "navigation": {
+    "portfolio": "Portfolio",
+    "portfolio_short": "Portfolio",
+    "analysis": "Analyse",
+    "market": "Markt",
+    "market_short": "Markt",
+    "goals": "Ziele",
+    "goals_short": "Ziele",
+    "rebalancing": "Rebalancing",
+    "rebalancing_short": "Rebalancing",
+    "settings": "Einstellungen"
+  },
+  "portfolio": {
+    "title": "Mein Portfolio",
+    "total_value": "Gesamtwert",
+    "total_pnl": "Gesamt-G&V",
+    "daily_change": "Taegliche Aenderung",
+    "positions": "Positionen",
+    "position_count_one": "{count} Position",
+    "position_count_other": "{count} Positionen",
+    "no_positions": "Keine Positionen gefunden",
+    "empty_portfolio": {
+      "description": "Erstellen oder importieren Sie ein Portfolio, um zu beginnen"
+    },
+    "import_portfolio": "Portfolio importieren",
+    "add_position": "Position hinzufuegen",
+    "create_portfolio": "Portfolio erstellen",
+    "create_portfolio_info": "Erstellen Sie ein neues Portfolio und geben Sie ihm einen Namen. Sie koennen danach Positionen hinzufuegen.",
+    "create_success": "Portfolio erfolgreich erstellt!",
+    "manage_portfolios": "Portfolios verwalten",
+    "rename_portfolio": "Portfolio umbenennen",
+    "portfolio_name": "Portfolio-Name",
+    "portfolio_name_hint": "z.B. Langfristige Anlagen",
+    "portfolio_name_required": "Portfolio-Name ist erforderlich",
+    "no_portfolio_to_add": "Erstellen oder waehlen Sie ein Portfolio, bevor Sie eine Position hinzufuegen",
+    "position": {
+      "symbol": "Symbol",
+      "name": "Name",
+      "quantity": "Menge",
+      "price": "Preis",
+      "value": "Wert",
+      "cost_basis": "Einstandspreis",
+      "pnl": "G&V",
+      "pnl_percent": "G&V %",
+      "sector": "Sektor",
+      "currency": "Waehrung",
+      "asset_type": "Anlagetyp",
+      "region": "Region",
+      "region_hint": "Auto nutzt die automatische geografische Erkennung",
+      "region_auto": "Auto"
+    },
+    "filters": {
+      "all": "Alle",
+      "stocks": "Aktien",
+      "etfs": "ETFs",
+      "crypto": "Kryptowaehrungen",
+      "bonds": "Anleihen",
+      "options": "Optionen",
+      "futures": "Futures",
+      "cash": "Bargeld",
+      "funds": "Fonds",
+      "commodities": "Rohstoffe",
+      "cfds": "CFDs",
+      "unassigned": "Nicht zugeordnet"
+    },
+    "asset_types": {
+      "stocks": "Aktien",
+      "etfs": "ETFs",
+      "bonds": "Anleihen",
+      "crypto": "Kryptowaehrungen",
+      "funds": "Fonds",
+      "options": "Optionen",
+      "futures": "Futures",
+      "cash": "Bargeld",
+      "cfds": "CFDs",
+      "commodities": "Rohstoffe",
+      "real_estate": "Immobilien",
+      "other": "Andere"
+    },
+    "sectors": {
+      "technology": "Technologie",
+      "financials": "Finanzen",
+      "healthcare": "Gesundheit",
+      "consumer_cyclicals": "Zyklische Konsumgueter",
+      "consumer_non_cyclicals": "Nicht-zyklische Konsumgueter",
+      "industrials": "Industrie",
+      "basic_materials": "Grundstoffe",
+      "energy": "Energie",
+      "utilities": "Versorger",
+      "real_estate": "Immobilien",
+      "communications": "Kommunikation",
+      "broad": "Diversifiziert",
+      "other": "Andere"
+    },
+    "sort_by": {
+      "name": "Name",
+      "value": "Wert",
+      "pnl": "G&V",
+      "pnl_percent": "G&V %",
+      "sector": "Sektor"
+    },
+    "charts": {
+      "title": "Portfolio-Diagramme",
+      "positions_title": "Positions-Treemap",
+      "positions_subtitle": "Jeder Block zeigt ein Ticker-Symbol, groesse entspricht dem Anteil am Gesamtwert.",
+      "regions_title": "Treemap Geografische Exposition",
+      "regions_subtitle": "Regionale Exposition nach Handelsregion und Liquiditaet.",
+      "empty": "Noch keine Daten vorhanden",
+      "tooltip": {
+        "allocation": "Allokation",
+        "value": "Wert"
+      },
+      "regions": {
+        "us": "Vereinigte Staaten",
+        "europe": "Europa",
+        "asia": "Asien",
+        "rest_world": "Rest der Welt",
+        "liquidity": "Liquiditaet",
+        "commodities": "Rohstoffe",
+        "unassigned": "Nicht zugeordnet"
+      }
+    }
+  },
+  "import": {
+    "title": "Portfolio importieren",
+    "select_broker": "Waehlen Sie Ihren Broker",
+	"choose_broker": "Waehlen Sie Ihren Broker...",
+    "portfolio_name": "Portfolio-Name",
+    "portfolio_name_label": "Portfolio-Name",
+    "portfolio_name_hint": "z.B. Rente 2026",
+    "supported_brokers": "Unterstuetzte Broker",
+    "upload_file": "CSV- oder PDF-Dateien hochladen",
+    "drag_drop": "Ziehen Sie Ihre CSV- oder PDF-Dateien hierher",
+    "or": "oder",
+    "browse_files": "Dateien durchsuchen",
+    "files_selected": "{count} Dateien ausgewaehlt",
+    "processing": "Portfolio wird verarbeitet...",
+    "success": "Portfolio erfolgreich importiert!",
+    "error": "Portfolio-Import fehlgeschlagen",
+    "positions_found": "{count} Positionen gefunden",
+    "preview": "Vorschau",
+    "import_button": "Importieren",
+    "import_target": "Importziel",
+    "import_target_create": "Neues Portfolio erstellen",
+    "import_target_existing": "Zu bestehendem Portfolio hinzufuegen",
+    "select_existing_portfolio": "Bestehendes Portfolio waehlen",
+    "select_existing_portfolio_hint": "Waehlen Sie ein Portfolio...",
+    "no_portfolios": "Noch keine Portfolios vorhanden",
+    "merge_conflict_title": "Positionen bereits vorhanden",
+    "merge_conflict_message": "{count} Positionen sind bereits in diesem Portfolio vorhanden. Wie moechten Sie damit umgehen?",
+    "merge_ignore": "Duplikate ignorieren",
+    "merge_replace": "Bestehende ersetzen",
+    "merge_add": "Mengen addieren",
+    "brokers": {
+      "ibkr": "Interactive Brokers",
+      "td_ameritrade": "TD Ameritrade",
+      "fidelity": "Fidelity",
+      "charles_schwab": "Charles Schwab",
+      "etrade": "E*TRADE",
+      "robinhood": "Robinhood",
+      "vanguard": "Vanguard",
+      "degiro": "DEGIRO",
+      "trading212": "Trading 212",
+      "xtb": "XTB",
+      "revolut": "Revolut",
+      "other": "Andere (Generisches CSV)"
+    },
+    "help": {
+      "title": "Exportieren von Ihrem Broker",
+      "ibkr": "In Interactive Brokers: Kontoverwaltung > Berichte > Flex-Abfragen > Benutzerdefinierte Flex-Abfrage erstellen > Als CSV herunterladen",
+      "fidelity": "In Fidelity: Accounts & Trade > Portfolio > Export > CSV",
+      "schwab": "In Charles Schwab: Accounts > History > Export",
+      "td_ameritrade": "In TD Ameritrade: My Account > History & Statements > Export",
+      "etrade": "In E*TRADE: Accounts > Portfolio > Download",
+      "robinhood": "In Robinhood: Account > Statements & History > Export",
+      "vanguard": "In Vanguard: My Accounts > Download Holdings",
+      "degiro": "In DEGIRO: Activity > Account Statement > Export CSV",
+      "trading212": "In Trading 212: History > Export CSV",
+      "xtb": "In XTB: History > Cash Operations > Export",
+      "revolut": "In Revolut: Stocks > Statements > Export CSV",
+      "generic": "Exportieren Sie Ihre Positionen als CSV- oder PDF-Datei von der Plattform Ihres Brokers"
+    }
+  },
+  "add_position": {
+    "title": "Position hinzufuegen",
+    "required_fields": "Erforderliche Informationen",
+    "optional_fields": "Optionale Informationen",
+    "info": "Fuegen Sie eine neue Position zu Ihrem Portfolio hinzu. Nuetzlich fuer Vermoegenswerte, die nicht in Ihren Dateien enthalten sind.",
+    "add_button": "Position hinzufuegen",
+    "success": "Position erfolgreich hinzugefuegt!",
+    "field_required": "Dieses Feld ist erforderlich",
+    "invalid_number": "Bitte geben Sie eine gueltige Zahl ein",
+    "must_be_positive": "Der Wert muss groesser als Null sein",
+    "cost_basis_hint": "Leer lassen, um den aktuellen Wert zu verwenden"
+  },
+  "edit_position": {
+    "title": "Position bearbeiten",
+    "info": "Aktualisieren Sie die Details dieser Position. Aenderungen werden in Ihrem Portfolio gespeichert.",
+    "save_button": "Aenderungen speichern",
+    "success": "Position erfolgreich aktualisiert!",
+    "not_found": "Diese Position konnte nicht gefunden werden. Bitte gehen Sie zurueck und versuchen Sie es erneut.",
+    "exchange_label": "Boerse",
+    "exchange_hint": "z.B. NASDAQ"
+  },
+  "analysis": {
+    "title": "KI-Analyse",
+    "generating": "Analyse wird generiert...",
+    "ask_ai": "Fragen Sie die KI zu Ihrem Portfolio",
+    "chat_title": "KI-Assistent",
+    "chat_tooltip": "KI-Chat",
+    "generate_full": "Vollstaendige Analyse erstellen",
+    "ai_result_title": "KI-Analyse",
+    "no_portfolio_loaded": "Kein Portfolio geladen",
+    "api_key_required": "Bitte konfigurieren Sie Ihren Gemini API-Schluessel in den Einstellungen",
+    "thinking": "Denke nach...",
+    "suggestions": {
+      "title": "Vorgeschlagene Fragen",
+      "risk": "Was ist das Risikoniveau meines Portfolios?",
+      "diversification": "Wie gut diversifiziert ist mein Portfolio?",
+      "performance": "Wie entwickelt sich mein Portfolio?",
+      "recommendations": "Welche Verbesserungen schlagen Sie vor?"
+    },
+    "sections": {
+      "summary": "Portfolio-Zusammenfassung",
+      "allocation": "Vermoegensallokation",
+      "risk": "Risikoanalyse",
+      "performance": "Performance-Analyse",
+      "recommendations": "Empfehlungen"
+    },
+    "metrics": {
+      "sharpe_ratio": "Sharpe-Ratio",
+      "volatility": "Volatilitaet",
+      "beta": "Beta",
+      "alpha": "Alpha",
+      "max_drawdown": "Max. Drawdown",
+      "sortino_ratio": "Sortino-Ratio"
+    }
+  },
+  "market": {
+    "title": "Marktuebersicht",
+    "top_gainers": "Top-Gewinner",
+    "top_losers": "Top-Verlierer",
+    "calendar": "Wirtschaftskalender",
+    "news": "Marktnachrichten",
+    "refresh": "Aktualisieren",
+    "updated": "Aktualisiert: {time}",
+    "snapshot_source": "Snapshot-Daten aus dem verteilten Feed",
+    "no_data": "Keine Daten verfuegbar",
+    "no_events": "Keine anstehenden Ereignisse",
+    "portfolio_not_loaded": "Portfolio noch nicht geladen",
+    "no_positions": "Keine Positionen im Portfolio",
+    "portfolio_live_title": "Live-Preise Ihres Portfolios",
+    "portfolio_live_subtitle": "Live-Kurse ueber Ihren API-Schluessel (EODHD/FMP)",
+    "portfolio_live_subtitle_snapshot": "Preise aus dem taegl. Snapshot — EODHD-Schluessel fuer Live-Kurse hinzufuegen",
+    "portfolio_live_subtitle_no_key": "Keine Datenquelle verfuegbar. EODHD- oder FMP-Schluessel in Einstellungen hinzufuegen.",
+    "portfolio_live_optional_key_hint": "Optional: EODHD- oder FMP-Schluessel in Einstellungen fuer Echtzeit-Portfolio-Kurse hinzufuegen",
+    "live_positions": "Aktualisierte Positionen",
+    "cash_included": "Bargeld/Liquiditaet wird arithmetisch zum Gesamtwert addiert",
+    "updated_positions": "Aktualisierte Positionen: {count}",
+    "badges": {
+      "source": "Quelle: {source}",
+      "source_price_not_found": "Quelle/Preis nicht gefunden",
+      "outlier_blocked": "Verdaechtiger Preis blockiert"
+    },
+    "price_unavailable": "Preis nicht verfuegbar",
+    "event_labels": {
+      "previous": "Vorher",
+      "forecast": "Prognose",
+      "actual": "Ist"
+    },
+    "time": {
+      "just_now": "Gerade eben",
+      "minutes_ago": "vor {count}m",
+      "hours_ago": "vor {count}h"
+    },
+    "timeframes": {
+      "today": "Heute",
+      "week": "Diese Woche",
+      "month": "Dieser Monat",
+      "year": "Letzte 365 Tage"
+    },
+    "markets": {
+      "us": "Vereinigte Staaten",
+      "lse": "Vereinigtes Koenigreich",
+      "xetra": "Deutschland",
+      "pa": "Frankreich",
+      "mi": "Italien",
+      "to": "Kanada",
+      "tse": "Japan",
+      "hk": "Hongkong",
+      "au": "Australien",
+      "nse": "Indien"
+    }
+  },
+  "rebalancing": {
+    "title": "Rebalancing",
+    "subtitle": "Legen Sie Zielprozentsaetze fuer Ihre Positionen fest und sehen Sie, was angepasst werden muss",
+    "current": "Aktuell",
+    "target": "Ziel",
+    "delta": "Delta",
+    "action": {
+      "add": "HINZUFUEGEN",
+      "remove": "ENTFERNEN",
+      "hold": "OK"
+    },
+    "summary": {
+      "total_target": "Gesamtziel",
+      "remaining": "Rest bis 100%",
+      "portfolio_value": "Portfoliowert",
+      "over_allocated": "Ueber-alloziert um {0}%",
+      "under_allocated": "Unter-alloziert um {0}%",
+      "balanced": "Portfolio ist ausbalanciert!"
+    },
+    "filter": {
+      "changes_only": "Nur Aenderungen"
+    },
+    "menu": {
+      "filters": "Filter",
+      "options": "Optionen",
+      "reset_to_current": "Auf aktuelle Allokation zuruecksetzen",
+      "distribute_equally": "Gleichmaessig verteilen"
+    },
+    "actions": {
+      "reset": "Zuruecksetzen",
+      "save": "Speichern"
+    },
+    "messages": {
+      "saved": "Zielallokation gespeichert!",
+      "import_portfolio_first": "Bitte importieren Sie zuerst ein Portfolio"
+    },
+    "empty": {
+      "title": "Kein Portfolio",
+      "description": "Importieren Sie ein Portfolio, um mit dem Rebalancing Ihrer Positionen zu beginnen"
+    },
+    "error": {
+      "title": "Fehler"
+    },
+    "help": {
+      "title": "So funktioniert das Rebalancing",
+      "description": "Dieser Bereich spiegelt Ihre Portfoliopositionen wider und laesst Sie Zielgewichte festlegen. Beim Bearbeiten der Ziele aktualisieren sich Aktuell-, Ziel- und Delta-Werte, damit Sie sehen, was erhoeht oder reduziert werden sollte.",
+      "steps_title": "So verwenden Sie es:",
+      "step1": "1. Pruefen Sie aktuelle Allokation und Wert jeder Position",
+      "step2": "2. Geben Sie den gewuenschten Zielprozentsatz fuer jede Position ein",
+      "step3": "3. Halten Sie die Summe der Zielwerte mit der Zusammenfassung bei 100%",
+      "step4": "4. Lesen Sie die Delta-Spalte, um zu sehen, wie viel hinzugefuegt oder reduziert werden muss",
+      "step5": "5. \"Auf aktuelle Allokation zuruecksetzen\" uebernimmt aktuelle Gewichte in alle Zielfelder",
+      "step6": "6. \"Gleichmaessig verteilen\" weist allen Positionen denselben Zielprozentsatz zu",
+      "step7": "7. Aktivieren Sie \"Nur Aenderungen\", um nur Positionen mit Abweichungen zwischen Ziel und Ist zu sehen"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "general": {
+      "title": "Allgemein",
+      "language": "Sprache",
+      "currency": "Basiswaehrung",
+      "theme": "Design",
+      "theme_light": "Hell",
+      "theme_dark": "Dunkel",
+      "theme_system": "System"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "price_alerts": "Preisalarme",
+      "daily_summary": "Taegliche Zusammenfassung",
+      "market_news": "Marktnachrichten"
+    },
+    "data": {
+      "title": "Datenverwaltung",
+      "export": "Daten exportieren",
+      "backup": "Sicherung",
+      "restore": "Wiederherstellen",
+      "clear": "Alle Daten loeschen"
+    },
+    "ai": {
+      "title": "KI-Einstellungen",
+      "api_key": "Gemini API-Schluessel",
+      "api_key_hint": "Geben Sie Ihren Gemini API-Schluessel ein",
+      "api_key_saved": "API-Schluessel gespeichert",
+      "test_connection": "Verbindung testen",
+      "connection_success": "Verbindung erfolgreich!",
+      "connection_error": "Verbindung fehlgeschlagen. Ueberpruefen Sie Ihren API-Schluessel."
+    },
+    "eodhd": {
+      "title": "EODHD-Marktdaten (Optional)",
+      "api_key": "EODHD API-Schluessel",
+      "api_key_hint": "Geben Sie Ihren EODHD API-Schluessel ein",
+      "api_key_saved": "EODHD API-Schluessel gespeichert",
+      "api_key_optional_hint": "Optional — ermoeglicht Echtzeit-Portfolio-Kurse ueber EODHD"
+    },
+    "fmp": {
+      "title": "FMP-Marktdaten (Optional)",
+      "api_key": "FMP API-Schluessel",
+      "api_key_hint": "Geben Sie Ihren FMP API-Schluessel ein",
+      "api_key_saved": "FMP API-Schluessel gespeichert"
+    },
+    "about": {
+      "title": "Ueber",
+      "version": "Version",
+      "privacy": "Datenschutzrichtlinie",
+      "terms": "Nutzungsbedingungen",
+      "licenses": "Open-Source-Lizenzen",
+      "rate": "App bewerten",
+      "contact": "Support kontaktieren"
+    }
+  },
+  "guide": {
+    "title": "Benutzerhandbuch",
+    "sections": {
+      "getting_started": {
+        "title": "Erste Schritte",
+        "content": "Richten Sie Portfolio, Sprache und KI-Einstellungen ein, um Ihre Investments zu verfolgen.",
+        "details": "1. Erstellen Sie ein neues Portfolio oder importieren Sie eine CSV/PDF vom Broker\n2. Sprache und Basiswaehrung unter Einstellungen > Allgemein setzen\n3. Gemini API-Schluessel unter Einstellungen > KI-Einstellungen eintragen, um Analyse und KI-Chat zu aktivieren\n4. FMP API-Schluessel unter Einstellungen > KI-Einstellungen eintragen, um Marktdaten zu aktivieren\n5. Portfolio-, Markt- und Ziele-Reiter erkunden\n6. Daten nach wichtigen Trades aktualisieren\n\n**Tipps:**\n- Pro Portfolio nur eine Basiswaehrung verwenden\n- Ticker vor dem Import pruefen\n- Verwenden Sie die ?-Schaltflaeche, um diese Anleitung erneut zu oeffnen"
+      },
+      "importing": {
+        "title": "Daten importieren",
+        "content": "Anleitung zum Import von CSV/PDF-Dateien von unterstuetzten Brokern.",
+        "details": "**Interactive Brokers (IBKR)**\n1. Melden Sie sich im Client Portal an\n2. Gehen Sie zu Performance & Reports > Statements\n3. Waehlen Sie \"Flex Queries\"\n4. Erstellen oder starten Sie eine Activity Flex Query\n5. Laden Sie den Bericht als CSV oder PDF herunter\n\n**Weitere Broker**\nExportieren Sie Positionen oder Kontoauszuege als CSV/PDF und nutzen Sie dann \"Portfolio importieren\" und waehlen Sie den Broker.\nWenn Ihr Broker nicht gelistet ist, verwenden Sie \"Andere (Generisches CSV)\" und folgen Sie dem in der Importansicht angegebenen Spaltenformat.\n\n**Problembehebung:**\n- Dezimaltrennzeichen entsprechend der Sprache pruefen\n- Leere Kopfzeilen entfernen\n- Stellen Sie sicher, dass Symbole, Mengen und Preise vorhanden sind"
+      },
+      "analysis": {
+        "title": "Analyse verstehen",
+        "content": "Erfahren Sie, wie KI-Insights funktionieren und wie Sie sie aktivieren.",
+        "details": "Portfolio Manager verwendet Gemini KI fuer Portfolio-Insights und KI-Chat sowie die FMP-API fuer Marktkurse im Markt-Tab.\n\n**KI aktivieren:**\n1. Holen Sie sich einen kostenlosen Gemini API-Schluessel aus dem Google AI Studio\n2. Tragen Sie ihn unter Einstellungen > KI-Einstellungen ein\n3. Nutzen Sie den Analyse-Reiter fuer Reports oder Chat\n\n**Marktdaten aktivieren:**\n1. Besorgen Sie sich einen FMP API-Schluessel\n2. Tragen Sie ihn unter Einstellungen > KI-Einstellungen ein\n3. Nutzen Sie den Markt-Reiter fuer Top-Gewinner/Verlierer und Live-Portfolio-Kurse\n\n**Wichtige Metriken:**\n- Sharpe-Ratio, Volatilitaet, Beta, Alpha, Max. Drawdown\n- Allokation und Risiko"
+      },
+      "charts": {
+        "title": "Portfolio-Diagramme",
+        "content": "So lesen Sie Treemaps und Allokations-Tooltips.",
+        "details": "**Positions-Treemap**\nJedes Rechteck repraesentiert eine Position; die Groesse zeigt den Anteil am Gesamtwert. Tippen oder Hover zeigt Allokation und Wert.\n\n**Geografische Treemap**\nPositionen werden nach Region gruppiert (Vereinigte Staaten, Europa, Asien, Rest der Welt, Liquiditaet, Rohstoffe, Nicht zugeordnet).\n\n**Tipps:**\n- Grosse Bloecke zeigen Konzentrationsrisiko\n- Nach Trades aktualisieren, um Diagramme aktuell zu halten"
+      },
+      "goals": {
+        "title": "Ziele setzen",
+        "content": "Ziele setzen, Beitraege definieren und Fortschritt verfolgen.",
+        "details": "1. Tippen Sie auf \"Ziele\" in der unteren Navigation\n2. Tippen Sie auf \"Ziel hinzufuegen\" und waehlen Sie einen Zieltyp\n3. Zielbetrag, Datum und optionalen monatlichen Beitrag festlegen\n4. Zielallokation mit dem Portfolio vergleichen\n5. Mit dem Portfolio synchronisieren, um Fortschritt zu aktualisieren"
+      },
+      "rebalancing": {
+        "title": "Positionen rebalancieren",
+        "content": "So setzen Sie Zielgewichte, nutzen Schnellaktionen und speichern einen Rebalancing-Plan.",
+        "details": "Nutzen Sie den Rebalancing-Tab, um Ihre gewuenschte Portfolio-Aufteilung festzulegen.\n\n**So funktioniert es**\n- Die App startet mit Ihrer aktuellen Allokation.\n- Bearbeiten Sie jeden **Ziel**-Wert, um das gewuenschte Gewicht zu setzen.\n- **Delta** zeigt, was pro Position hinzugefuegt oder reduziert werden sollte.\n\n**Schnellaktionen**\n- **Auf aktuelle Allokation zuruecksetzen**: uebernimmt aktuelle Gewichte in die Zielfelder.\n- **Gleichmaessig verteilen**: weist allen Positionen denselben Zielprozentsatz zu.\n- **Nur Aenderungen**: zeigt nur Positionen, bei denen Ziel und Ist abweichen.\n\n**Vor dem Speichern**\n- Halten Sie die Summe der Zielwerte bei 100%.\n- Speichern Sie, wenn die Zusammenfassung eine gueltige Allokation bestaetigt."
+      },
+      "market_data": {
+        "title": "Marktdaten & Snapshots",
+        "content": "Wie Marktdaten ohne API-Schluessel bereitgestellt werden.",
+        "details": "**Serverloser Markt-Snapshot**\nJeden Wochentag nach US-Marktschluss laedt ein automatisierter Workflow EODHD-Bulk-Daten fuer 10 globale Boersen herunter, berechnet die Top 20 Gewinner und Verlierer fuer 4 Zeitrahmen und veroefentlicht die Ergebnisse auf GitHub Pages.\n\n**Kein Schluessel fuer Top-Mover erforderlich:**\nDer Markt-Tab laedt Top-Mover-Daten automatisch von der oeffentlichen Snapshot-URL. Alle Nutzer sehen dieselben Marktdaten ohne Konfiguration.\n\n**Optionaler EODHD-Schluessel:**\nFuegen Sie Ihren EODHD-Schluessel unter Einstellungen > EODHD-Marktdaten ein, um Echtzeit-Kurse fuer Ihre Portfolio-Positionen zu erhalten.\n\n**Optionaler FMP-Schluessel:**\nAlternativ fuegen Sie einen FMP-Schluessel als Fallback fuer Portfolio-Kurse hinzu.\n\n**Historische Daten:**\nDer Workflow fuehrt eine Verlaufsdatenbank, die Wochen-, Monats- und Jahreszeitreihen-Rankings ermoeglicht."
+      },
+      "glossary": {
+        "title": "Investment-Glossar",
+        "content": "Definitionen der wichtigsten Begriffe der App.",
+        "details": "**P&L**: Gewinn & Verlust (aktueller Wert minus Einstandspreis)\n\n**Einstandspreis**: Urspruenglicher Kaufpreis\n\n**Allokation**: Gewicht eines Assets im Portfolio\n\n**Volatilitaet**: Kursschwankung im Zeitverlauf\n\n**Drawdown**: Rueckgang vom Hoch zum Tief\n\n**Basiswaehrung**: Hauptwaehrung fuer Reports"
+      }
+    }
+  },
+  "language_selection": {
+    "title": "Waehlen Sie Ihre Sprache",
+    "subtitle": "Waehlen Sie die Sprache und Waehrung, die Sie in der App verwenden moechten.",
+    "dynamic_translation_hint": "Die Seite wird sofort aktualisiert, wenn Sie eine Sprache antippen.",
+    "currency_title": "Waehlen Sie Ihre Waehrung",
+    "currency_subtitle": "Waehlen Sie die Basiswaehrung fuer Ihr Portfolio.",
+    "footer": "Sie koennen diese spaeter unter Einstellungen > Allgemein aendern."
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "network": "Netzwerkfehler. Ueberpruefen Sie Ihre Verbindung.",
+    "file_invalid": "Ungueltiges Dateiformat. Waehlen Sie eine gueltige CSV- oder PDF-Datei.",
+    "parse_error": "Dateiverarbeitung fehlgeschlagen. Ueberpruefen Sie das Format.",
+    "api_error": "API-Fehler. Versuchen Sie es spaeter erneut.",
+    "storage_error": "Speichern fehlgeschlagen. Versuchen Sie es erneut."
+  },
+  "currencies": {
+    "EUR": "Euro",
+    "USD": "US-Dollar",
+    "GBP": "Britisches Pfund",
+    "CHF": "Schweizer Franken",
+    "JPY": "Japanischer Yen",
+    "CAD": "Kanadischer Dollar",
+    "AUD": "Australischer Dollar"
+  },
+  "sectors": {
+    "technology": "Technologie",
+    "financials": "Finanzen",
+    "healthcare": "Gesundheitswesen",
+    "consumer_cyclicals": "Zyklische Konsumgueter",
+    "consumer_non_cyclicals": "Nicht-zyklische Konsumgueter",
+    "industrials": "Industrie",
+    "basic_materials": "Grundstoffe",
+    "energy": "Energie",
+    "utilities": "Versorgungsunternehmen",
+    "real_estate": "Immobilien",
+    "broad": "Breit/Diversifiziert"
+  }
+}

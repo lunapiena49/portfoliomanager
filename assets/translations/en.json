@@ -1,0 +1,551 @@
+{
+  "app": {
+    "name": "Portfolio Manager",
+    "tagline": "Smart Investment Tracking"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "settings": "Settings",
+    "help": "Help",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "skip": "Skip",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to Portfolio Manager",
+      "subtitle": "Your professional investment companion"
+    },
+    "features": {
+      "import": {
+        "title": "Import Your Portfolio",
+        "description": "Easily import portfolios from major brokers like Interactive Brokers, TD Ameritrade, and more via CSV or PDF files."
+      },
+      "analysis": {
+        "title": "AI-Powered Analysis",
+        "description": "Get intelligent insights about your investments powered by advanced AI technology."
+      },
+      "tracking": {
+        "title": "Real-Time Tracking",
+        "description": "Monitor your portfolio performance with detailed charts and statistics."
+      },
+      "goals": {
+        "title": "Set Your Goals",
+        "description": "Define investment targets and track your progress towards financial freedom."
+      },
+      "market": {
+        "title": "Live Market Data — Free",
+        "description": "Top 20 gainers & losers for 10 global markets updated daily via a free serverless feed. No API key needed. Add your optional EODHD key for real-time portfolio quotes."
+      }
+    },
+    "get_started": "Get Started",
+    "already_user": "Already have data? Import now"
+  },
+  "navigation": {
+    "portfolio": "Portfolio",
+    "portfolio_short": "Portfolio",
+    "analysis": "Analysis",
+    "market": "Market",
+    "market_short": "Market",
+    "goals": "Goals",
+    "goals_short": "Goals",
+    "rebalancing": "Rebalancing",
+    "rebalancing_short": "Rebalance",
+    "settings": "Settings"
+  },
+  "portfolio": {
+    "title": "My Portfolio",
+    "total_value": "Total Value",
+    "total_pnl": "Total P&L",
+    "daily_change": "Daily Change",
+    "positions": "Positions",
+    "position_count_one": "{count} position",
+    "position_count_other": "{count} positions",
+    "no_positions": "No positions found",
+    "empty_portfolio": {
+      "description": "Create or import a portfolio to get started"
+    },
+    "import_portfolio": "Import Portfolio",
+    "add_position": "Add Position",
+    "create_portfolio": "Create Portfolio",
+    "create_portfolio_info": "Create a new portfolio and give it a name. You can add positions after creation.",
+    "create_empty_tab": "Create Empty",
+    "create_import_tab": "Import from Broker",
+    "create_success": "Portfolio created successfully!",
+    "manage_portfolios": "Manage Portfolios",
+    "rename_portfolio": "Rename Portfolio",
+    "portfolio_name": "Portfolio Name",
+    "portfolio_name_hint": "e.g., Long Term Investments",
+    "portfolio_name_required": "Portfolio name is required",
+    "no_portfolio_to_add": "Create or select a portfolio before adding a position",
+    "position": {
+      "symbol": "Symbol",
+      "name": "Name",
+      "quantity": "Quantity",
+      "price": "Price",
+      "value": "Value",
+      "cost_basis": "Cost Basis",
+      "pnl": "P&L",
+      "pnl_percent": "P&L %",
+      "sector": "Sector",
+      "currency": "Currency",
+      "asset_type": "Asset Type",
+      "region": "Region",
+      "region_hint": "Auto uses automatic geographic detection",
+      "region_auto": "Auto"
+    },
+    "filters": {
+      "all": "All",
+      "stocks": "Stocks",
+      "etfs": "ETFs",
+      "crypto": "Cryptocurrencies",
+      "bonds": "Bonds",
+      "options": "Options",
+      "futures": "Futures",
+      "cash": "Cash",
+      "funds": "Funds",
+      "commodities": "Commodities",
+      "cfds": "CFDs",
+      "unassigned": "Unassigned"
+    },
+    "asset_types": {
+      "stocks": "Stocks",
+      "etfs": "ETFs",
+      "bonds": "Bonds",
+      "crypto": "Crypto",
+      "funds": "Funds",
+      "options": "Options",
+      "futures": "Futures",
+      "cash": "Cash",
+      "cfds": "CFDs",
+      "commodities": "Commodities",
+      "real_estate": "Real Estate",
+      "other": "Other"
+    },
+    "sectors": {
+      "technology": "Technology",
+      "financials": "Financials",
+      "healthcare": "Healthcare",
+      "consumer_cyclicals": "Consumer Cyclicals",
+      "consumer_non_cyclicals": "Consumer Non-Cyclicals",
+      "industrials": "Industrials",
+      "basic_materials": "Basic Materials",
+      "energy": "Energy",
+      "utilities": "Utilities",
+      "real_estate": "Real Estate",
+      "communications": "Communications",
+      "broad": "Broad",
+      "other": "Other"
+    },
+    "sort_by": {
+      "name": "Name",
+      "value": "Value",
+      "pnl": "P&L",
+      "pnl_percent": "P&L %",
+      "sector": "Sector"
+    },
+    "charts": {
+      "title": "Portfolio Charts",
+      "positions_title": "Positions Treemap",
+      "positions_subtitle": "Each block shows a position ticker sized by its share of total value.",
+      "regions_title": "Geographic Exposure Treemap",
+      "regions_subtitle": "Regional exposure grouped by trading region and liquidity assets.",
+      "empty": "No data available yet",
+      "tooltip": {
+        "allocation": "Allocation",
+        "value": "Value"
+      },
+      "regions": {
+        "us": "United States",
+        "europe": "Europe",
+        "asia": "Asia",
+        "rest_world": "Rest of World",
+        "liquidity": "Liquidity",
+        "commodities": "Commodities",
+        "unassigned": "Unassigned"
+      }
+    }
+  },
+  "import": {
+    "title": "Import Portfolio",
+    "select_broker": "Select Your Broker",
+	"choose_broker": "Choose your broker...",
+    "portfolio_name": "Portfolio Name",
+    "portfolio_name_label": "Portfolio Name",
+    "portfolio_name_hint": "e.g., Retirement 2026",
+    "supported_brokers": "Supported Brokers",
+    "upload_file": "Upload CSV or PDF Files",
+    "drag_drop": "Drag and drop your CSV or PDF files here",
+    "or": "or",
+    "browse_files": "Browse Files",
+    "files_selected": "{count} files selected",
+    "processing": "Processing your portfolio...",
+    "success": "Portfolio imported successfully!",
+    "error": "Failed to import portfolio",
+    "positions_found": "{count} positions found",
+    "preview": "Preview",
+    "import_button": "Import",
+    "import_target": "Import target",
+    "import_target_create": "Create new portfolio",
+    "import_target_existing": "Add to existing portfolio",
+    "select_existing_portfolio": "Select existing portfolio",
+    "select_existing_portfolio_hint": "Choose a portfolio...",
+    "no_portfolios": "No portfolios available yet",
+    "merge_conflict_title": "Positions already exist",
+    "merge_conflict_message": "{count} positions already exist in this portfolio. How would you like to handle them?",
+    "merge_ignore": "Ignore duplicates",
+    "merge_replace": "Replace existing",
+    "merge_add": "Add quantities",
+    "brokers": {
+      "ibkr": "Interactive Brokers",
+      "td_ameritrade": "TD Ameritrade",
+      "fidelity": "Fidelity",
+      "charles_schwab": "Charles Schwab",
+      "etrade": "E*TRADE",
+      "robinhood": "Robinhood",
+      "vanguard": "Vanguard",
+      "degiro": "DEGIRO",
+      "trading212": "Trading 212",
+      "xtb": "XTB",
+      "revolut": "Revolut",
+      "other": "Other (Generic CSV)"
+    },
+    "help": {
+      "title": "How to Export from Your Broker",
+      "ibkr": "In Interactive Brokers: Account Management > Reports > Flex Queries > Create Custom Flex Query > Download as CSV",
+      "fidelity": "In Fidelity: Accounts & Trade > Portfolio > Export > CSV",
+      "schwab": "In Charles Schwab: Accounts > History > Export",
+      "td_ameritrade": "In TD Ameritrade: My Account > History & Statements > Export",
+      "etrade": "In E*TRADE: Accounts > Portfolio > Download",
+      "robinhood": "In Robinhood: Account > Statements & History > Export",
+      "vanguard": "In Vanguard: My Accounts > Download Holdings",
+      "degiro": "In DEGIRO: Activity > Account Statement > Export CSV",
+      "trading212": "In Trading 212: History > Export CSV",
+      "xtb": "In XTB: History > Cash Operations > Export",
+      "revolut": "In Revolut: Stocks > Statements > Export CSV",
+      "generic": "Export your positions as a CSV or PDF file from your broker's platform"
+    }
+  },
+  "add_position": {
+    "title": "Add Position",
+    "required_fields": "Required Information",
+    "optional_fields": "Optional Information",
+    "info": "Add a new position to your portfolio. Useful for assets not included in your files.",
+    "add_button": "Add Position",
+    "success": "Position added successfully!",
+    "field_required": "This field is required",
+    "invalid_number": "Please enter a valid number",
+    "must_be_positive": "Value must be greater than zero",
+    "cost_basis_hint": "Leave empty to use current value"
+  },
+  "edit_position": {
+    "title": "Edit Position",
+    "info": "Update the details for this position. Changes will be saved to your portfolio.",
+    "save_button": "Save Changes",
+    "success": "Position updated successfully!",
+    "not_found": "We couldn't find this position. Please go back and try again.",
+    "exchange_label": "Exchange",
+    "exchange_hint": "e.g., NASDAQ"
+  },
+  "analysis": {
+    "title": "AI Analysis",
+    "generating": "Generating analysis...",
+    "ask_ai": "Ask AI about your portfolio",
+    "chat_title": "AI Assistant",
+    "chat_tooltip": "AI Chat",
+    "generate_full": "Generate Full Analysis",
+    "ai_result_title": "AI Analysis",
+    "no_portfolio_loaded": "No portfolio loaded",
+    "api_key_required": "Please configure your Gemini API key in Settings",
+    "thinking": "Thinking...",
+    "suggestions": {
+      "title": "Suggested Questions",
+      "risk": "What is my portfolio risk level?",
+      "diversification": "How well diversified is my portfolio?",
+      "performance": "How is my portfolio performing?",
+      "recommendations": "What improvements do you suggest?"
+    },
+    "sections": {
+      "summary": "Portfolio Summary",
+      "allocation": "Asset Allocation",
+      "risk": "Risk Analysis",
+      "performance": "Performance Analysis",
+      "recommendations": "Recommendations"
+    },
+    "metrics": {
+      "sharpe_ratio": "Sharpe Ratio",
+      "volatility": "Volatility",
+      "beta": "Beta",
+      "alpha": "Alpha",
+      "max_drawdown": "Max Drawdown",
+      "sortino_ratio": "Sortino Ratio"
+    }
+  },
+  "market": {
+    "title": "Market Overview",
+    "top_gainers": "Top Gainers",
+    "top_losers": "Top Losers",
+    "calendar": "Economic Calendar",
+    "news": "Market News",
+    "refresh": "Refresh",
+    "updated": "Updated: {time}",
+    "snapshot_source": "Snapshot data from distributed feed",
+    "no_data": "No data available",
+    "no_events": "No upcoming events",
+    "portfolio_not_loaded": "Portfolio not loaded yet",
+    "no_positions": "No positions in portfolio",
+    "portfolio_live_title": "Your portfolio live prices",
+    "portfolio_live_subtitle": "Live quotes fetched via your API key (EODHD/FMP)",
+    "portfolio_live_subtitle_snapshot": "Prices from daily snapshot — add EODHD key in Settings for live quotes",
+    "portfolio_live_subtitle_no_key": "No data source available. Add EODHD or FMP API key in Settings.",
+    "portfolio_live_optional_key_hint": "Optional: add your EODHD or FMP API key in Settings for real-time portfolio quotes",
+    "live_positions": "Updated positions",
+    "cash_included": "Cash/liquidity is included arithmetically in total value",
+    "updated_positions": "Updated positions: {count}",
+    "badges": {
+      "source": "Source: {source}",
+      "source_price_not_found": "Source/price not found",
+      "outlier_blocked": "Suspicious price blocked"
+    },
+    "price_unavailable": "Price unavailable",
+    "event_labels": {
+      "previous": "Previous",
+      "forecast": "Forecast",
+      "actual": "Actual"
+    },
+    "time": {
+      "just_now": "Just now",
+      "minutes_ago": "{count}m ago",
+      "hours_ago": "{count}h ago"
+    },
+    "timeframes": {
+      "today": "Today",
+      "week": "This Week",
+      "month": "This Month",
+      "year": "Last 365 Days"
+    },
+    "markets": {
+      "us": "United States",
+      "lse": "United Kingdom",
+      "xetra": "Germany",
+      "pa": "France",
+      "mi": "Italy",
+      "to": "Canada",
+      "tse": "Japan",
+      "hk": "Hong Kong",
+      "au": "Australia",
+      "nse": "India"
+    }
+  },
+  "rebalancing": {
+    "title": "Rebalancing",
+    "subtitle": "Set target percentages for your positions and see what to adjust",
+    "current": "Current",
+    "target": "Target",
+    "delta": "Delta",
+    "action": {
+      "add": "ADD",
+      "remove": "REMOVE",
+      "hold": "OK"
+    },
+    "summary": {
+      "total_target": "Total Target",
+      "remaining": "Remaining to 100%",
+      "portfolio_value": "Portfolio Value",
+      "over_allocated": "Over-allocated by {0}%",
+      "under_allocated": "Under-allocated by {0}%",
+      "balanced": "Portfolio is balanced!"
+    },
+    "filter": {
+      "changes_only": "Changes only"
+    },
+    "menu": {
+      "filters": "Filters",
+      "options": "Options",
+      "reset_to_current": "Reset to current allocation",
+      "distribute_equally": "Distribute equally"
+    },
+    "actions": {
+      "reset": "Reset",
+      "save": "Save"
+    },
+    "messages": {
+      "saved": "Target allocation saved!",
+      "import_portfolio_first": "Please import a portfolio first"
+    },
+    "empty": {
+      "title": "No Portfolio",
+      "description": "Import a portfolio to start rebalancing your positions"
+    },
+    "error": {
+      "title": "Error"
+    },
+    "help": {
+      "title": "How Rebalancing Works",
+      "description": "This tab mirrors your portfolio positions and lets you define target weights. As you edit targets, current, target, and delta values update to show what to add or reduce.",
+      "steps_title": "How to use it:",
+      "step1": "1. Review each position's current allocation and value",
+      "step2": "2. Enter the target percentage you want for each position",
+      "step3": "3. Keep the total target at 100% using the summary card",
+      "step4": "4. Read the delta column to see how much to add or remove",
+      "step5": "5. \"Reset to current allocation\" copies current weights into all target fields",
+      "step6": "6. \"Distribute equally\" assigns the same target percentage to every position",
+      "step7": "7. Enable \"Changes only\" to show only positions where target and current differ"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "general": {
+      "title": "General",
+      "language": "Language",
+      "currency": "Base Currency",
+      "theme": "Theme",
+      "theme_light": "Light",
+      "theme_dark": "Dark",
+      "theme_system": "System"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "price_alerts": "Price Alerts",
+      "daily_summary": "Daily Summary",
+      "market_news": "Market News"
+    },
+    "data": {
+      "title": "Data Management",
+      "export": "Export Data",
+      "backup": "Backup",
+      "restore": "Restore",
+      "clear": "Clear All Data"
+    },
+    "ai": {
+      "title": "AI Settings",
+      "api_key": "Gemini API Key",
+      "api_key_hint": "Enter your Gemini API key",
+      "api_key_saved": "API key saved",
+      "test_connection": "Test Connection",
+      "connection_success": "Connection successful!",
+      "connection_error": "Connection failed. Please check your API key."
+    },
+    "eodhd": {
+      "title": "EODHD Market Data (Optional)",
+      "api_key": "EODHD API Key",
+      "api_key_hint": "Enter your EODHD API key",
+      "api_key_saved": "EODHD API key saved",
+      "api_key_optional_hint": "Optional — enables real-time portfolio quotes via EODHD"
+    },
+    "fmp": {
+      "title": "FMP Market Data (Optional)",
+      "api_key": "FMP API Key",
+      "api_key_hint": "Enter your FMP API key",
+      "api_key_saved": "FMP API key saved"
+    },
+    "about": {
+      "title": "About",
+      "version": "Version",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "licenses": "Open Source Licenses",
+      "rate": "Rate This App",
+      "contact": "Contact Support"
+    }
+  },
+  "guide": {
+    "title": "User Guide",
+    "sections": {
+      "getting_started": {
+        "title": "Getting Started",
+        "content": "Set up your portfolio, language, and optional API keys to start tracking your investments.",
+        "details": "1. Create a new portfolio or import a CSV/PDF from your broker\n2. Set language and base currency in Settings > General\n3. Add your Gemini API key in Settings > AI Settings to enable Analysis and AI Chat\n4. *(Optional)* Add your EODHD API key in Settings > EODHD for real-time portfolio quotes\n5. *(Optional)* Add your FMP API key in Settings > AI Settings as an alternative for market quotes\n6. Explore Portfolio, Market, and Goals tabs — Market top movers work without any key!\n7. Refresh data after important trades\n\n**How market data works:**\n- Top 20 gainers/losers for 10 global markets are updated daily via a free serverless feed (no key needed)\n- Portfolio position prices: EODHD key (real-time) → FMP key → daily snapshot\n\n**Tips:**\n- Keep one base currency per portfolio\n- Verify tickers before importing\n- Use the ? button to reopen this guide"
+      },
+      "importing": {
+        "title": "Importing Data",
+        "content": "Instructions for importing CSV/PDF files from supported brokers.",
+        "details": "**Interactive Brokers (IBKR)**\n1. Log in to Client Portal\n2. Go to Performance & Reports > Statements\n3. Select \"Flex Queries\"\n4. Create or run an Activity Flex Query\n5. Download the report as CSV or PDF\n\n**Other brokers**\nExport your positions or statements as CSV/PDF, then use \"Import Portfolio\" and choose the broker.\nIf your broker is not listed, use \"Other (Generic CSV)\" and follow the column format shown on screen.\n\n**Troubleshooting:**\n- Check decimal separators for your locale\n- Remove empty header rows\n- Ensure symbols, quantities, and prices are present"
+      },
+      "analysis": {
+        "title": "Understanding Analysis & Market Data",
+        "content": "Learn how AI insights and market data work.",
+        "details": "Portfolio Manager uses Gemini AI for portfolio insights and AI chat. Market top movers are provided by a free daily serverless snapshot — no key needed.\n\n**To enable AI Analysis:**\n1. Get a free Gemini API key from Google AI Studio\n2. Paste it in Settings > AI Settings\n3. Use the Analysis tab to generate reports or chat\n\n**Market data (top movers — no key needed):**\n- Updated daily via GitHub Actions + EODHD bulk data\n- 20 top gainers and losers per market for Today / Week / Month / Year\n- 10 global markets: US, UK, Germany, France, Italy, Canada, Japan, HK, Australia, India\n\n**Real-time portfolio prices (optional):**\n- Add your EODHD API key in Settings > EODHD for real-time quotes\n- Or add your FMP API key as an alternative\n- Without a key, the app uses the latest daily snapshot prices\n\n**Key metrics:**\n- Sharpe Ratio, Volatility, Beta, Alpha, Max Drawdown\n- Allocation and risk breakdowns"
+      },
+      "goals": {
+        "title": "Setting Goals",
+        "content": "Set goals, contributions, and track progress over time.",
+        "details": "1. Tap \"Goals\" in the bottom navigation\n2. Tap \"Add Goal\" and choose a goal type\n3. Set target amount, date, and optional monthly contribution\n4. Use target allocation to compare with portfolio mix\n5. Sync with your portfolio to keep progress updated"
+      },
+      "rebalancing": {
+        "title": "Rebalancing Positions",
+        "content": "How to set target weights, use quick actions, and save a rebalance plan.",
+        "details": "Use the Rebalancing tab to define your desired portfolio mix.\n\n**How it works**\n- The app starts from your current allocation.\n- Edit each **Target** value to set your desired weight.\n- **Delta** shows what to add or reduce for each position.\n\n**Quick actions**\n- **Reset to current allocation**: fills targets with current weights.\n- **Distribute equally**: assigns the same target percentage to every position.\n- **Changes only**: shows only positions where target and current differ.\n\n**Before saving**\n- Keep the total target at 100%.\n- Save when the summary card confirms the allocation is valid."
+      },
+      "market_data": {
+        "title": "Market Data & Snapshots",
+        "content": "How market data is delivered without requiring an API key.",
+        "details": "**Serverless Market Snapshot**\nEvery weekday after US market close, an automated pipeline downloads EODHD bulk data for 10 global exchanges, computes the top 20 gainers and losers for 4 timeframes, and publishes the results to GitHub Pages.\n\n**No key required for movers:**\nThe Market tab fetches top movers data automatically from the public snapshot URL. All users see the same market data without any configuration.\n\n**Optional EODHD API key:**\nAdd your own EODHD key in Settings > EODHD Market Data to get real-time quotes for your portfolio positions.\n\n**Optional FMP API key:**\nAlternatively, add an FMP key in Settings > AI Settings as a fallback for portfolio quotes.\n\n**Historical data:**\nThe pipeline maintains a history database that enables weekly, monthly, and yearly top mover rankings based on real price change calculations."
+      },
+      "glossary": {
+        "title": "Investment Glossary",
+        "content": "Definitions of the main terms used in the app.",
+        "details": "**P&L**: Profit and loss (current value minus cost basis)\n\n**Cost Basis**: Original purchase price\n\n**Allocation**: Weight of an asset within the portfolio\n\n**Volatility**: Price fluctuation over time\n\n**Drawdown**: Peak-to-trough decline\n\n**Base Currency**: Primary reporting currency"
+      },
+      "charts": {
+        "title": "Portfolio Charts",
+        "content": "How to read treemaps and allocation tooltips.",
+        "details": "**Positions Treemap**\nEach rectangle represents a position; size shows weight on total value. Tap or hover for allocation and value.\n\n**Geographic Treemap**\nPositions are grouped by region (US, Europe, Asia, Rest of World, Liquidity, Commodities, Unassigned).\n\n**Tips:**\n- Large blocks indicate concentration risk\n- Update your portfolio after trades to keep charts accurate"
+      }
+    }
+  },
+  "language_selection": {
+    "title": "Choose your language",
+    "subtitle": "Select the language and currency you prefer to use in the app.",
+    "dynamic_translation_hint": "The page updates immediately when you tap a language.",
+    "currency_title": "Select your currency",
+    "currency_subtitle": "Choose the base currency for your portfolio.",
+    "footer": "You can change these later from Settings > General."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "file_invalid": "Invalid file format. Please select a valid CSV or PDF file.",
+    "parse_error": "Failed to parse the file. Please check the format.",
+    "api_error": "API error. Please try again later.",
+    "storage_error": "Failed to save data. Please try again."
+  },
+  "currencies": {
+    "EUR": "Euro",
+    "USD": "US Dollar",
+    "GBP": "British Pound",
+    "CHF": "Swiss Franc",
+    "JPY": "Japanese Yen",
+    "CAD": "Canadian Dollar",
+    "AUD": "Australian Dollar"
+  },
+  "sectors": {
+    "technology": "Technology",
+    "financials": "Financials",
+    "healthcare": "Healthcare",
+    "consumer_cyclicals": "Consumer Cyclicals",
+    "consumer_non_cyclicals": "Consumer Non-Cyclicals",
+    "industrials": "Industrials",
+    "basic_materials": "Basic Materials",
+    "energy": "Energy",
+    "utilities": "Utilities",
+    "real_estate": "Real Estate",
+    "broad": "Broad/Diversified"
+  }
+}

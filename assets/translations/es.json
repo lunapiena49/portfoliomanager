@@ -1,0 +1,549 @@
+{
+  "app": {
+    "name": "Portfolio Manager",
+    "tagline": "Gestion Inteligente de Inversiones"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Agregar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "settings": "Ajustes",
+    "help": "Ayuda",
+    "back": "Atras",
+    "next": "Siguiente",
+    "done": "Hecho",
+    "skip": "Omitir",
+    "close": "Cerrar",
+    "yes": "Si",
+    "no": "No",
+    "ok": "OK"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Bienvenido a Portfolio Manager",
+      "subtitle": "Tu companero profesional de inversiones"
+    },
+    "features": {
+      "import": {
+        "title": "Importa Tu Cartera",
+        "description": "Importa facilmente carteras de los principales brokers como Interactive Brokers, TD Ameritrade y mas a traves de archivos CSV o PDF."
+      },
+      "analysis": {
+        "title": "Analisis con Inteligencia Artificial",
+        "description": "Obtiene informacion inteligente sobre tus inversiones gracias a tecnologia IA avanzada."
+      },
+      "tracking": {
+        "title": "Seguimiento en Tiempo Real",
+        "description": "Monitorea el rendimiento de tu cartera con graficos y estadisticas detalladas."
+      },
+      "goals": {
+        "title": "Establece Tus Objetivos",
+        "description": "Define objetivos de inversion y rastrea tu progreso hacia la libertad financiera."
+      },
+      "market": {
+        "title": "Datos de Mercado Live — Gratis",
+        "description": "Top 20 subidas y bajadas de 10 mercados globales actualizados cada dia via feed serverless gratuito. No se necesita clave API. Agrega tu clave EODHD opcional para cotizaciones en tiempo real."
+      }
+    },
+    "get_started": "Comenzar",
+    "already_user": "Ya tienes datos? Importa ahora"
+  },
+  "navigation": {
+    "portfolio": "Cartera",
+    "portfolio_short": "Cartera",
+    "analysis": "Analisis",
+    "market": "Mercado",
+    "market_short": "Mercado",
+    "goals": "Objetivos",
+    "goals_short": "Objetivos",
+    "rebalancing": "Rebalanceo",
+    "rebalancing_short": "Rebalanceo",
+    "settings": "Ajustes"
+  },
+  "portfolio": {
+    "title": "Mi Cartera",
+    "total_value": "Valor Total",
+    "total_pnl": "P&L Total",
+    "daily_change": "Cambio Diario",
+    "positions": "Posiciones",
+    "position_count_one": "{count} posicion",
+    "position_count_other": "{count} posiciones",
+    "no_positions": "No se encontraron posiciones",
+    "empty_portfolio": {
+      "description": "Cree o importe una cartera para comenzar"
+    },
+    "import_portfolio": "Importar Cartera",
+    "add_position": "Agregar Posicion",
+    "create_portfolio": "Crear Cartera",
+    "create_portfolio_info": "Cree una nueva cartera y dele un nombre. Podra agregar posiciones despues de crearla.",
+    "create_success": "Cartera creada con exito!",
+    "manage_portfolios": "Administrar Carteras",
+    "rename_portfolio": "Renombrar Cartera",
+    "portfolio_name": "Nombre de la Cartera",
+    "portfolio_name_hint": "p. ej., Inversiones a Largo Plazo",
+    "portfolio_name_required": "El nombre de la cartera es obligatorio",
+    "no_portfolio_to_add": "Cree o seleccione una cartera antes de agregar una posicion",
+    "position": {
+      "symbol": "Simbolo",
+      "name": "Nombre",
+      "quantity": "Cantidad",
+      "price": "Precio",
+      "value": "Valor",
+      "cost_basis": "Costo Base",
+      "pnl": "P&L",
+      "pnl_percent": "P&L %",
+      "sector": "Sector",
+      "currency": "Moneda",
+      "asset_type": "Tipo de Activo",
+      "region": "Region",
+      "region_hint": "Auto usa deteccion geografica automatica",
+      "region_auto": "Auto"
+    },
+    "filters": {
+      "all": "Todos",
+      "stocks": "Acciones",
+      "etfs": "ETFs",
+      "crypto": "Criptomonedas",
+      "bonds": "Bonos",
+      "options": "Opciones",
+      "futures": "Futuros",
+      "cash": "Efectivo",
+      "funds": "Fondos",
+      "commodities": "Materias Primas",
+      "cfds": "CFD",
+      "unassigned": "No asignable"
+    },
+    "asset_types": {
+      "stocks": "Acciones",
+      "etfs": "ETFs",
+      "bonds": "Bonos",
+      "crypto": "Criptomonedas",
+      "funds": "Fondos",
+      "options": "Opciones",
+      "futures": "Futuros",
+      "cash": "Efectivo",
+      "cfds": "CFD",
+      "commodities": "Materias Primas",
+      "real_estate": "Bienes Raices",
+      "other": "Otro"
+    },
+    "sectors": {
+      "technology": "Tecnologia",
+      "financials": "Financieros",
+      "healthcare": "Salud",
+      "consumer_cyclicals": "Consumo Ciclico",
+      "consumer_non_cyclicals": "Consumo No Ciclico",
+      "industrials": "Industriales",
+      "basic_materials": "Materiales Basicos",
+      "energy": "Energia",
+      "utilities": "Servicios Publicos",
+      "real_estate": "Bienes Raices",
+      "communications": "Comunicaciones",
+      "broad": "Diversificado",
+      "other": "Otro"
+    },
+    "sort_by": {
+      "name": "Nombre",
+      "value": "Valor",
+      "pnl": "P&L",
+      "pnl_percent": "P&L %",
+      "sector": "Sector"
+    },
+    "charts": {
+      "title": "Graficos de Cartera",
+      "positions_title": "Treemap de Posiciones",
+      "positions_subtitle": "Cada bloque muestra el ticker y su peso en el valor total.",
+      "regions_title": "Treemap de Exposicion Geografica",
+      "regions_subtitle": "Exposicion regional por area y activos liquidos.",
+      "empty": "Aun no hay datos disponibles",
+      "tooltip": {
+        "allocation": "Asignacion",
+        "value": "Valor"
+      },
+      "regions": {
+        "us": "Estados Unidos",
+        "europe": "Europa",
+        "asia": "Asia",
+        "rest_world": "Resto del Mundo",
+        "liquidity": "Liquidez",
+        "commodities": "Materias Primas",
+        "unassigned": "Sin Asignar"
+      }
+    }
+  },
+  "import": {
+    "title": "Importar Cartera",
+    "select_broker": "Selecciona Tu Broker",
+	"choose_broker": "Elija su broker...",
+    "portfolio_name": "Nombre de la Cartera",
+    "portfolio_name_label": "Nombre de la Cartera",
+    "portfolio_name_hint": "p. ej., Jubilacion 2026",
+    "supported_brokers": "Brokers Soportados",
+    "upload_file": "Cargar Archivos CSV o PDF",
+    "drag_drop": "Arrastra tus archivos CSV o PDF aqui",
+    "or": "o",
+    "browse_files": "Explorar Archivos",
+    "files_selected": "{count} archivos seleccionados",
+    "processing": "Procesando tu cartera...",
+    "success": "Cartera importada exitosamente!",
+    "error": "Error al importar la cartera",
+    "positions_found": "{count} posiciones encontradas",
+    "preview": "Vista Previa",
+    "import_button": "Importar",
+    "import_target": "Destino de importacion",
+    "import_target_create": "Crear nueva cartera",
+    "import_target_existing": "Agregar a cartera existente",
+    "select_existing_portfolio": "Seleccionar cartera existente",
+    "select_existing_portfolio_hint": "Elige una cartera...",
+    "no_portfolios": "No hay carteras disponibles",
+    "merge_conflict_title": "Posiciones ya existen",
+    "merge_conflict_message": "{count} posiciones ya existen en esta cartera. Como deseas manejarlas?",
+    "merge_ignore": "Ignorar duplicados",
+    "merge_replace": "Reemplazar existentes",
+    "merge_add": "Agregar cantidades",
+    "brokers": {
+      "ibkr": "Interactive Brokers",
+      "td_ameritrade": "TD Ameritrade",
+      "fidelity": "Fidelity",
+      "charles_schwab": "Charles Schwab",
+      "etrade": "E*TRADE",
+      "robinhood": "Robinhood",
+      "vanguard": "Vanguard",
+      "degiro": "DEGIRO",
+      "trading212": "Trading 212",
+      "xtb": "XTB",
+      "revolut": "Revolut",
+      "other": "Otro (CSV Generico)"
+    },
+    "help": {
+      "title": "Como Exportar desde Tu Broker",
+      "ibkr": "En Interactive Brokers: Gestion de Cuenta > Informes > Flex Queries > Crear Consulta Flex Personalizada > Descargar como CSV",
+      "fidelity": "En Fidelity: Accounts & Trade > Portfolio > Export > CSV",
+      "schwab": "En Charles Schwab: Accounts > History > Export",
+      "td_ameritrade": "En TD Ameritrade: My Account > History & Statements > Export",
+      "etrade": "En E*TRADE: Accounts > Portfolio > Download",
+      "robinhood": "En Robinhood: Account > Statements & History > Export",
+      "vanguard": "En Vanguard: My Accounts > Download Holdings",
+      "degiro": "En DEGIRO: Activity > Account Statement > Export CSV",
+      "trading212": "En Trading 212: History > Export CSV",
+      "xtb": "En XTB: History > Cash Operations > Export",
+      "revolut": "En Revolut: Stocks > Statements > Export CSV",
+      "generic": "Exporta tus posiciones como archivo CSV o PDF desde la plataforma de tu broker"
+    }
+  },
+  "add_position": {
+    "title": "Agregar Posicion",
+    "required_fields": "Informacion Requerida",
+    "optional_fields": "Informacion Opcional",
+    "info": "Agregue una nueva posicion a su cartera. Util para activos no incluidos en sus archivos.",
+    "add_button": "Agregar Posicion",
+    "success": "Posicion agregada exitosamente!",
+    "field_required": "Este campo es obligatorio",
+    "invalid_number": "Por favor ingrese un numero valido",
+    "must_be_positive": "El valor debe ser mayor que cero",
+    "cost_basis_hint": "Deje vacio para usar el valor actual"
+  },
+  "edit_position": {
+    "title": "Editar Posicion",
+    "info": "Actualiza los detalles de esta posicion. Los cambios se guardaran en tu cartera.",
+    "save_button": "Guardar Cambios",
+    "success": "Posicion actualizada exitosamente!",
+    "not_found": "No pudimos encontrar esta posicion. Vuelve atras e intenta de nuevo.",
+    "exchange_label": "Bolsa",
+    "exchange_hint": "p. ej., NASDAQ"
+  },
+  "analysis": {
+    "title": "Analisis IA",
+    "generating": "Generando analisis...",
+    "ask_ai": "Pregunta a la IA sobre tu cartera",
+    "chat_title": "Asistente de IA",
+    "chat_tooltip": "Chat IA",
+    "generate_full": "Generar Analisis Completo",
+    "ai_result_title": "Analisis IA",
+    "no_portfolio_loaded": "No hay cartera cargada",
+    "api_key_required": "Configura tu clave API de Gemini en Ajustes",
+    "thinking": "Pensando...",
+    "suggestions": {
+      "title": "Preguntas Sugeridas",
+      "risk": "Cual es el nivel de riesgo de mi cartera?",
+      "diversification": "Que tan diversificada esta mi cartera?",
+      "performance": "Como esta rindiendo mi cartera?",
+      "recommendations": "Que mejoras sugiere?"
+    },
+    "sections": {
+      "summary": "Resumen de Cartera",
+      "allocation": "Asignacion de Activos",
+      "risk": "Analisis de Riesgo",
+      "performance": "Analisis de Rendimiento",
+      "recommendations": "Recomendaciones"
+    },
+    "metrics": {
+      "sharpe_ratio": "Ratio de Sharpe",
+      "volatility": "Volatilidad",
+      "beta": "Beta",
+      "alpha": "Alpha",
+      "max_drawdown": "Caida Maxima",
+      "sortino_ratio": "Ratio de Sortino"
+    }
+  },
+  "market": {
+    "title": "Vision General del Mercado",
+    "top_gainers": "Mayores Alzas",
+    "top_losers": "Mayores Bajas",
+    "calendar": "Calendario Economico",
+    "news": "Noticias del Mercado",
+    "refresh": "Actualizar",
+    "updated": "Actualizado: {time}",
+    "snapshot_source": "Datos snapshot desde el feed distribuido",
+    "no_data": "No hay datos disponibles",
+    "no_events": "No hay eventos proximos",
+    "portfolio_not_loaded": "La cartera aun no esta cargada",
+    "no_positions": "No hay posiciones en la cartera",
+    "portfolio_live_title": "Precios en vivo de tu cartera",
+    "portfolio_live_subtitle": "Cotizaciones en vivo con tu clave API (EODHD/FMP)",
+    "portfolio_live_subtitle_snapshot": "Precios del snapshot diario — agrega clave EODHD en Ajustes para cotizaciones en vivo",
+    "portfolio_live_subtitle_no_key": "Sin fuente de datos disponible. Agrega clave EODHD o FMP en Ajustes.",
+    "portfolio_live_optional_key_hint": "Opcional: agrega tu clave API EODHD o FMP en Ajustes para cotizaciones en tiempo real",
+    "live_positions": "Posiciones actualizadas",
+    "cash_included": "El efectivo/la liquidez se suma aritmeticamente al valor total",
+    "updated_positions": "Posiciones actualizadas: {count}",
+    "badges": {
+      "source": "Fuente: {source}",
+      "source_price_not_found": "Fuente/precio no encontrado",
+      "outlier_blocked": "Precio sospechoso bloqueado"
+    },
+    "price_unavailable": "Precio no disponible",
+    "event_labels": {
+      "previous": "Anterior",
+      "forecast": "Pronostico",
+      "actual": "Real"
+    },
+    "time": {
+      "just_now": "Ahora mismo",
+      "minutes_ago": "hace {count}m",
+      "hours_ago": "hace {count}h"
+    },
+    "timeframes": {
+      "today": "Hoy",
+      "week": "Esta Semana",
+      "month": "Este Mes",
+      "year": "Ultimos 365 dias"
+    },
+    "markets": {
+      "us": "Estados Unidos",
+      "lse": "Reino Unido",
+      "xetra": "Alemania",
+      "pa": "Francia",
+      "mi": "Italia",
+      "to": "Canada",
+      "tse": "Japon",
+      "hk": "Hong Kong",
+      "au": "Australia",
+      "nse": "India"
+    }
+  },
+  "rebalancing": {
+    "title": "Rebalanceo",
+    "subtitle": "Establece porcentajes objetivo para tus posiciones y mira que ajustar",
+    "current": "Actual",
+    "target": "Objetivo",
+    "delta": "Delta",
+    "action": {
+      "add": "AGREGAR",
+      "remove": "QUITAR",
+      "hold": "OK"
+    },
+    "summary": {
+      "total_target": "Objetivo Total",
+      "remaining": "Restante hasta 100%",
+      "portfolio_value": "Valor del Portafolio",
+      "over_allocated": "Sobre-asignado por {0}%",
+      "under_allocated": "Sub-asignado por {0}%",
+      "balanced": "El portafolio esta equilibrado!"
+    },
+    "filter": {
+      "changes_only": "Solo cambios"
+    },
+    "menu": {
+      "filters": "Filtros",
+      "options": "Opciones",
+      "reset_to_current": "Restablecer a la asignacion actual",
+      "distribute_equally": "Distribuir equitativamente"
+    },
+    "actions": {
+      "reset": "Restablecer",
+      "save": "Guardar"
+    },
+    "messages": {
+      "saved": "Asignacion objetivo guardada!",
+      "import_portfolio_first": "Por favor importa una cartera primero"
+    },
+    "empty": {
+      "title": "Sin Cartera",
+      "description": "Importa una cartera para comenzar a rebalancear tus posiciones"
+    },
+    "error": {
+      "title": "Error"
+    },
+    "help": {
+      "title": "Como Funciona el Rebalanceo",
+      "description": "Esta pestana replica las posiciones de tu cartera y te permite definir pesos objetivo. Mientras editas los objetivos, los valores actual, objetivo y delta se actualizan para mostrar que aumentar o reducir.",
+      "steps_title": "Como usarla:",
+      "step1": "1. Revisa la asignacion actual y el valor de cada posicion",
+      "step2": "2. Ingresa el porcentaje objetivo que deseas para cada posicion",
+      "step3": "3. Manten el total objetivo en 100% usando la tarjeta de resumen",
+      "step4": "4. Lee la columna delta para ver cuanto agregar o reducir",
+      "step5": "5. \"Restablecer a la asignacion actual\" copia los pesos actuales en todos los campos objetivo",
+      "step6": "6. \"Distribuir equitativamente\" asigna el mismo porcentaje objetivo a todas las posiciones",
+      "step7": "7. Activa \"Solo cambios\" para ver solo posiciones con diferencias entre objetivo y actual"
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "general": {
+      "title": "General",
+      "language": "Idioma",
+      "currency": "Moneda Base",
+      "theme": "Tema",
+      "theme_light": "Claro",
+      "theme_dark": "Oscuro",
+      "theme_system": "Sistema"
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "price_alerts": "Alertas de Precio",
+      "daily_summary": "Resumen Diario",
+      "market_news": "Noticias del Mercado"
+    },
+    "data": {
+      "title": "Gestion de Datos",
+      "export": "Exportar Datos",
+      "backup": "Respaldo",
+      "restore": "Restaurar",
+      "clear": "Borrar Todos los Datos"
+    },
+    "ai": {
+      "title": "Ajustes de IA",
+      "api_key": "Clave API de Gemini",
+      "api_key_hint": "Ingresa tu clave API de Gemini",
+      "api_key_saved": "Clave API guardada",
+      "test_connection": "Probar Conexion",
+      "connection_success": "Conexion exitosa!",
+      "connection_error": "Conexion fallida. Verifica tu clave API."
+    },
+    "eodhd": {
+      "title": "Datos de Mercado EODHD (Opcional)",
+      "api_key": "Clave API de EODHD",
+      "api_key_hint": "Ingresa tu clave API de EODHD",
+      "api_key_saved": "Clave API de EODHD guardada",
+      "api_key_optional_hint": "Opcional — habilita cotizaciones en tiempo real del portafolio via EODHD"
+    },
+    "fmp": {
+      "title": "Datos de Mercado FMP (Opcional)",
+      "api_key": "Clave API de FMP",
+      "api_key_hint": "Ingresa tu clave API de FMP",
+      "api_key_saved": "Clave API de FMP guardada"
+    },
+    "about": {
+      "title": "Acerca de",
+      "version": "Version",
+      "privacy": "Politica de Privacidad",
+      "terms": "Terminos de Servicio",
+      "licenses": "Licencias de Codigo Abierto",
+      "rate": "Calificar App",
+      "contact": "Contactar Soporte"
+    }
+  },
+  "guide": {
+    "title": "Guia de Usuario",
+    "sections": {
+      "getting_started": {
+        "title": "Primeros Pasos",
+        "content": "Configura tu cartera, idioma y ajustes de IA para comenzar a seguir tus inversiones.",
+        "details": "1. Crea una nueva cartera o importa un CSV/PDF de tu broker\n2. Establece idioma y moneda base en Ajustes > General\n3. Agrega la clave API de Gemini en Ajustes > Ajustes de IA para activar Analisis y Chat IA\n4. Agrega la clave API de FMP en Ajustes > Ajustes de IA para activar datos de Mercado\n5. Explora las pestanas Cartera, Mercado y Objetivos\n6. Actualiza los datos despues de operaciones importantes\n\n**Consejos:**\n- Mantener una sola moneda base por cartera\n- Verifica los tickers antes de importar\n- Usa el boton ? para reabrir esta guia"
+      },
+      "importing": {
+        "title": "Importacion de Datos",
+        "content": "Instrucciones para importar archivos CSV/PDF de brokers soportados.",
+        "details": "**Interactive Brokers (IBKR)**\n1. Inicia sesion en el Client Portal\n2. Ve a Performance & Reports > Statements\n3. Selecciona \"Flex Queries\"\n4. Crea o ejecuta una Activity Flex Query\n5. Descarga el reporte en CSV o PDF\n\n**Otros brokers**\nExporta posiciones o extractos como CSV/PDF y usa \"Importar Cartera\" para elegir el broker.\nSi tu broker no esta en la lista, usa \"Otro (CSV Generico)\" y sigue el formato de columnas mostrado en pantalla.\n\n**Solucion de problemas:**\n- Verifica separadores decimales segun tu idioma\n- Elimina filas de encabezado vacias\n- Confirma que simbolos, cantidades y precios esten presentes"
+      },
+      "analysis": {
+        "title": "Entendiendo el Analisis",
+        "content": "Aprende como funcionan los insights de IA y como activarlos.",
+        "details": "Portfolio Manager utiliza Gemini AI para insights de cartera y chat IA, y la API de FMP para cotizaciones en la pestana Mercado.\n\n**Para activar la IA:**\n1. Obtenga una clave API de Gemini gratuita en Google AI Studio\n2. Introduce la clave en Ajustes > Ajustes de IA\n3. Ve a la pestana Analisis para generar informes o chatear\n\n**Para activar datos de Mercado:**\n1. Obtenga una clave API de FMP\n2. Introduce la clave en Ajustes > Ajustes de IA\n3. Ve a la pestana Mercado para top movers y precios live de la cartera\n\n**Metricas clave:**\n- Ratio de Sharpe, Volatilidad, Beta, Alpha, Caida Maxima\n- Asignacion y riesgo"
+      },
+      "charts": {
+        "title": "Graficos de Cartera",
+        "content": "Como leer treemaps y tooltips de asignacion.",
+        "details": "**Treemap de Posiciones**\nCada rectangulo representa una posicion; el tamano indica el peso sobre el valor total. Toca o pasa el cursor para ver asignacion y valor.\n\n**Treemap de Exposicion Geografica**\nLas posiciones se agrupan por region (Estados Unidos, Europa, Asia, Resto del Mundo, Liquidez, Materias Primas, Sin Asignar).\n\n**Consejos:**\n- Bloques grandes indican riesgo de concentracion\n- Actualiza la cartera despues de operaciones para mantener los graficos precisos"
+      },
+      "goals": {
+        "title": "Establecer Objetivos",
+        "content": "Establece objetivos, contribuciones y sigue el progreso en el tiempo.",
+        "details": "1. Toca \"Objetivos\" en la navegacion inferior\n2. Toca \"Agregar Objetivo\" y elige un tipo de objetivo\n3. Establece monto objetivo, fecha y contribucion mensual opcional\n4. Usa la asignacion objetivo para compararla con la cartera\n5. Sincroniza con la cartera para mantener el progreso actualizado"
+      },
+      "rebalancing": {
+        "title": "Rebalanceo de Posiciones",
+        "content": "Como definir pesos objetivo, usar acciones rapidas y guardar un plan de rebalanceo.",
+        "details": "Usa la pestana Rebalanceo para definir la composicion deseada de tu cartera.\n\n**Como funciona**\n- La app parte de tu asignacion actual.\n- Edita cada valor **Objetivo** para establecer el peso deseado.\n- **Delta** muestra cuanto agregar o reducir por posicion.\n\n**Acciones rapidas**\n- **Restablecer a la asignacion actual**: rellena los objetivos con los pesos actuales.\n- **Distribuir equitativamente**: asigna el mismo porcentaje objetivo a todas las posiciones.\n- **Solo cambios**: muestra solo posiciones donde objetivo y actual difieren.\n\n**Antes de guardar**\n- Manten el total objetivo en 100%.\n- Guarda cuando el resumen confirme que la asignacion es valida."
+      },
+      "market_data": {
+        "title": "Datos de Mercado y Snapshots",
+        "content": "Como se distribuyen los datos de mercado sin necesidad de clave API.",
+        "details": "**Snapshot Serverless**\nCada dia laborable despues del cierre del mercado de EE.UU., un flujo de trabajo automatizado descarga datos bulk de EODHD para 10 bolsas globales, calcula los top 20 subidas y bajadas para 4 marcos temporales y publica los resultados en GitHub Pages.\n\n**Sin clave para top movers:**\nLa pestana Mercado descarga datos de top movers automaticamente desde la URL snapshot publica. Todos los usuarios ven los mismos datos sin ninguna configuracion.\n\n**Clave EODHD opcional:**\nAgrega tu clave EODHD en Ajustes > Datos de Mercado EODHD para obtener cotizaciones en tiempo real para las posiciones de tu cartera.\n\n**Clave FMP opcional:**\nAlternativamente, agrega una clave FMP como respaldo para cotizaciones de la cartera.\n\n**Datos historicos:**\nEl flujo de trabajo mantiene una base de datos de historial que permite rankings semanales, mensuales y anuales basados en calculos reales de variacion de precios."
+      },
+      "glossary": {
+        "title": "Glosario de Inversiones",
+        "content": "Definiciones de los principales terminos usados en la app.",
+        "details": "**P&L**: Profit & Loss (valor actual menos costo base)\n\n**Costo Base**: Precio de compra original\n\n**Asignacion**: Peso de un activo en la cartera\n\n**Volatilidad**: Fluctuacion del precio en el tiempo\n\n**Drawdown**: Caida desde el maximo al minimo\n\n**Moneda Base**: Moneda principal para los reportes"
+      }
+    }
+  },
+  "language_selection": {
+    "title": "Elige tu idioma",
+    "subtitle": "Selecciona el idioma y la moneda que prefieres usar en la aplicacion.",
+    "dynamic_translation_hint": "La pagina se actualiza de inmediato cuando tocas un idioma.",
+    "currency_title": "Selecciona tu moneda",
+    "currency_subtitle": "Elige la moneda base para tu cartera.",
+    "footer": "Puedes cambiar estas opciones mas tarde desde Ajustes > General."
+  },
+  "errors": {
+    "generic": "Algo salio mal. Por favor intenta de nuevo.",
+    "network": "Error de red. Verifica tu conexion.",
+    "file_invalid": "Formato de archivo invalido. Selecciona un archivo CSV o PDF valido.",
+    "parse_error": "Error al procesar el archivo. Verifica el formato.",
+    "api_error": "Error de API. Intenta mas tarde.",
+    "storage_error": "Error al guardar datos. Intenta de nuevo."
+  },
+  "currencies": {
+    "EUR": "Euro",
+    "USD": "Dolar Estadounidense",
+    "GBP": "Libra Esterlina",
+    "CHF": "Franco Suizo",
+    "JPY": "Yen Japones",
+    "CAD": "Dolar Canadiense",
+    "AUD": "Dolar Australiano"
+  },
+  "sectors": {
+    "technology": "Tecnologia",
+    "financials": "Finanzas",
+    "healthcare": "Salud",
+    "consumer_cyclicals": "Consumo Ciclico",
+    "consumer_non_cyclicals": "Consumo No Ciclico",
+    "industrials": "Industriales",
+    "basic_materials": "Materiales Basicos",
+    "energy": "Energia",
+    "utilities": "Servicios Publicos",
+    "real_estate": "Bienes Raices",
+    "broad": "Amplio/Diversificado"
+  }
+}

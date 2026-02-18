@@ -1,0 +1,77 @@
+name: Market Data Snapshot
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  schedule:
+    # Weekdays after US market close (UTC-based schedule)
+    - cron: "35 22 * * 1-5"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: market-data-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build daily market snapshot
+        env:
+          EODHD_API_KEY: ${{ secrets.EODHD_API_KEY }}
+          MARKETS: US,LSE,XETRA,PA,MI,TO,TSE,HK,AU,NSE
+        run: |
+          MILESTONE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/milestone_prices.db.zip"
+          python scripts/eodhd/build_daily_market_snapshot.py \
+            --output-dir dist/market-data \
+            --log-file "${{ github.workspace }}/dist/logs/pipeline.log" \
+            --markets "$MARKETS" \
+            --milestone-db-name milestone_prices.db \
+            --milestone-db-zip-name milestone_prices.db.zip \
+            --milestone-db-url "$MILESTONE_URL" \
+            --top-limit 20
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-data-logs
+          path: dist/logs/pipeline.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/market-data
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
