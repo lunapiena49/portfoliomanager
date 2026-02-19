@@ -299,6 +299,8 @@
     "title": "Marktuebersicht",
     "top_gainers": "Top-Gewinner",
     "top_losers": "Top-Verlierer",
+    "mover_volume_filter": "Top-Mover enthalten nur Aktien mit Volumen >= {volume}",
+    "mover_volume": "Volumen: {volume}",
     "calendar": "Wirtschaftskalender",
     "news": "Marktnachrichten",
     "refresh": "Aktualisieren",

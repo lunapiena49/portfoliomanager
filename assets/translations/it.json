@@ -301,6 +301,8 @@
     "title": "Panoramica Mercato",
     "top_gainers": "Migliori Rialzi",
     "top_losers": "Peggiori Ribassi",
+    "mover_volume_filter": "I top mover includono solo titoli con volume >= {volume}",
+    "mover_volume": "Volume: {volume}",
     "calendar": "Calendario Economico",
     "news": "Notizie di Mercato",
     "refresh": "Aggiorna",

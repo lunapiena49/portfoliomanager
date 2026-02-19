@@ -299,6 +299,8 @@
     "title": "Apercu du Marche",
     "top_gainers": "Meilleures Hausses",
     "top_losers": "Pires Baisses",
+    "mover_volume_filter": "Les top movers incluent uniquement les actions avec volume >= {volume}",
+    "mover_volume": "Volume : {volume}",
     "calendar": "Calendrier Economique",
     "news": "Actualites du Marche",
     "refresh": "Actualiser",

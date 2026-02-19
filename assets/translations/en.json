@@ -301,6 +301,8 @@
     "title": "Market Overview",
     "top_gainers": "Top Gainers",
     "top_losers": "Top Losers",
+    "mover_volume_filter": "Top movers include only stocks with volume >= {volume}",
+    "mover_volume": "Volume: {volume}",
     "calendar": "Economic Calendar",
     "news": "Market News",
     "refresh": "Refresh",

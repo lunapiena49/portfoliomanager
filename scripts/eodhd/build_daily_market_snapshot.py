@@ -41,6 +41,7 @@ from urllib.request import Request, urlopen
 BULK_LAST_DAY_URL_TEMPLATE = "https://eodhd.com/api/eod-bulk-last-day/{market}"
 USER_AGENT = "portfolio-manager-market-pipeline/1.0"
 TIMEFRAME_KEYS = ("1D", "5D", "1M", "1Y")
+DEFAULT_MIN_VOLUME = 1_000_000
 
 
 @dataclass(frozen=True)
@@ -164,6 +165,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=20,
         help="Number of gainers/losers to keep in top_movers.json.",
+    )
+    parser.add_argument(
+        "--min-volume",
+        type=int,
+        default=DEFAULT_MIN_VOLUME,
+        help="Minimum daily volume required for inclusion in top_movers.json.",
     )
     parser.add_argument(
         "--max-retries",
@@ -694,6 +701,7 @@ def build_top_movers_payload(
     rows: list[DailyPriceRow],
     markets: list[MarketDefinition],
     top_limit: int,
+    min_volume: int,
     milestone_db_path: Path,
     logger: logging.Logger,
 ) -> dict[str, Any]:
@@ -759,23 +767,31 @@ def build_top_movers_payload(
         timeframes_payload: dict[str, Any] = {}
         for tf in TIMEFRAME_KEYS:
             pool = ranked[tf]
-            positive_pool = [item for item in pool if item[1] > 0]
-            negative_pool = [item for item in pool if item[1] < 0]
+            volume_filtered_pool = [item for item in pool if item[0].volume >= min_volume]
+            positive_pool = [item for item in volume_filtered_pool if item[1] > 0]
+            negative_pool = [item for item in volume_filtered_pool if item[1] < 0]
             gainers = sorted(positive_pool, key=lambda x: x[1], reverse=True)[:top_limit]
             losers = sorted(negative_pool, key=lambda x: x[1])[:top_limit]
             timeframes_payload[tf] = {
                 "eligible_symbols": len(positive_pool) + len(negative_pool),
+                "eligible_before_volume_filter": len(pool),
+                "eligible_after_volume_filter": len(volume_filtered_pool),
                 "gainers": [row_to_mover_json(r, c) for r, c in gainers],
                 "losers": [row_to_mover_json(r, c) for r, c in losers],
             }
 
         logger.info(
-            "Top movers [%s] 1D=%d 5D=%d 1M=%d 1Y=%d eligible",
+            "Top movers [%s] min_volume>=%d | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after/before)",
             market.code,
-            len(ranked["1D"]),
-            len(ranked["5D"]),
-            len(ranked["1M"]),
-            len(ranked["1Y"]),
+            min_volume,
+            timeframes_payload["1D"]["eligible_after_volume_filter"],
+            timeframes_payload["1D"]["eligible_before_volume_filter"],
+            timeframes_payload["5D"]["eligible_after_volume_filter"],
+            timeframes_payload["5D"]["eligible_before_volume_filter"],
+            timeframes_payload["1M"]["eligible_after_volume_filter"],
+            timeframes_payload["1M"]["eligible_before_volume_filter"],
+            timeframes_payload["1Y"]["eligible_after_volume_filter"],
+            timeframes_payload["1Y"]["eligible_before_volume_filter"],
         )
 
         markets_payload.append(
@@ -792,6 +808,10 @@ def build_top_movers_payload(
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "source": "EODHD_BULK_LAST_DAY",
         "timeframes": list(TIMEFRAME_KEYS),
+        "filters": {
+            "min_volume": min_volume,
+            "top_limit": top_limit,
+        },
         "markets": markets_payload,
         "counts": {"input_rows": len(rows), "markets": len(markets_payload)},
     }
@@ -885,6 +905,9 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
+    if args.min_volume < 0:
+        print("ERROR: --min-volume must be >= 0.", file=sys.stderr)
+        return 2
 
     logger = configure_logger(log_path)
     logger.info(
@@ -948,6 +971,7 @@ def main() -> int:
             rows=rows,
             markets=markets,
             top_limit=args.top_limit,
+            min_volume=args.min_volume,
             milestone_db_path=milestone_db_path,
             logger=logger,
         )

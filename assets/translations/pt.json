@@ -299,6 +299,8 @@
     "title": "Visao Geral do Mercado",
     "top_gainers": "Maiores Altas",
     "top_losers": "Maiores Baixas",
+    "mover_volume_filter": "Os top movers incluem apenas acoes com volume >= {volume}",
+    "mover_volume": "Volume: {volume}",
     "calendar": "Calendario Economico",
     "news": "Noticias do Mercado",
     "refresh": "Atualizar",

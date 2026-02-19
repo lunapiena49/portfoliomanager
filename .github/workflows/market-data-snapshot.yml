@@ -6,8 +6,8 @@ on:
     branches:
       - main
   schedule:
-    # Weekdays after US market close (UTC-based schedule)
-    - cron: "35 22 * * 1-5"
+    # Daily after US market close (UTC-based schedule)
+    - cron: "35 22 * * *"
 
 permissions:
   contents: read
@@ -49,7 +49,8 @@ jobs:
             --milestone-db-name milestone_prices.db \
             --milestone-db-zip-name milestone_prices.db.zip \
             --milestone-db-url "$MILESTONE_URL" \
-            --top-limit 20
+            --top-limit 20 \
+            --min-volume 1000000
 
       - name: Upload build logs
         if: always()

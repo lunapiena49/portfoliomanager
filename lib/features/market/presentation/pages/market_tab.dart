@@ -20,6 +20,7 @@ class MarketMover {
   final String name;
   final double changePercent;
   final double price;
+  final int volume;
   final String currency;
   final String? source;
   final String? asOf;
@@ -30,6 +31,7 @@ class MarketMover {
     required this.name,
     required this.changePercent,
     required this.price,
+    this.volume = 0,
     required this.currency,
     this.source,
     this.asOf,
@@ -55,6 +57,19 @@ class MarketMover {
       parsedChange = double.tryParse(rawChange.replaceAll(',', '.')) ?? 0;
     }
 
+    final rawVolume = json['volume'];
+    var parsedVolume = 0;
+    if (rawVolume is num) {
+      parsedVolume = rawVolume.toInt();
+    } else if (rawVolume is String) {
+      final sanitized = rawVolume.trim().replaceAll(',', '');
+      parsedVolume = int.tryParse(sanitized) ??
+          (double.tryParse(rawVolume.replaceAll(',', '.'))?.toInt() ?? 0);
+    }
+    if (parsedVolume < 0) {
+      parsedVolume = 0;
+    }
+
     final rawReliability =
         json['isReliable'] ?? json['reliable'] ?? json['priceReliable'];
     bool parsedReliability = parsedPrice > 0;
@@ -77,6 +92,7 @@ class MarketMover {
       name: (json['name']?.toString() ?? '').trim(),
       changePercent: parsedChange,
       price: parsedPrice,
+      volume: parsedVolume,
       currency: (json['currency']?.toString() ?? 'USD').trim().toUpperCase(),
       source: (rawSource == null || rawSource.isEmpty) ? null : rawSource,
       asOf: (rawAsOf == null || rawAsOf.isEmpty) ? null : rawAsOf,
@@ -146,6 +162,7 @@ class _MoverSnapshot {
   final String symbol;
   final String name;
   final double price;
+  final int volume;
   final String currency;
   final String? source;
 
@@ -153,6 +170,7 @@ class _MoverSnapshot {
     required this.symbol,
     required this.name,
     required this.price,
+    required this.volume,
     required this.currency,
     this.source,
   });
@@ -215,6 +233,7 @@ class _MarketTabState extends State<MarketTab>
   List<String> _availableMarkets = <String>['US'];
   String _selectedMarket = 'US';
   bool _isUsingDistributedSnapshot = false;
+  int _activeMoverMinVolume = _minimumMoverVolume;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -241,6 +260,7 @@ class _MarketTabState extends State<MarketTab>
   static const double _maxOutlierJumpRatio = 5.0;
   static const double _splitRatioTolerance = 0.12;
   static const int _moverUniverseSideLimit = 25;
+  static const int _minimumMoverVolume = 1000000;
   static const List<String> _preferredMarketOrder = <String>[
     'US',
     'LSE',
@@ -257,6 +277,7 @@ class _MarketTabState extends State<MarketTab>
   static const String _weeklyTimeframeKey = '5D';
   static const String _monthlyTimeframeKey = '1M';
   static const String _yearlyTimeframeKey = '1Y';
+
   /// Maps common broker exchange names to EODHD market codes.
   static const Map<String, String> _exchangeToEodhdMarket = <String, String>{
     'NASDAQ': 'US',
@@ -323,6 +344,41 @@ class _MarketTabState extends State<MarketTab>
     return 0;
   }
 
+  int? _parseNullableInt(dynamic rawValue) {
+    if (rawValue is num) {
+      final value = rawValue.toInt();
+      return value < 0 ? 0 : value;
+    }
+
+    if (rawValue is String) {
+      final normalized = rawValue.trim();
+      if (normalized.isEmpty) {
+        return null;
+      }
+
+      final intCandidate = int.tryParse(normalized.replaceAll(',', ''));
+      if (intCandidate != null) {
+        return intCandidate < 0 ? 0 : intCandidate;
+      }
+
+      final doubleCandidate =
+          double.tryParse(normalized.replaceAll(',', '.'))?.toInt();
+      if (doubleCandidate != null) {
+        return doubleCandidate < 0 ? 0 : doubleCandidate;
+      }
+    }
+
+    return null;
+  }
+
+  String _formatVolume(int volume, {bool compact = false}) {
+    final locale = context.locale.toString();
+    final formatter = compact
+        ? NumberFormat.compact(locale: locale)
+        : NumberFormat.decimalPattern(locale);
+    return formatter.format(volume);
+  }
+
   String? _parseNullableText(dynamic rawValue) {
     final text = rawValue?.toString().trim();
     if (text == null || text.isEmpty) {
@@ -350,29 +406,49 @@ class _MarketTabState extends State<MarketTab>
     required String asOf,
     required bool isGainer,
   }) {
-    return payload
-        .map((item) {
-          final rawPercent = _parseFmpDouble(
-            item['changesPercentage'] ?? item['changePercent'],
-          );
-          final normalizedPercent =
-              isGainer ? rawPercent.abs() : -rawPercent.abs();
-          final source = _parseNullableText(item['exchange']);
-          return MarketMover(
-            symbol: (item['symbol']?.toString() ?? '').trim(),
-            name: (item['name']?.toString() ?? '').trim(),
-            changePercent: normalizedPercent,
-            price: _parseFmpDouble(item['price']),
-            currency:
-                ((item['currency']?.toString().trim().toUpperCase() ?? 'USD')),
-            source: source,
-            asOf: asOf,
-            isPriceReliable: _parseFmpDouble(item['price']) > 0,
-          );
-        })
-        .where((item) => item.symbol.isNotEmpty)
-        .take(20)
-        .toList();
+    final movers = <MarketMover>[];
+
+    for (final item in payload) {
+      final symbol = (item['symbol']?.toString() ?? '').trim().toUpperCase();
+      if (symbol.isEmpty) {
+        continue;
+      }
+
+      final volume =
+          _parseNullableInt(item['volume'] ?? item['avgVolume']) ?? 0;
+      if (volume < _minimumMoverVolume) {
+        continue;
+      }
+
+      final rawPercent = _parseFmpDouble(
+        item['changesPercentage'] ?? item['changePercent'],
+      );
+      final normalizedPercent = isGainer ? rawPercent.abs() : -rawPercent.abs();
+      final price = _parseFmpDouble(item['price']);
+      final source = _parseNullableText(item['exchange']);
+      final rawName = (item['name']?.toString() ?? '').trim();
+
+      movers.add(
+        MarketMover(
+          symbol: symbol,
+          name: rawName.isEmpty ? symbol : rawName,
+          changePercent: normalizedPercent,
+          price: price,
+          volume: volume,
+          currency:
+              ((item['currency']?.toString().trim().toUpperCase() ?? 'USD')),
+          source: source,
+          asOf: asOf,
+          isPriceReliable: price > 0,
+        ),
+      );
+
+      if (movers.length >= 20) {
+        break;
+      }
+    }
+
+    return movers;
   }
 
   String _normalizeMarketCode(String marketCode) {
@@ -458,6 +534,7 @@ class _MarketTabState extends State<MarketTab>
     _yearlyGainers = const <MarketMover>[];
     _yearlyLosers = const <MarketMover>[];
     _isUsingDistributedSnapshot = false;
+    _activeMoverMinVolume = _minimumMoverVolume;
   }
 
   String _marketLabelFor(String marketCode) {
@@ -476,6 +553,7 @@ class _MarketTabState extends State<MarketTab>
     dynamic payload, {
     required bool isGainer,
     required String marketCode,
+    required int minVolume,
     required String fallbackAsOf,
     required String fallbackCurrency,
   }) {
@@ -501,6 +579,10 @@ class _MarketTabState extends State<MarketTab>
       );
       final normalizedChange = isGainer ? rawChange.abs() : -rawChange.abs();
       final rawPrice = _parseFmpDouble(item['price'] ?? item['close']);
+      final volume = _parseNullableInt(item['volume']) ?? 0;
+      if (volume < minVolume) {
+        continue;
+      }
       final rawCurrency = (item['currency']?.toString().trim().toUpperCase() ??
               fallbackCurrency)
           .trim();
@@ -517,6 +599,7 @@ class _MarketTabState extends State<MarketTab>
           name: rawName.isEmpty ? symbol : rawName,
           changePercent: normalizedChange,
           price: rawPrice,
+          volume: volume,
           currency: rawCurrency.isEmpty ? fallbackCurrency : rawCurrency,
           source: source,
           asOf: rawAsOf,
@@ -531,6 +614,7 @@ class _MarketTabState extends State<MarketTab>
   _TimeframeMovers _parseSnapshotTimeframe(
     dynamic payload, {
     required String marketCode,
+    required int minVolume,
     required String fallbackAsOf,
     required String fallbackCurrency,
   }) {
@@ -547,6 +631,7 @@ class _MarketTabState extends State<MarketTab>
         timeframePayload['gainers'],
         isGainer: true,
         marketCode: marketCode,
+        minVolume: minVolume,
         fallbackAsOf: fallbackAsOf,
         fallbackCurrency: fallbackCurrency,
       ),
@@ -554,6 +639,7 @@ class _MarketTabState extends State<MarketTab>
         timeframePayload['losers'],
         isGainer: false,
         marketCode: marketCode,
+        minVolume: minVolume,
         fallbackAsOf: fallbackAsOf,
         fallbackCurrency: fallbackCurrency,
       ),
@@ -571,6 +657,15 @@ class _MarketTabState extends State<MarketTab>
       final payload = await _snapshotService.fetchTopMoversSnapshot();
       if (payload == null) {
         return false;
+      }
+
+      final rawFilters = payload['filters'];
+      var snapshotMinVolume = _minimumMoverVolume;
+      if (rawFilters is Map) {
+        final filters = Map<String, dynamic>.from(rawFilters);
+        snapshotMinVolume =
+            _parseNullableInt(filters['min_volume'] ?? filters['minVolume']) ??
+                _minimumMoverVolume;
       }
 
       final rawMarkets = payload['markets'];
@@ -619,24 +714,28 @@ class _MarketTabState extends State<MarketTab>
         final dailyMovers = _parseSnapshotTimeframe(
           timeframes[_dailyTimeframeKey],
           marketCode: marketCode,
+          minVolume: snapshotMinVolume,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
         final weeklyMovers = _parseSnapshotTimeframe(
           timeframes[_weeklyTimeframeKey],
           marketCode: marketCode,
+          minVolume: snapshotMinVolume,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
         final monthlyMovers = _parseSnapshotTimeframe(
           timeframes[_monthlyTimeframeKey],
           marketCode: marketCode,
+          minVolume: snapshotMinVolume,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
         final yearlyMovers = _parseSnapshotTimeframe(
           timeframes[_yearlyTimeframeKey],
           marketCode: marketCode,
+          minVolume: snapshotMinVolume,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
@@ -683,6 +782,7 @@ class _MarketTabState extends State<MarketTab>
 
       setState(() {
         _isUsingDistributedSnapshot = true;
+        _activeMoverMinVolume = snapshotMinVolume;
         _marketDisplayNames
           ..clear()
           ..addAll(marketDisplayNames);
@@ -1014,6 +1114,7 @@ class _MarketTabState extends State<MarketTab>
       if (!mounted) return;
       setState(() {
         _isUsingDistributedSnapshot = false;
+        _activeMoverMinVolume = _minimumMoverVolume;
         _marketDisplayNames
           ..clear()
           ..['US'] = _marketLabelFor('US');
@@ -1062,12 +1163,19 @@ class _MarketTabState extends State<MarketTab>
         return;
       }
 
+      final volume =
+          _parseNullableInt(item['volume'] ?? item['avgVolume']) ?? 0;
+      if (volume < _minimumMoverVolume) {
+        return;
+      }
+
       final candidate = _MoverSnapshot(
         symbol: symbol,
         name: (item['name']?.toString() ?? '').trim().isEmpty
             ? symbol
             : (item['name']?.toString() ?? '').trim(),
         price: _parseFmpDouble(item['price']),
+        volume: volume,
         currency: (item['currency']?.toString().trim().toUpperCase() ?? 'USD'),
         source: _parseNullableText(item['exchange']),
       );
@@ -1082,6 +1190,8 @@ class _MarketTabState extends State<MarketTab>
           existing.name.isEmpty ? candidate.name : existing.name;
       final resolvedPrice =
           existing.price > 0 ? existing.price : candidate.price;
+      final resolvedVolume =
+          existing.volume > 0 ? existing.volume : candidate.volume;
       final resolvedCurrency =
           existing.currency.isNotEmpty ? existing.currency : candidate.currency;
       final resolvedSource = existing.source ?? candidate.source;
@@ -1090,6 +1200,7 @@ class _MarketTabState extends State<MarketTab>
         symbol: symbol,
         name: resolvedName,
         price: resolvedPrice,
+        volume: resolvedVolume,
         currency: resolvedCurrency,
         source: resolvedSource,
       );
@@ -1216,6 +1327,7 @@ class _MarketTabState extends State<MarketTab>
         name: snapshot.name,
         changePercent: changePercent,
         price: snapshot.price,
+        volume: snapshot.volume,
         currency: snapshot.currency,
         source: snapshot.source,
         asOf: asOf,
@@ -1471,11 +1583,11 @@ class _MarketTabState extends State<MarketTab>
       for (var index = 0; index < entries.length; index++) {
         final symbol = entries[index].key;
         final position = entries[index].value;
-        final eodhdMarket =
-            _eodhdMarketForExchange(position.exchange) ?? 'US';
+        final eodhdMarket = _eodhdMarketForExchange(position.exchange) ?? 'US';
         try {
           final data = await _eodhdService.fetchBestQuote(symbol, eodhdMarket);
-          final rawPrice = data?['close'] ?? data?['last'] ?? data?['adjusted_close'];
+          final rawPrice =
+              data?['close'] ?? data?['last'] ?? data?['adjusted_close'];
           final price = _parseFmpDouble(rawPrice);
           quotes.add(PositionMarketPrice(
             symbol: symbol,
@@ -1552,7 +1664,7 @@ class _MarketTabState extends State<MarketTab>
         double price = 0;
         String snapshotDate = isoDate;
         if (snapshotEntry != null) {
-          price = _parseFmpDouble(snapshotEntry['c']) ;
+          price = _parseFmpDouble(snapshotEntry['c']);
           snapshotDate = (snapshotEntry['d'] as String?) ?? isoDate;
         }
         quotes.add(PositionMarketPrice(
@@ -1758,26 +1870,25 @@ class _MarketTabState extends State<MarketTab>
   }
 
   Widget _buildMarketSelector() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: 8.w,
+        runSpacing: 8.h,
         children: _availableMarkets.map((marketCode) {
           final isSelected = marketCode == _selectedMarket;
-          return Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: ChoiceChip(
-              label: Text(_marketLabelFor(marketCode)),
-              selected: isSelected,
-              onSelected: (_) {
-                if (isSelected) {
-                  return;
-                }
-                setState(() {
-                  _selectedMarket = marketCode;
-                  _applySelectedMarketMovers();
-                });
-              },
-            ),
+          return ChoiceChip(
+            label: Text(_marketLabelFor(marketCode)),
+            selected: isSelected,
+            onSelected: (_) {
+              if (isSelected) {
+                return;
+              }
+              setState(() {
+                _selectedMarket = marketCode;
+                _applySelectedMarketMovers();
+              });
+            },
           );
         }).toList(growable: false),
       ),
@@ -1989,8 +2100,7 @@ class _MarketTabState extends State<MarketTab>
     final positions = List<Position>.from(portfolio.positions)
       ..sort((a, b) => b.valueInBaseCurrency.compareTo(a.valueInBaseCurrency));
     final syncTime = _portfolioPricesUpdatedAt ?? portfolio.lastUpdated;
-    final bool hasAnyApiKey =
-        _eodhdService.hasApiKey || _fmpService.hasApiKey;
+    final bool hasAnyApiKey = _eodhdService.hasApiKey || _fmpService.hasApiKey;
     final String portfolioSubtitleKey;
     if (hasAnyApiKey) {
       portfolioSubtitleKey = 'market.portfolio_live_subtitle';
@@ -2286,6 +2396,15 @@ class _MarketTabState extends State<MarketTab>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'market.mover_volume_filter'.tr(
+                namedArgs: {
+                  'volume': _formatVolume(_activeMoverMinVolume),
+                },
+              ),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            SizedBox(height: 12.h),
             _buildMoverSection(
               title: 'market.top_gainers'.tr(),
               movers: gainers,
@@ -2343,6 +2462,9 @@ class _MarketTabState extends State<MarketTab>
     final priceLabel = hasReliablePrice
         ? '${mover.currency} ${mover.price.toStringAsFixed(2)}'
         : 'market.price_unavailable'.tr();
+    final volumeLabel = 'market.mover_volume'.tr(
+      namedArgs: {'volume': _formatVolume(mover.volume, compact: true)},
+    );
 
     final changeLabel =
         '${mover.changePercent >= 0 ? '+' : ''}${mover.changePercent.toStringAsFixed(2)}%';
@@ -2390,6 +2512,13 @@ class _MarketTabState extends State<MarketTab>
                 const SizedBox(height: 2),
                 Text(
                   mover.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  volumeLabel,
+                  style: Theme.of(context).textTheme.labelSmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
