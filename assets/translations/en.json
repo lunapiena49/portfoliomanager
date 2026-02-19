@@ -30,32 +30,39 @@
   "onboarding": {
     "welcome": {
       "title": "Welcome to Portfolio Manager",
-      "subtitle": "Your professional investment companion"
+      "subtitle": "A professional, multi-platform workspace for portfolio intelligence"
     },
     "features": {
+      "setup": {
+        "title": "Configure your workspace",
+        "description": "Choose language, base currency, and optional API keys. Your settings sync instantly across desktop and mobile layouts."
+      },
       "import": {
-        "title": "Import Your Portfolio",
-        "description": "Easily import portfolios from major brokers like Interactive Brokers, TD Ameritrade, and more via CSV or PDF files."
+        "title": "Import from broker statements",
+        "description": "Import CSV/PDF files from supported brokers, preview parsed rows, and handle duplicates with merge strategies before saving."
       },
       "analysis": {
-        "title": "AI-Powered Analysis",
-        "description": "Get intelligent insights about your investments powered by advanced AI technology."
+        "title": "AI analysis and chat",
+        "description": "Use Gemini-powered analysis, ask custom portfolio questions, and generate structured insights for risk, allocation, and performance."
       },
       "tracking": {
-        "title": "Real-Time Tracking",
-        "description": "Monitor your portfolio performance with detailed charts and statistics."
+        "title": "Live pricing and performance",
+        "description": "Track position prices with source badges and fallback logic: EODHD real-time -> FMP -> daily snapshot."
       },
       "goals": {
-        "title": "Set Your Goals",
-        "description": "Define investment targets and track your progress towards financial freedom."
+        "title": "Goals and rebalancing",
+        "description": "Set goal targets, follow progress, and use rebalancing tools to compare current allocation with desired weights."
       },
       "market": {
-        "title": "Live Market Data — Free",
-        "description": "Top 20 gainers & losers for 10 global markets updated daily via a free serverless feed. No API key needed. Add your optional EODHD key for real-time portfolio quotes."
+        "title": "Global market movers for free",
+        "description": "Top gainers and losers are delivered daily from a public serverless snapshot. No API key is required for market movers."
+      },
+      "security": {
+        "title": "Privacy-first key management",
+        "description": "API keys are managed locally in app settings. You control providers, data refresh behavior, and when external requests are performed."
       }
     },
-    "get_started": "Get Started",
-    "already_user": "Already have data? Import now"
+    "get_started": "Get Started"
   },
   "navigation": {
     "portfolio": "Portfolio",
@@ -347,9 +354,7 @@
       "lse": "United Kingdom",
       "xetra": "Germany",
       "pa": "France",
-      "mi": "Italy",
       "to": "Canada",
-      "tse": "Japan",
       "hk": "Hong Kong",
       "au": "Australia",
       "nse": "India"
@@ -433,7 +438,9 @@
       "export": "Export Data",
       "backup": "Backup",
       "restore": "Restore",
-      "clear": "Clear All Data"
+      "clear": "Clear All Data",
+      "clear_confirm_message": "This will delete portfolio data, goals, onboarding progress, and local settings from this device. This action cannot be undone.",
+      "clear_success": "All local data was cleared successfully"
     },
     "ai": {
       "title": "AI Settings",
@@ -460,6 +467,8 @@
     "about": {
       "title": "About",
       "version": "Version",
+      "review_onboarding": "Review onboarding",
+      "onboarding_reset_message": "Onboarding has been reset. The app will reopen the onboarding flow.",
       "privacy": "Privacy Policy",
       "terms": "Terms of Service",
       "licenses": "Open Source Licenses",
@@ -472,38 +481,53 @@
     "sections": {
       "getting_started": {
         "title": "Getting Started",
-        "content": "Set up your portfolio, language, and optional API keys to start tracking your investments.",
-        "details": "1. Create a new portfolio or import a CSV/PDF from your broker\n2. Set language and base currency in Settings > General\n3. Add your Gemini API key in Settings > AI Settings to enable Analysis and AI Chat\n4. *(Optional)* Add your EODHD API key in Settings > EODHD for real-time portfolio quotes\n5. *(Optional)* Add your FMP API key in Settings > AI Settings as an alternative for market quotes\n6. Explore Portfolio, Market, and Goals tabs — Market top movers work without any key!\n7. Refresh data after important trades\n\n**How market data works:**\n- Top 20 gainers/losers for 10 global markets are updated daily via a free serverless feed (no key needed)\n- Portfolio position prices: EODHD key (real-time) → FMP key → daily snapshot\n\n**Tips:**\n- Keep one base currency per portfolio\n- Verify tickers before importing\n- Use the ? button to reopen this guide"
+        "content": "Set up language, currency, portfolios, and optional API keys before your first analysis.",
+        "details": "1. Open Settings > General and choose language + base currency\n2. Create an empty portfolio or import one from broker files\n3. Add Gemini API key in Settings > AI to unlock analysis and AI chat\n4. (Optional) Add EODHD key for real-time position quotes\n5. (Optional) Add FMP key as quote fallback\n6. Open Market tab for free daily movers (no key required)\n7. Re-run refresh after major trades\n\n**Startup flow (technical):**\n- Splash checks language selection and onboarding status\n- Onboarding completion is stored locally\n- Settings are loaded from local storage first, then optional compile-time env values\n\n**Cross-device UX notes:**\n- Mobile screens use scrollable cards and adaptive spacing\n- Desktop/web full-width layouts preserve the same feature order and actions"
       },
       "importing": {
         "title": "Importing Data",
-        "content": "Instructions for importing CSV/PDF files from supported brokers.",
-        "details": "**Interactive Brokers (IBKR)**\n1. Log in to Client Portal\n2. Go to Performance & Reports > Statements\n3. Select \"Flex Queries\"\n4. Create or run an Activity Flex Query\n5. Download the report as CSV or PDF\n\n**Other brokers**\nExport your positions or statements as CSV/PDF, then use \"Import Portfolio\" and choose the broker.\nIf your broker is not listed, use \"Other (Generic CSV)\" and follow the column format shown on screen.\n\n**Troubleshooting:**\n- Check decimal separators for your locale\n- Remove empty header rows\n- Ensure symbols, quantities, and prices are present"
+        "content": "Import CSV/PDF statements, preview parser results, and merge safely into portfolios.",
+        "details": "**Supported flow**\n1. Choose broker profile in Import page\n2. Upload CSV or PDF documents\n3. Review parsed positions before final save\n4. Pick destination: new portfolio or existing portfolio\n5. Resolve duplicate symbols with merge mode\n\n**Duplicate handling modes**\n- Ignore duplicates\n- Replace existing rows\n- Add quantities to existing rows\n\n**Generic CSV minimum fields**\n- Symbol\n- Quantity\n- Price or cost basis\n- Currency (recommended)\n- Exchange (recommended for better quote mapping)\n\n**Common errors**\n- Wrong decimal separators\n- Extra header lines in exported files\n- Missing symbol or quantity columns"
       },
       "analysis": {
-        "title": "Understanding Analysis & Market Data",
-        "content": "Learn how AI insights and market data work.",
-        "details": "Portfolio Manager uses Gemini AI for portfolio insights and AI chat. Market top movers are provided by a free daily serverless snapshot — no key needed.\n\n**To enable AI Analysis:**\n1. Get a free Gemini API key from Google AI Studio\n2. Paste it in Settings > AI Settings\n3. Use the Analysis tab to generate reports or chat\n\n**Market data (top movers — no key needed):**\n- Updated daily via GitHub Actions + EODHD bulk data\n- 20 top gainers and losers per market for Today / Week / Month / Year\n- 10 global markets: US, UK, Germany, France, Italy, Canada, Japan, HK, Australia, India\n\n**Real-time portfolio prices (optional):**\n- Add your EODHD API key in Settings > EODHD for real-time quotes\n- Or add your FMP API key as an alternative\n- Without a key, the app uses the latest daily snapshot prices\n\n**Key metrics:**\n- Sharpe Ratio, Volatility, Beta, Alpha, Max Drawdown\n- Allocation and risk breakdowns"
+        "title": "Understanding Analysis and AI Chat",
+        "content": "Learn how AI responses are generated, what inputs are used, and how quote sources affect results.",
+        "details": "**AI engine**\n- Provider: Gemini API\n- Default model: gemini-2.5-flash\n- Configured with safety settings and token/temperature controls\n\n**What the AI sees**\n- Portfolio positions and allocation\n- Cost basis and performance metrics\n- Optional custom prompt entered by user\n\n**What the AI does not do automatically**\n- It does not place orders\n- It does not connect to broker accounts directly\n- It does not persist chat externally unless provider API logs requests\n\n**Response quality tips**\n- Keep symbols clean before import\n- Ask explicit questions (risk, diversification, concentration)\n- Refresh quotes before generating a new analysis"
       },
       "goals": {
         "title": "Setting Goals",
-        "content": "Set goals, contributions, and track progress over time.",
-        "details": "1. Tap \"Goals\" in the bottom navigation\n2. Tap \"Add Goal\" and choose a goal type\n3. Set target amount, date, and optional monthly contribution\n4. Use target allocation to compare with portfolio mix\n5. Sync with your portfolio to keep progress updated"
+        "content": "Set investment targets and evaluate progress against real portfolio values.",
+        "details": "1. Open Goals tab\n2. Add a goal type and target amount\n3. Set target date and optional monthly contribution\n4. Compare target allocation vs current allocation\n5. Re-sync after imports or manual position edits\n\n**Advanced usage:**\n- Use goals with rebalancing to convert high-level targets into position-level actions\n- Keep contribution assumptions realistic and update periodically"
       },
       "rebalancing": {
         "title": "Rebalancing Positions",
-        "content": "How to set target weights, use quick actions, and save a rebalance plan.",
-        "details": "Use the Rebalancing tab to define your desired portfolio mix.\n\n**How it works**\n- The app starts from your current allocation.\n- Edit each **Target** value to set your desired weight.\n- **Delta** shows what to add or reduce for each position.\n\n**Quick actions**\n- **Reset to current allocation**: fills targets with current weights.\n- **Distribute equally**: assigns the same target percentage to every position.\n- **Changes only**: shows only positions where target and current differ.\n\n**Before saving**\n- Keep the total target at 100%.\n- Save when the summary card confirms the allocation is valid."
+        "content": "Set desired weights and convert allocation gaps into actionable deltas.",
+        "details": "**Core mechanics**\n- Current = latest portfolio allocation\n- Target = desired allocation you edit\n- Delta = difference between target and current\n\n**Quick actions**\n- Reset to current allocation\n- Distribute equally\n- Changes only filter\n\n**Validation rules**\n- Target sum should stay near 100%\n- Over/under allocation warnings are shown in summary\n- Save only after validation confirms consistency\n\n**Practical tip**\nUse rebalancing after big market moves or after adding new capital to avoid drift."
       },
       "market_data": {
         "title": "Market Data & Snapshots",
-        "content": "How market data is delivered without requiring an API key.",
-        "details": "**Serverless Market Snapshot**\nEvery weekday after US market close, an automated pipeline downloads EODHD bulk data for 10 global exchanges, computes the top 20 gainers and losers for 4 timeframes, and publishes the results to GitHub Pages.\n\n**No key required for movers:**\nThe Market tab fetches top movers data automatically from the public snapshot URL. All users see the same market data without any configuration.\n\n**Optional EODHD API key:**\nAdd your own EODHD key in Settings > EODHD Market Data to get real-time quotes for your portfolio positions.\n\n**Optional FMP API key:**\nAlternatively, add an FMP key in Settings > AI Settings as a fallback for portfolio quotes.\n\n**Historical data:**\nThe pipeline maintains a history database that enables weekly, monthly, and yearly top mover rankings based on real price change calculations."
+        "content": "Understand the difference between free public movers and optional private quote providers.",
+        "details": "**Free movers feed (no key)**\n- Daily top gainers/losers are fetched from public distributed snapshot\n- Timeframes: 1D, 5D, 1M, 1Y\n- Markets currently covered: US, UK, Germany, France, Canada, Hong Kong, Australia, India\n\n**Portfolio quote chain (optional keys)**\n1. EODHD real-time quote\n2. EODHD end-of-day fallback\n3. FMP fallback\n4. Snapshot price fallback\n\n**Reliability safeguards**\n- Volume filter applied to movers\n- Staleness checks on quote dates\n- Outlier blocking for suspicious jumps"
+      },
+      "data_pipeline": {
+        "title": "Data Pipeline (Technical)",
+        "content": "Technical overview of how market snapshots are built and deployed.",
+        "details": "**Automation stack**\n- GitHub Actions workflow runs on schedule, on main push, and manual dispatch\n- Workflow injects secret EODHD_API_KEY\n- Python script computes movers and writes snapshot artifacts\n\n**Artifacts**\n- Public JSON/zip data for app consumption\n- Historical milestone database for multi-period ranking\n- Build logs uploaded as workflow artifacts\n\n**Why this architecture**\n- Keeps app startup fast\n- Removes API-key requirement for public movers\n- Centralizes heavy computation in CI rather than on user device"
+      },
+      "privacy_security": {
+        "title": "Privacy and Security",
+        "content": "How credentials and local financial data are handled in the app.",
+        "details": "**Local persistence**\n- App settings, onboarding status, and portfolio data are stored locally on device\n- Clearing data removes local boxes and preferences\n\n**API keys**\n- Keys are entered by user in Settings\n- Keys are only sent to selected provider endpoints when required\n- App can run market movers without any personal key\n\n**Operational best practices**\n- Rotate keys periodically\n- Avoid sharing screenshots that expose keys\n- Use provider dashboards to revoke compromised keys"
+      },
+      "troubleshooting": {
+        "title": "Troubleshooting",
+        "content": "Fix common import, quote, and analysis issues quickly.",
+        "details": "**Import issues**\n- Verify broker format selection\n- Remove duplicate headers and empty rows\n- Check quantity/price numeric format\n\n**No live prices**\n- Confirm EODHD/FMP key is saved in Settings\n- Verify exchange code mapping in position details\n- Use refresh after updating keys\n\n**AI analysis fails**\n- Test Gemini connection in Settings\n- Verify API key validity and quota\n- Retry with a shorter prompt\n\n**Unexpected UI behavior**\n- Reopen onboarding from Settings > About\n- Clear local data only if migration issues persist\n- Re-import portfolio after data reset"
       },
       "glossary": {
         "title": "Investment Glossary",
-        "content": "Definitions of the main terms used in the app.",
-        "details": "**P&L**: Profit and loss (current value minus cost basis)\n\n**Cost Basis**: Original purchase price\n\n**Allocation**: Weight of an asset within the portfolio\n\n**Volatility**: Price fluctuation over time\n\n**Drawdown**: Peak-to-trough decline\n\n**Base Currency**: Primary reporting currency"
+        "content": "Definitions of key portfolio analytics terms used across the app.",
+        "details": "**P&L**: Current value minus cost basis\n\n**Cost Basis**: Original purchase value of a position\n\n**Allocation**: Position weight relative to total portfolio value\n\n**Volatility**: Dispersion of returns over time\n\n**Drawdown**: Decline from local peak to subsequent trough\n\n**Sharpe Ratio**: Return adjusted by total volatility\n\n**Sortino Ratio**: Return adjusted by downside volatility only\n\n**Beta**: Sensitivity versus benchmark market moves\n\n**Alpha**: Excess return beyond model-expected return\n\n**Base Currency**: Reporting currency used for totals and comparisons"
       },
       "charts": {
         "title": "Portfolio Charts",

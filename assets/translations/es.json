@@ -30,32 +30,39 @@
   "onboarding": {
     "welcome": {
       "title": "Bienvenido a Portfolio Manager",
-      "subtitle": "Tu companero profesional de inversiones"
+      "subtitle": "Un espacio profesional multiplataforma para inteligencia de cartera"
     },
     "features": {
+      "setup": {
+        "title": "Configura tu espacio de trabajo",
+        "description": "Elige idioma, moneda base y claves API opcionales. Tus ajustes se aplican al instante en disenos de escritorio y movil."
+      },
       "import": {
-        "title": "Importa Tu Cartera",
-        "description": "Importa facilmente carteras de los principales brokers como Interactive Brokers, TD Ameritrade y mas a traves de archivos CSV o PDF."
+        "title": "Importa desde estados del broker",
+        "description": "Importa archivos CSV/PDF de brokers compatibles, revisa filas parseadas y gestiona duplicados con estrategias de mezcla antes de guardar."
       },
       "analysis": {
-        "title": "Analisis con Inteligencia Artificial",
-        "description": "Obtiene informacion inteligente sobre tus inversiones gracias a tecnologia IA avanzada."
+        "title": "Analisis IA y chat",
+        "description": "Usa analisis con Gemini, haz preguntas personalizadas de cartera y genera insights estructurados sobre riesgo, asignacion y rendimiento."
       },
       "tracking": {
-        "title": "Seguimiento en Tiempo Real",
-        "description": "Monitorea el rendimiento de tu cartera con graficos y estadisticas detalladas."
+        "title": "Precios en vivo y rendimiento",
+        "description": "Sigue precios de posiciones con insignias de fuente y logica de respaldo: EODHD tiempo real -> FMP -> snapshot diario."
       },
       "goals": {
-        "title": "Establece Tus Objetivos",
-        "description": "Define objetivos de inversion y rastrea tu progreso hacia la libertad financiera."
+        "title": "Objetivos y rebalanceo",
+        "description": "Define metas, sigue el progreso y usa herramientas de rebalanceo para comparar asignacion actual y pesos deseados."
       },
       "market": {
-        "title": "Datos de Mercado Live — Gratis",
-        "description": "Top 20 subidas y bajadas de 10 mercados globales actualizados cada dia via feed serverless gratuito. No se necesita clave API. Agrega tu clave EODHD opcional para cotizaciones en tiempo real."
+        "title": "Top movers globales gratis",
+        "description": "Los principales ganadores y perdedores se entregan cada dia desde un snapshot publico serverless. No se requiere clave API para top movers."
+      },
+      "security": {
+        "title": "Gestion de claves centrada en privacidad",
+        "description": "Las claves API se gestionan localmente en ajustes de la app. Tu controlas proveedores, refresco de datos y cuando se hacen solicitudes externas."
       }
     },
-    "get_started": "Comenzar",
-    "already_user": "Ya tienes datos? Importa ahora"
+    "get_started": "Comenzar"
   },
   "navigation": {
     "portfolio": "Cartera",
@@ -345,9 +352,7 @@
       "lse": "Reino Unido",
       "xetra": "Alemania",
       "pa": "Francia",
-      "mi": "Italia",
       "to": "Canada",
-      "tse": "Japon",
       "hk": "Hong Kong",
       "au": "Australia",
       "nse": "India"
@@ -431,7 +436,9 @@
       "export": "Exportar Datos",
       "backup": "Respaldo",
       "restore": "Restaurar",
-      "clear": "Borrar Todos los Datos"
+      "clear": "Borrar Todos los Datos",
+      "clear_confirm_message": "Esto eliminara datos de cartera, objetivos, progreso de onboarding y ajustes locales en este dispositivo. Esta accion no se puede deshacer.",
+      "clear_success": "Todos los datos locales fueron eliminados correctamente"
     },
     "ai": {
       "title": "Ajustes de IA",
@@ -458,6 +465,8 @@
     "about": {
       "title": "Acerca de",
       "version": "Version",
+      "review_onboarding": "Revisar onboarding",
+      "onboarding_reset_message": "El onboarding se restablecio. La app volvera a abrir el flujo de onboarding.",
       "privacy": "Politica de Privacidad",
       "terms": "Terminos de Servicio",
       "licenses": "Licencias de Codigo Abierto",
@@ -469,19 +478,19 @@
     "title": "Guia de Usuario",
     "sections": {
       "getting_started": {
-        "title": "Primeros Pasos",
-        "content": "Configura tu cartera, idioma y ajustes de IA para comenzar a seguir tus inversiones.",
-        "details": "1. Crea una nueva cartera o importa un CSV/PDF de tu broker\n2. Establece idioma y moneda base en Ajustes > General\n3. Agrega la clave API de Gemini en Ajustes > Ajustes de IA para activar Analisis y Chat IA\n4. Agrega la clave API de FMP en Ajustes > Ajustes de IA para activar datos de Mercado\n5. Explora las pestanas Cartera, Mercado y Objetivos\n6. Actualiza los datos despues de operaciones importantes\n\n**Consejos:**\n- Mantener una sola moneda base por cartera\n- Verifica los tickers antes de importar\n- Usa el boton ? para reabrir esta guia"
+        "title": "Primeros pasos",
+        "content": "Configura idioma, moneda, carteras y claves API opcionales antes de tu primer analisis.",
+        "details": "1. Abre Ajustes > General y elige idioma + moneda base\n2. Crea una cartera vacia o importa archivos de broker\n3. Agrega clave Gemini en Ajustes > IA para activar analisis y chat\n4. (Opcional) Agrega clave EODHD para cotizaciones en tiempo real\n5. (Opcional) Agrega clave FMP como respaldo de precios\n6. Abre la pestana Mercado para movers diarios gratis (sin clave)\n7. Ejecuta refresco tras operaciones importantes\n\n**Flujo de inicio (tecnico):**\n- Splash verifica seleccion de idioma y estado de onboarding\n- El estado completado de onboarding se guarda localmente\n- Ajustes se cargan primero desde almacenamiento local y luego desde valores compile-time opcionales\n\n**Notas UX multidispositivo:**\n- En movil se usan tarjetas desplazables y espaciado adaptativo\n- En escritorio/web full-width se mantiene el mismo orden y acciones"
       },
       "importing": {
         "title": "Importacion de Datos",
-        "content": "Instrucciones para importar archivos CSV/PDF de brokers soportados.",
-        "details": "**Interactive Brokers (IBKR)**\n1. Inicia sesion en el Client Portal\n2. Ve a Performance & Reports > Statements\n3. Selecciona \"Flex Queries\"\n4. Crea o ejecuta una Activity Flex Query\n5. Descarga el reporte en CSV o PDF\n\n**Otros brokers**\nExporta posiciones o extractos como CSV/PDF y usa \"Importar Cartera\" para elegir el broker.\nSi tu broker no esta en la lista, usa \"Otro (CSV Generico)\" y sigue el formato de columnas mostrado en pantalla.\n\n**Solucion de problemas:**\n- Verifica separadores decimales segun tu idioma\n- Elimina filas de encabezado vacias\n- Confirma que simbolos, cantidades y precios esten presentes"
+        "content": "Importa estados CSV/PDF, revisa resultados del parser y combina con seguridad en carteras.",
+        "details": "**Flujo compatible**\n1. Elige perfil de broker en la pagina Importar\n2. Sube documentos CSV o PDF\n3. Revisa posiciones parseadas antes de guardar\n4. Elige destino: cartera nueva o existente\n5. Resuelve simbolos duplicados con modo de fusion\n\n**Modos de duplicados**\n- Ignorar duplicados\n- Reemplazar filas existentes\n- Sumar cantidades a filas existentes\n\n**Campos minimos CSV generico**\n- Simbolo\n- Cantidad\n- Precio o costo base\n- Moneda (recomendado)\n- Bolsa/Exchange (recomendado para mejor mapeo de cotizaciones)\n\n**Errores comunes**\n- Separador decimal incorrecto\n- Filas de cabecera extra en el export\n- Columnas de simbolo o cantidad ausentes"
       },
       "analysis": {
-        "title": "Entendiendo el Analisis",
-        "content": "Aprende como funcionan los insights de IA y como activarlos.",
-        "details": "Portfolio Manager utiliza Gemini AI para insights de cartera y chat IA, y la API de FMP para cotizaciones en la pestana Mercado.\n\n**Para activar la IA:**\n1. Obtenga una clave API de Gemini gratuita en Google AI Studio\n2. Introduce la clave en Ajustes > Ajustes de IA\n3. Ve a la pestana Analisis para generar informes o chatear\n\n**Para activar datos de Mercado:**\n1. Obtenga una clave API de FMP\n2. Introduce la clave en Ajustes > Ajustes de IA\n3. Ve a la pestana Mercado para top movers y precios live de la cartera\n\n**Metricas clave:**\n- Ratio de Sharpe, Volatilidad, Beta, Alpha, Caida Maxima\n- Asignacion y riesgo"
+        "title": "Comprender Analisis y Chat IA",
+        "content": "Aprende como se generan respuestas IA, que entradas se usan y como las fuentes de precio afectan resultados.",
+        "details": "**Motor IA**\n- Proveedor: Gemini API\n- Modelo por defecto: gemini-2.5-flash\n- Configurado con ajustes de seguridad y controles de tokens/temperatura\n\n**Que ve la IA**\n- Posiciones y asignacion de cartera\n- Costo base y metricas de rendimiento\n- Prompt personalizado opcional del usuario\n\n**Que no hace la IA automaticamente**\n- No ejecuta ordenes\n- No conecta directamente con cuentas de broker\n- No guarda chats fuera de la app salvo posibles logs del proveedor\n\n**Consejos para mejor calidad**\n- Limpia los simbolos antes de importar\n- Haz preguntas explicitas (riesgo, diversificacion, concentracion)\n- Refresca cotizaciones antes de una nueva analisis"
       },
       "charts": {
         "title": "Graficos de Cartera",
@@ -500,13 +509,28 @@
       },
       "market_data": {
         "title": "Datos de Mercado y Snapshots",
-        "content": "Como se distribuyen los datos de mercado sin necesidad de clave API.",
-        "details": "**Snapshot Serverless**\nCada dia laborable despues del cierre del mercado de EE.UU., un flujo de trabajo automatizado descarga datos bulk de EODHD para 10 bolsas globales, calcula los top 20 subidas y bajadas para 4 marcos temporales y publica los resultados en GitHub Pages.\n\n**Sin clave para top movers:**\nLa pestana Mercado descarga datos de top movers automaticamente desde la URL snapshot publica. Todos los usuarios ven los mismos datos sin ninguna configuracion.\n\n**Clave EODHD opcional:**\nAgrega tu clave EODHD en Ajustes > Datos de Mercado EODHD para obtener cotizaciones en tiempo real para las posiciones de tu cartera.\n\n**Clave FMP opcional:**\nAlternativamente, agrega una clave FMP como respaldo para cotizaciones de la cartera.\n\n**Datos historicos:**\nEl flujo de trabajo mantiene una base de datos de historial que permite rankings semanales, mensuales y anuales basados en calculos reales de variacion de precios."
+        "content": "Comprende la diferencia entre movers publicos gratuitos y proveedores privados opcionales de cotizaciones.",
+        "details": "**Feed de movers gratuitos (sin clave)**\n- Top ganadores/perdedores diarios desde snapshot publico distribuido\n- Marcos temporales: 1D, 5D, 1M, 1Y\n- Mercados cubiertos: US, UK, Alemania, Francia, Canada, Hong Kong, Australia, India\n\n**Cadena de cotizaciones de cartera (claves opcionales)**\n1. EODHD tiempo real\n2. EODHD fin de dia como respaldo\n3. FMP como respaldo\n4. Precio de snapshot como respaldo\n\n**Controles de fiabilidad**\n- Filtro de volumen aplicado a movers\n- Control de vigencia por fecha de cotizacion\n- Bloqueo de outliers para saltos sospechosos"
+      },
+      "data_pipeline": {
+        "title": "Pipeline de Datos (Tecnico)",
+        "content": "Resumen tecnico de como se construyen y publican los snapshots de mercado.",
+        "details": "**Stack de automatizacion**\n- Workflow de GitHub Actions en horario, push a main y ejecucion manual\n- El workflow inyecta el secreto EODHD_API_KEY\n- Script Python calcula movers y genera artefactos snapshot\n\n**Artefactos**\n- Datos publicos JSON/zip para consumo de la app\n- Base historica milestone para ranking multiperiodo\n- Logs de build subidos como artefactos\n\n**Por que esta arquitectura**\n- Mantiene rapido el arranque de la app\n- Evita requerir clave API para movers publicos\n- Centraliza calculo pesado en CI en lugar del dispositivo"
+      },
+      "privacy_security": {
+        "title": "Privacidad y Seguridad",
+        "content": "Como se gestionan credenciales y datos financieros locales en la app.",
+        "details": "**Persistencia local**\n- Ajustes, estado de onboarding y datos de cartera se guardan localmente\n- Borrar datos elimina cajas locales y preferencias\n\n**Claves API**\n- Las claves se introducen en Ajustes por el usuario\n- Solo se envian a endpoints del proveedor cuando es necesario\n- Top movers puede funcionar sin claves personales\n\n**Buenas practicas operativas**\n- Rota claves periodicamente\n- Evita compartir capturas con claves visibles\n- Revoca claves comprometidas desde el panel del proveedor"
+      },
+      "troubleshooting": {
+        "title": "Solucion de problemas",
+        "content": "Resuelve rapidamente problemas comunes de importacion, cotizaciones y analisis.",
+        "details": "**Problemas de importacion**\n- Verifica formato de broker seleccionado\n- Elimina cabeceras duplicadas y filas vacias\n- Revisa formato numerico de cantidad/precio\n\n**Sin precios en vivo**\n- Confirma que clave EODHD/FMP esta guardada en Ajustes\n- Verifica mapeo de exchange en detalle de posicion\n- Ejecuta refresco tras actualizar claves\n\n**Falla analisis IA**\n- Prueba conexion Gemini en Ajustes\n- Verifica validez de clave y cuota del proveedor\n- Reintenta con prompt mas corto\n\n**Comportamiento UI inesperado**\n- Reabre onboarding desde Ajustes > Acerca de\n- Borra datos locales solo si persisten problemas de migracion\n- Reimporta cartera tras reset de datos"
       },
       "glossary": {
         "title": "Glosario de Inversiones",
-        "content": "Definiciones de los principales terminos usados en la app.",
-        "details": "**P&L**: Profit & Loss (valor actual menos costo base)\n\n**Costo Base**: Precio de compra original\n\n**Asignacion**: Peso de un activo en la cartera\n\n**Volatilidad**: Fluctuacion del precio en el tiempo\n\n**Drawdown**: Caida desde el maximo al minimo\n\n**Moneda Base**: Moneda principal para los reportes"
+        "content": "Definiciones de terminos clave de analitica de cartera usados en la app.",
+        "details": "**P&L**: Valor actual menos costo base\n\n**Costo Base**: Valor original de compra de una posicion\n\n**Asignacion**: Peso de una posicion respecto al valor total de la cartera\n\n**Volatilidad**: Dispersion de rendimientos en el tiempo\n\n**Drawdown**: Caida desde un maximo local hasta un minimo posterior\n\n**Ratio Sharpe**: Rendimiento ajustado por volatilidad total\n\n**Ratio Sortino**: Rendimiento ajustado solo por volatilidad bajista\n\n**Beta**: Sensibilidad frente a movimientos del mercado de referencia\n\n**Alpha**: Exceso de rendimiento frente al esperado por el modelo\n\n**Moneda Base**: Moneda principal para totales y comparaciones"
       }
     }
   },

@@ -30,32 +30,39 @@
   "onboarding": {
     "welcome": {
       "title": "Bienvenue sur Portfolio Manager",
-      "subtitle": "Votre compagnon professionnel d'investissement"
+      "subtitle": "Un espace professionnel multi-plateforme pour l'intelligence de portefeuille"
     },
     "features": {
+      "setup": {
+        "title": "Configurez votre espace",
+        "description": "Choisissez langue, devise de base et cles API optionnelles. Vos reglages s'appliquent immediatement sur mobile et desktop."
+      },
       "import": {
-        "title": "Importez Votre Portefeuille",
-        "description": "Importez facilement des portefeuilles depuis les principaux courtiers comme Interactive Brokers, TD Ameritrade et plus via des fichiers CSV ou PDF."
+        "title": "Importez depuis vos releves broker",
+        "description": "Importez des fichiers CSV/PDF de courtiers compatibles, verifiez les lignes parsees et gerez les doublons avec des strategies de fusion avant sauvegarde."
       },
       "analysis": {
-        "title": "Analyse par Intelligence Artificielle",
-        "description": "Obtenez des analyses intelligentes sur vos investissements grace a la technologie IA avancee."
+        "title": "Analyse IA et chat",
+        "description": "Utilisez l'analyse basee sur Gemini, posez des questions personnalisees sur votre portefeuille et generez des insights structures sur risque, allocation et performance."
       },
       "tracking": {
-        "title": "Suivi en Temps Reel",
-        "description": "Surveillez les performances de votre portefeuille avec des graphiques et statistiques detailles."
+        "title": "Prix en direct et performance",
+        "description": "Suivez les prix des positions avec badges de source et logique de secours : EODHD temps reel -> FMP -> snapshot quotidien."
       },
       "goals": {
-        "title": "Definissez Vos Objectifs",
-        "description": "Definissez des objectifs d'investissement et suivez vos progres vers la liberte financiere."
+        "title": "Objectifs et reequilibrage",
+        "description": "Definissez des cibles, suivez la progression et utilisez le reequilibrage pour comparer allocation actuelle et poids cibles."
       },
       "market": {
-        "title": "Donnees de Marche en Direct — Gratuites",
-        "description": "Top 20 hausses et baisses de 10 marches mondiaux mis a jour chaque jour via un flux serverless gratuit. Aucune cle API requise. Ajoutez votre cle EODHD optionnelle pour des cotations en temps reel."
+        "title": "Top movers mondiaux gratuits",
+        "description": "Les meilleurs gagnants et perdants sont publies chaque jour depuis un snapshot public serverless. Aucune cle API requise pour les top movers."
+      },
+      "security": {
+        "title": "Gestion des cles orientee vie privee",
+        "description": "Les cles API sont gerees localement dans les parametres. Vous controlez les fournisseurs, le rafraichissement des donnees et quand les requetes externes sont envoyees."
       }
     },
-    "get_started": "Commencer",
-    "already_user": "Vous avez deja des donnees? Importez maintenant"
+    "get_started": "Commencer"
   },
   "navigation": {
     "portfolio": "Portefeuille",
@@ -345,9 +352,7 @@
       "lse": "Royaume-Uni",
       "xetra": "Allemagne",
       "pa": "France",
-      "mi": "Italie",
       "to": "Canada",
-      "tse": "Japon",
       "hk": "Hong Kong",
       "au": "Australie",
       "nse": "Inde"
@@ -431,7 +436,9 @@
       "export": "Exporter les Donnees",
       "backup": "Sauvegarde",
       "restore": "Restaurer",
-      "clear": "Effacer Toutes les Donnees"
+      "clear": "Effacer Toutes les Donnees",
+      "clear_confirm_message": "Cette action supprimera les donnees du portefeuille, les objectifs, la progression d'onboarding et les reglages locaux de cet appareil. Cette action est irreversible.",
+      "clear_success": "Toutes les donnees locales ont ete supprimees avec succes"
     },
     "ai": {
       "title": "Parametres IA",
@@ -458,6 +465,8 @@
     "about": {
       "title": "A Propos",
       "version": "Version",
+      "review_onboarding": "Revoir l'onboarding",
+      "onboarding_reset_message": "L'onboarding a ete reinitialise. L'application reouvrira le flux d'onboarding.",
       "privacy": "Politique de Confidentialite",
       "terms": "Conditions d'Utilisation",
       "licenses": "Licences Open Source",
@@ -469,19 +478,19 @@
     "title": "Guide Utilisateur",
     "sections": {
       "getting_started": {
-        "title": "Pour Commencer",
-        "content": "Configurez votre portefeuille, la langue et les parametres IA pour commencer a suivre vos investissements.",
-        "details": "1. Creez un nouveau portefeuille ou importez un CSV/PDF de votre courtier\n2. Definissez la langue et la devise de base dans Parametres > General\n3. Ajoutez votre cle API Gemini dans Parametres > Parametres IA pour activer Analyse et Chat IA\n4. Ajoutez votre cle API FMP dans Parametres > Parametres IA pour activer les donnees de Marche\n5. Explorez les onglets Portefeuille, Marche et Objectifs\n6. Actualisez les donnees apres des transactions importantes\n\n**Conseils :**\n- Une seule devise de base par portefeuille\n- Verifiez les tickers avant l'import\n- Utilisez le bouton ? pour rouvrir ce guide"
+        "title": "Demarrage",
+        "content": "Configurez langue, devise, portefeuilles et cles API optionnelles avant votre premiere analyse.",
+        "details": "1. Ouvrez Parametres > General et choisissez langue + devise de base\n2. Creez un portefeuille vide ou importez des fichiers broker\n3. Ajoutez la cle Gemini dans Parametres > IA pour activer analyse et chat\n4. (Optionnel) Ajoutez la cle EODHD pour des prix de position en temps reel\n5. (Optionnel) Ajoutez la cle FMP comme secours de cotation\n6. Ouvrez l'onglet Marche pour les movers quotidiens gratuits (sans cle)\n7. Lancez un rafraichissement apres des operations importantes\n\n**Flux de demarrage (technique) :**\n- Le Splash verifie la langue et le statut onboarding\n- La completion de l'onboarding est stockee localement\n- Les parametres sont charges d'abord depuis le stockage local puis depuis d'eventuelles variables compile-time\n\n**Notes UX multi-appareils :**\n- Sur mobile, cartes scrollables et espacements adaptatifs\n- Sur desktop/web plein ecran, meme ordre des fonctions et actions"
       },
       "importing": {
         "title": "Importation des Donnees",
-        "content": "Instructions pour importer des fichiers CSV/PDF depuis les courtiers supportes.",
-        "details": "**Interactive Brokers (IBKR)**\n1. Connectez-vous au Client Portal\n2. Allez dans Performance & Reports > Statements\n3. Selectionnez \"Flex Queries\"\n4. Creez ou executez une Activity Flex Query\n5. Telechargez le rapport en CSV ou PDF\n\n**Autres courtiers**\nExportez vos positions ou releves en CSV/PDF puis utilisez \"Importer Portefeuille\" et choisissez le courtier.\nSi votre courtier n'est pas liste, utilisez \"Autre (CSV Generique)\" et suivez le format de colonnes affiche.\n\n**Depannage :**\n- Verifiez les separateurs decimaux selon votre langue\n- Supprimez les lignes d'entete vides\n- Verifiez symboles, quantites et prix"
+        "content": "Importez des releves CSV/PDF, verifiez le resultat du parseur et fusionnez en securite dans vos portefeuilles.",
+        "details": "**Flux pris en charge**\n1. Choisissez le profil broker dans la page Import\n2. Televersez des documents CSV ou PDF\n3. Verifiez les positions parsees avant sauvegarde\n4. Choisissez la destination : nouveau portefeuille ou existant\n5. Resolvez les symboles en doublon avec le mode de fusion\n\n**Modes de doublons**\n- Ignorer les doublons\n- Remplacer les lignes existantes\n- Additionner les quantites aux lignes existantes\n\n**Champs minimum CSV generique**\n- Symbole\n- Quantite\n- Prix ou cout de revient\n- Devise (recommande)\n- Place de cotation (recommande pour un meilleur mapping des cours)\n\n**Erreurs frequentes**\n- Mauvais separateur decimal\n- Lignes d'en-tete supplementaires\n- Colonnes symbole ou quantite manquantes"
       },
       "analysis": {
-        "title": "Comprendre l'Analyse",
-        "content": "Decouvrez comment fonctionnent les insights IA et comment les activer.",
-        "details": "Portfolio Manager utilise Gemini AI pour les insights de portefeuille et le chat IA, et l'API FMP pour les cotations dans l'onglet Marche.\n\n**Pour activer l'IA :**\n1. Obtenez une cle API Gemini gratuite sur Google AI Studio\n2. Saisissez-la dans Parametres > Parametres IA\n3. Utilisez l'onglet Analyse pour les rapports ou le chat\n\n**Pour activer les donnees de Marche :**\n1. Obtenez une cle API FMP\n2. Saisissez-la dans Parametres > Parametres IA\n3. Utilisez l'onglet Marche pour les top movers et les prix live du portefeuille\n\n**Metriques cles :**\n- Ratio de Sharpe, Volatilite, Beta, Alpha, Perte Maximale\n- Allocation et risque"
+        "title": "Comprendre Analyse et Chat IA",
+        "content": "Apprenez comment les reponses IA sont generees, quelles entrees sont utilisees et comment les sources de prix influencent les resultats.",
+        "details": "**Moteur IA**\n- Fournisseur : Gemini API\n- Modele par defaut : gemini-2.5-flash\n- Configure avec des parametres de securite et des controles tokens/temperature\n\n**Ce que voit l'IA**\n- Positions et allocation du portefeuille\n- Cout de revient et metriques de performance\n- Prompt personnalise facultatif de l'utilisateur\n\n**Ce que l'IA ne fait pas automatiquement**\n- Ne passe pas d'ordres\n- Ne se connecte pas directement aux comptes broker\n- Ne stocke pas les chats en externe sauf eventuels logs du fournisseur\n\n**Conseils qualite**\n- Nettoyez les symboles avant import\n- Posez des questions explicites (risque, diversification, concentration)\n- Rafraichissez les prix avant une nouvelle analyse"
       },
       "charts": {
         "title": "Graphiques du Portefeuille",
@@ -500,13 +509,28 @@
       },
       "market_data": {
         "title": "Donnees de Marche et Snapshots",
-        "content": "Comment les donnees de marche sont distribuees sans cle API.",
-        "details": "**Snapshot Serverless**\nChaque jour ouvre apres la cloture du marche americain, un workflow automatise telecharge les donnees bulk EODHD pour 10 bourses mondiales, calcule les top 20 hausses et baisses pour 4 periodes et publie les resultats sur GitHub Pages.\n\n**Aucune cle pour les top movers :**\nL'onglet Marche telecharge automatiquement les donnees depuis l'URL snapshot publique. Tous les utilisateurs voient les memes donnees sans aucune configuration.\n\n**Cle EODHD optionnelle :**\nAjoutez votre cle EODHD dans Parametres > Donnees de Marche EODHD pour obtenir des cotations en temps reel pour vos positions.\n\n**Cle FMP optionnelle :**\nAlternativement, ajoutez une cle FMP comme solution de secours.\n\n**Donnees historiques :**\nLe workflow maintient une base de donnees d'historique permettant des classements hebdomadaires, mensuels et annuels."
+        "content": "Comprenez la difference entre movers publics gratuits et fournisseurs prives optionnels de cotation.",
+        "details": "**Flux movers gratuits (sans cle)**\n- Top gagnants/perdants quotidiens depuis snapshot public distribue\n- Periodes : 1D, 5D, 1M, 1Y\n- Marches couverts : US, UK, Allemagne, France, Canada, Hong Kong, Australie, Inde\n\n**Chaine de cotation portefeuille (cles optionnelles)**\n1. EODHD temps reel\n2. EODHD fin de journee en secours\n3. FMP en secours\n4. Prix snapshot en secours\n\n**Garde-fous fiabilite**\n- Filtre de volume applique aux movers\n- Verification de fraicheur des dates de cours\n- Blocage des outliers pour sauts suspects"
+      },
+      "data_pipeline": {
+        "title": "Pipeline de Donnees (Technique)",
+        "content": "Vue technique de la construction et de la publication des snapshots de marche.",
+        "details": "**Pile d'automatisation**\n- Workflow GitHub Actions sur planning, push main et declenchement manuel\n- Injection du secret EODHD_API_KEY\n- Script Python qui calcule les movers et produit les artefacts snapshot\n\n**Artefacts**\n- Donnees publiques JSON/zip consommees par l'app\n- Base milestone historique pour classements multi-periodes\n- Logs de build publies en artefacts workflow\n\n**Pourquoi cette architecture**\n- Demarrage app plus rapide\n- Pas de cle API obligatoire pour les movers publics\n- Calcul lourd centralise en CI plutot que sur l'appareil"
+      },
+      "privacy_security": {
+        "title": "Confidentialite et Securite",
+        "content": "Comment les identifiants et donnees financieres locales sont traites dans l'app.",
+        "details": "**Stockage local**\n- Parametres, statut onboarding et donnees portefeuille stockes localement\n- Effacer les donnees supprime les boites locales et preferences\n\n**Cles API**\n- Les cles sont saisies par l'utilisateur dans Parametres\n- Les cles sont envoyees uniquement aux endpoints necessaires\n- Les top movers fonctionnent sans cle personnelle\n\n**Bonnes pratiques**\n- Rotation reguliere des cles\n- Eviter les captures d'ecran avec cles visibles\n- Revoquer rapidement les cles compromises depuis le tableau fournisseur"
+      },
+      "troubleshooting": {
+        "title": "Depannage",
+        "content": "Corrigez rapidement les problemes courants d'import, de cotation et d'analyse.",
+        "details": "**Problemes d'import**\n- Verifiez le format broker selectionne\n- Supprimez les en-tetes dupliques et lignes vides\n- Controlez le format numerique quantite/prix\n\n**Pas de prix en direct**\n- Confirmez la sauvegarde des cles EODHD/FMP dans Parametres\n- Verifiez le mapping exchange dans les details de position\n- Lancez un rafraichissement apres mise a jour des cles\n\n**Echec analyse IA**\n- Testez la connexion Gemini dans Parametres\n- Verifiez validite de cle et quota fournisseur\n- Reessayez avec un prompt plus court\n\n**Comportement UI inattendu**\n- Relancez l'onboarding via Parametres > A Propos\n- Effacez les donnees locales seulement si les problemes de migration persistent\n- Reimportez le portefeuille apres reset des donnees"
       },
       "glossary": {
         "title": "Glossaire de l'Investissement",
-        "content": "Definitions des principaux termes utilises dans l'app.",
-        "details": "**P&L** : Profit & Loss (valeur actuelle moins prix de revient)\n\n**Prix de Revient** : Prix d'achat initial\n\n**Allocation** : Poids d'un actif dans le portefeuille\n\n**Volatilite** : Fluctuation du prix dans le temps\n\n**Drawdown** : Baisse entre un pic et un creux\n\n**Devise de Base** : Devise principale pour les rapports"
+        "content": "Definitions des termes cles d'analyse portefeuille utilises dans l'application.",
+        "details": "**P&L** : Valeur actuelle moins cout de revient\n\n**Cout de Revient** : Valeur d'achat initiale d'une position\n\n**Allocation** : Poids d'une position par rapport a la valeur totale du portefeuille\n\n**Volatilite** : Dispersion des rendements dans le temps\n\n**Drawdown** : Baisse entre un sommet local et le creux suivant\n\n**Ratio de Sharpe** : Rendement ajuste par la volatilite totale\n\n**Ratio de Sortino** : Rendement ajuste par la seule volatilite baissiere\n\n**Beta** : Sensibilite aux mouvements du marche de reference\n\n**Alpha** : Surperformance par rapport au rendement attendu\n\n**Devise de Base** : Devise principale pour les totaux et comparaisons"
       }
     }
   },

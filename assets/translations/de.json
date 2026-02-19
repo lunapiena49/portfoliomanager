@@ -30,32 +30,39 @@
   "onboarding": {
     "welcome": {
       "title": "Willkommen bei Portfolio Manager",
-      "subtitle": "Ihr professioneller Investment-Begleiter"
+      "subtitle": "Ein professioneller, plattformuebergreifender Workspace fuer Portfolio-Intelligence"
     },
     "features": {
+      "setup": {
+        "title": "Workspace konfigurieren",
+        "description": "Waehlen Sie Sprache, Basiswaehrung und optionale API-Schluessel. Ihre Einstellungen gelten sofort auf Desktop- und Mobile-Layouts."
+      },
       "import": {
-        "title": "Importieren Sie Ihr Portfolio",
-        "description": "Importieren Sie einfach Portfolios von fuehrenden Brokern wie Interactive Brokers, TD Ameritrade und mehr ueber CSV- oder PDF-Dateien."
+        "title": "Import aus Broker-Abrechnungen",
+        "description": "Importieren Sie CSV/PDF-Dateien unterstuetzter Broker, pruefen Sie geparste Zeilen und behandeln Sie Duplikate mit Merge-Strategien vor dem Speichern."
       },
       "analysis": {
-        "title": "KI-gestuetzte Analyse",
-        "description": "Erhalten Sie intelligente Einblicke in Ihre Investitionen durch fortschrittliche KI-Technologie."
+        "title": "KI-Analyse und Chat",
+        "description": "Nutzen Sie Gemini-gestuetzte Analyse, stellen Sie individuelle Portfolio-Fragen und erzeugen Sie strukturierte Insights zu Risiko, Allokation und Performance."
       },
       "tracking": {
-        "title": "Echtzeit-Verfolgung",
-        "description": "Ueberwachen Sie die Portfolio-Performance mit detaillierten Diagrammen und Statistiken."
+        "title": "Live-Preise und Performance",
+        "description": "Verfolgen Sie Positionspreise mit Quellen-Badges und Fallback-Logik: EODHD Echtzeit -> FMP -> taeglicher Snapshot."
       },
       "goals": {
-        "title": "Setzen Sie Ihre Ziele",
-        "description": "Definieren Sie Investitionsziele und verfolgen Sie Ihren Fortschritt zur finanziellen Freiheit."
+        "title": "Ziele und Rebalancing",
+        "description": "Setzen Sie Zielwerte, verfolgen Sie Fortschritt und nutzen Sie Rebalancing-Tools zum Vergleich von Ist- und Soll-Allokation."
       },
       "market": {
-        "title": "Live-Marktdaten — Kostenlos",
-        "description": "Top 20 Gewinner und Verlierer fuer 10 globale Maerkte, taeglich ueber kostenlosen serverlosen Feed aktualisiert. Kein API-Schluessel erforderlich. Optionaler EODHD-Schluessel fuer Echtzeit-Portfolio-Kurse."
+        "title": "Globale Top-Mover kostenlos",
+        "description": "Top-Gewinner und -Verlierer kommen taeglich aus einem oeffentlichen serverlosen Snapshot. Kein API-Schluessel fuer Top-Mover erforderlich."
+      },
+      "security": {
+        "title": "Datenschutzorientiertes Key-Management",
+        "description": "API-Schluessel werden lokal in den Einstellungen verwaltet. Sie steuern Provider, Refresh-Verhalten und den Zeitpunkt externer Anfragen."
       }
     },
-    "get_started": "Loslegen",
-    "already_user": "Haben Sie bereits Daten? Jetzt importieren"
+    "get_started": "Loslegen"
   },
   "navigation": {
     "portfolio": "Portfolio",
@@ -345,9 +352,7 @@
       "lse": "Vereinigtes Koenigreich",
       "xetra": "Deutschland",
       "pa": "Frankreich",
-      "mi": "Italien",
       "to": "Kanada",
-      "tse": "Japan",
       "hk": "Hongkong",
       "au": "Australien",
       "nse": "Indien"
@@ -431,7 +436,9 @@
       "export": "Daten exportieren",
       "backup": "Sicherung",
       "restore": "Wiederherstellen",
-      "clear": "Alle Daten loeschen"
+      "clear": "Alle Daten loeschen",
+      "clear_confirm_message": "Dies loescht Portfolio-Daten, Ziele, Onboarding-Fortschritt und lokale Einstellungen auf diesem Geraet. Diese Aktion kann nicht rueckgaengig gemacht werden.",
+      "clear_success": "Alle lokalen Daten wurden erfolgreich geloescht"
     },
     "ai": {
       "title": "KI-Einstellungen",
@@ -458,6 +465,8 @@
     "about": {
       "title": "Ueber",
       "version": "Version",
+      "review_onboarding": "Onboarding erneut anzeigen",
+      "onboarding_reset_message": "Onboarding wurde zurueckgesetzt. Die App oeffnet den Onboarding-Flow erneut.",
       "privacy": "Datenschutzrichtlinie",
       "terms": "Nutzungsbedingungen",
       "licenses": "Open-Source-Lizenzen",
@@ -470,18 +479,18 @@
     "sections": {
       "getting_started": {
         "title": "Erste Schritte",
-        "content": "Richten Sie Portfolio, Sprache und KI-Einstellungen ein, um Ihre Investments zu verfolgen.",
-        "details": "1. Erstellen Sie ein neues Portfolio oder importieren Sie eine CSV/PDF vom Broker\n2. Sprache und Basiswaehrung unter Einstellungen > Allgemein setzen\n3. Gemini API-Schluessel unter Einstellungen > KI-Einstellungen eintragen, um Analyse und KI-Chat zu aktivieren\n4. FMP API-Schluessel unter Einstellungen > KI-Einstellungen eintragen, um Marktdaten zu aktivieren\n5. Portfolio-, Markt- und Ziele-Reiter erkunden\n6. Daten nach wichtigen Trades aktualisieren\n\n**Tipps:**\n- Pro Portfolio nur eine Basiswaehrung verwenden\n- Ticker vor dem Import pruefen\n- Verwenden Sie die ?-Schaltflaeche, um diese Anleitung erneut zu oeffnen"
+        "content": "Richten Sie Sprache, Waehrung, Portfolios und optionale API-Schluessel vor Ihrer ersten Analyse ein.",
+        "details": "1. Oeffnen Sie Einstellungen > Allgemein und waehlen Sie Sprache + Basiswaehrung\n2. Erstellen Sie ein leeres Portfolio oder importieren Sie Broker-Dateien\n3. Fuegen Sie den Gemini API-Schluessel unter Einstellungen > KI hinzu, um Analyse und KI-Chat zu aktivieren\n4. (Optional) Fuegen Sie EODHD fuer Echtzeit-Positionskurse hinzu\n5. (Optional) Fuegen Sie FMP als Kurs-Fallback hinzu\n6. Oeffnen Sie den Markt-Tab fuer kostenlose taegliche Mover (kein Schluessel erforderlich)\n7. Nach groesseren Trades aktualisieren\n\n**Start-Flow (technisch):**\n- Splash prueft Sprachauswahl und Onboarding-Status\n- Onboarding-Abschluss wird lokal gespeichert\n- Einstellungen werden zuerst lokal geladen, dann aus optionalen Compile-Time-Env-Werten\n\n**Cross-Device UX:**\n- Mobile nutzt scrollbare Karten und adaptive Abstaende\n- Desktop/Web in voller Breite behaelt dieselbe Reihenfolge und Aktionen"
       },
       "importing": {
         "title": "Daten importieren",
-        "content": "Anleitung zum Import von CSV/PDF-Dateien von unterstuetzten Brokern.",
-        "details": "**Interactive Brokers (IBKR)**\n1. Melden Sie sich im Client Portal an\n2. Gehen Sie zu Performance & Reports > Statements\n3. Waehlen Sie \"Flex Queries\"\n4. Erstellen oder starten Sie eine Activity Flex Query\n5. Laden Sie den Bericht als CSV oder PDF herunter\n\n**Weitere Broker**\nExportieren Sie Positionen oder Kontoauszuege als CSV/PDF und nutzen Sie dann \"Portfolio importieren\" und waehlen Sie den Broker.\nWenn Ihr Broker nicht gelistet ist, verwenden Sie \"Andere (Generisches CSV)\" und folgen Sie dem in der Importansicht angegebenen Spaltenformat.\n\n**Problembehebung:**\n- Dezimaltrennzeichen entsprechend der Sprache pruefen\n- Leere Kopfzeilen entfernen\n- Stellen Sie sicher, dass Symbole, Mengen und Preise vorhanden sind"
+        "content": "Importieren Sie CSV/PDF-Abrechnungen, pruefen Sie Parser-Ergebnisse und integrieren Sie sicher in Portfolios.",
+        "details": "**Unterstuetzter Ablauf**\n1. Broker-Profil in der Import-Seite waehlen\n2. CSV- oder PDF-Dokumente hochladen\n3. Geparste Positionen vor dem Speichern pruefen\n4. Ziel waehlen: neues oder bestehendes Portfolio\n5. Doppelte Symbole per Merge-Modus aufloesen\n\n**Duplikat-Modi**\n- Duplikate ignorieren\n- Bestehende Zeilen ersetzen\n- Mengen zu bestehenden Zeilen addieren\n\n**Generisches CSV Mindestfelder**\n- Symbol\n- Menge\n- Preis oder Einstand\n- Waehrung (empfohlen)\n- Boerse (empfohlen fuer besseres Quote-Mapping)\n\n**Haeufige Fehler**\n- Falsche Dezimaltrennzeichen\n- Zusaetzliche Kopfzeilen im Export\n- Fehlende Symbol- oder Mengen-Spalten"
       },
       "analysis": {
-        "title": "Analyse verstehen",
-        "content": "Erfahren Sie, wie KI-Insights funktionieren und wie Sie sie aktivieren.",
-        "details": "Portfolio Manager verwendet Gemini KI fuer Portfolio-Insights und KI-Chat sowie die FMP-API fuer Marktkurse im Markt-Tab.\n\n**KI aktivieren:**\n1. Holen Sie sich einen kostenlosen Gemini API-Schluessel aus dem Google AI Studio\n2. Tragen Sie ihn unter Einstellungen > KI-Einstellungen ein\n3. Nutzen Sie den Analyse-Reiter fuer Reports oder Chat\n\n**Marktdaten aktivieren:**\n1. Besorgen Sie sich einen FMP API-Schluessel\n2. Tragen Sie ihn unter Einstellungen > KI-Einstellungen ein\n3. Nutzen Sie den Markt-Reiter fuer Top-Gewinner/Verlierer und Live-Portfolio-Kurse\n\n**Wichtige Metriken:**\n- Sharpe-Ratio, Volatilitaet, Beta, Alpha, Max. Drawdown\n- Allokation und Risiko"
+        "title": "Analyse und KI-Chat verstehen",
+        "content": "Erfahren Sie, wie KI-Antworten erzeugt werden, welche Eingaben genutzt werden und wie Kursquellen Ergebnisse beeinflussen.",
+        "details": "**KI-Engine**\n- Provider: Gemini API\n- Standardmodell: gemini-2.5-flash\n- Konfiguriert mit Safety-Settings sowie Token-/Temperatursteuerung\n\n**Was die KI sieht**\n- Portfolio-Positionen und Allokation\n- Einstandsdaten und Performance-Metriken\n- Optionalen benutzerdefinierten Prompt\n\n**Was die KI nicht automatisch macht**\n- Keine Orderausfuehrung\n- Keine direkte Broker-Anbindung\n- Kein externes Speichern von Chats ausser ggf. Provider-Logs\n\n**Tipps fuer bessere Antworten**\n- Ticker vor Import bereinigen\n- Praezise Fragen stellen (Risiko, Diversifikation, Konzentration)\n- Kurse vor neuer Analyse aktualisieren"
       },
       "charts": {
         "title": "Portfolio-Diagramme",
@@ -500,13 +509,28 @@
       },
       "market_data": {
         "title": "Marktdaten & Snapshots",
-        "content": "Wie Marktdaten ohne API-Schluessel bereitgestellt werden.",
-        "details": "**Serverloser Markt-Snapshot**\nJeden Wochentag nach US-Marktschluss laedt ein automatisierter Workflow EODHD-Bulk-Daten fuer 10 globale Boersen herunter, berechnet die Top 20 Gewinner und Verlierer fuer 4 Zeitrahmen und veroefentlicht die Ergebnisse auf GitHub Pages.\n\n**Kein Schluessel fuer Top-Mover erforderlich:**\nDer Markt-Tab laedt Top-Mover-Daten automatisch von der oeffentlichen Snapshot-URL. Alle Nutzer sehen dieselben Marktdaten ohne Konfiguration.\n\n**Optionaler EODHD-Schluessel:**\nFuegen Sie Ihren EODHD-Schluessel unter Einstellungen > EODHD-Marktdaten ein, um Echtzeit-Kurse fuer Ihre Portfolio-Positionen zu erhalten.\n\n**Optionaler FMP-Schluessel:**\nAlternativ fuegen Sie einen FMP-Schluessel als Fallback fuer Portfolio-Kurse hinzu.\n\n**Historische Daten:**\nDer Workflow fuehrt eine Verlaufsdatenbank, die Wochen-, Monats- und Jahreszeitreihen-Rankings ermoeglicht."
+        "content": "Verstehen Sie den Unterschied zwischen kostenlosen oeffentlichen Movern und optionalen privaten Kursprovidern.",
+        "details": "**Kostenloser Mover-Feed (ohne Schluessel)**\n- Taegliche Top-Gewinner/-Verlierer aus oeffentlichem verteiltem Snapshot\n- Zeitraeume: 1D, 5D, 1M, 1Y\n- Aktuelle Maerkte: US, UK, Deutschland, Frankreich, Kanada, Hong Kong, Australien, Indien\n\n**Portfolio-Quote-Kette (optionale Schluessel)**\n1. EODHD Echtzeit\n2. EODHD End-of-Day Fallback\n3. FMP Fallback\n4. Snapshot-Preis Fallback\n\n**Zuverlaessigkeits-Schutz**\n- Volumenfilter fuer Mover\n- Staleness-Pruefungen auf Kursdatum\n- Outlier-Blockierung bei verdaechtigen Spruengen"
+      },
+      "data_pipeline": {
+        "title": "Datenpipeline (Technisch)",
+        "content": "Technischer Ueberblick, wie Markt-Snapshots erzeugt und bereitgestellt werden.",
+        "details": "**Automations-Stack**\n- GitHub-Workflow laeuft geplant, bei Push auf main und manuell\n- Workflow injiziert Secret EODHD_API_KEY\n- Python-Skript berechnet Mover und erzeugt Snapshot-Artefakte\n\n**Artefakte**\n- Oeffentliche JSON/ZIP-Daten fuer die App\n- Historische Milestone-Datenbank fuer Multi-Perioden-Rankings\n- Build-Logs als Workflow-Artefakte\n\n**Warum diese Architektur**\n- Schneller App-Start\n- Kein API-Key-Zwang fuer oeffentliche Mover\n- Rechenlast in CI statt auf dem Geraet"
+      },
+      "privacy_security": {
+        "title": "Datenschutz und Sicherheit",
+        "content": "Wie Zugangsdaten und lokale Finanzdaten in der App behandelt werden.",
+        "details": "**Lokale Speicherung**\n- Einstellungen, Onboarding-Status und Portfolio-Daten liegen lokal auf dem Geraet\n- Daten loeschen entfernt lokale Boxen und Preferences\n\n**API-Schluessel**\n- Schluessel werden vom Benutzer in Einstellungen eingetragen\n- Schluessel werden nur bei Bedarf an Provider-Endpunkte gesendet\n- Top-Mover funktionieren ohne persoenlichen Schluessel\n\n**Betriebliche Best Practices**\n- Schluessel regelmaessig rotieren\n- Keine Screenshots mit sichtbaren Schluesseln teilen\n- Kompromittierte Schluessel im Provider-Dashboard sofort widerrufen"
+      },
+      "troubleshooting": {
+        "title": "Problembehebung",
+        "content": "Beheben Sie haeufige Import-, Kurs- und Analyse-Probleme schnell.",
+        "details": "**Import-Probleme**\n- Broker-Formatwahl pruefen\n- Doppelte Header und leere Zeilen entfernen\n- Zahlenformat fuer Menge/Preis pruefen\n\n**Keine Live-Kurse**\n- Speichern von EODHD/FMP-Schluessel in Einstellungen bestaetigen\n- Exchange-Mapping in Positionsdetails pruefen\n- Nach Key-Aktualisierung Refresh ausfuehren\n\n**KI-Analyse fehlgeschlagen**\n- Gemini-Verbindung in Einstellungen testen\n- Key-Gueltigkeit und Provider-Quota pruefen\n- Mit kuerzerem Prompt erneut versuchen\n\n**Unerwartetes UI-Verhalten**\n- Onboarding unter Einstellungen > Ueber erneut starten\n- Lokale Daten nur bei anhaltenden Migrationsproblemen loeschen\n- Portfolio nach Daten-Reset neu importieren"
       },
       "glossary": {
         "title": "Investment-Glossar",
-        "content": "Definitionen der wichtigsten Begriffe der App.",
-        "details": "**P&L**: Gewinn & Verlust (aktueller Wert minus Einstandspreis)\n\n**Einstandspreis**: Urspruenglicher Kaufpreis\n\n**Allokation**: Gewicht eines Assets im Portfolio\n\n**Volatilitaet**: Kursschwankung im Zeitverlauf\n\n**Drawdown**: Rueckgang vom Hoch zum Tief\n\n**Basiswaehrung**: Hauptwaehrung fuer Reports"
+        "content": "Definitionen wichtiger Portfolio-Analysebegriffe in der App.",
+        "details": "**P&L**: Aktueller Wert minus Einstand\n\n**Einstandspreis**: Urspruenglicher Kaufwert einer Position\n\n**Allokation**: Gewicht einer Position relativ zum Portfoliogesamtwert\n\n**Volatilitaet**: Streuung der Renditen ueber die Zeit\n\n**Drawdown**: Rueckgang von lokalem Hoch zu nachfolgendem Tief\n\n**Sharpe Ratio**: Rendite relativ zur Gesamtvolatilitaet\n\n**Sortino Ratio**: Rendite relativ nur zur Abwaertsvolatilitaet\n\n**Beta**: Sensitivitaet gegenueber Benchmark-Marktbewegungen\n\n**Alpha**: Ueberrendite gegenueber modellierter Erwartung\n\n**Basiswaehrung**: Berichtswahrung fuer Summen und Vergleiche"
       }
     }
   },

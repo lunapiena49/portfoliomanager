@@ -22,6 +22,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<OnboardingItem> _items = [
     OnboardingItem(
+      icon: Icons.tune,
+      titleKey: 'onboarding.features.setup.title',
+      descriptionKey: 'onboarding.features.setup.description',
+      color: AppTheme.primaryColor,
+    ),
+    OnboardingItem(
       icon: Icons.account_balance_wallet,
       titleKey: 'onboarding.features.import.title',
       descriptionKey: 'onboarding.features.import.description',
@@ -50,6 +56,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
       titleKey: 'onboarding.features.market.title',
       descriptionKey: 'onboarding.features.market.description',
       color: AppTheme.successColor,
+    ),
+    OnboardingItem(
+      icon: Icons.shield_outlined,
+      titleKey: 'onboarding.features.security.title',
+      descriptionKey: 'onboarding.features.security.description',
+      color: AppTheme.accentColor,
     ),
   ];
 
@@ -112,6 +124,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   TextButton(
                     onPressed: _completeOnboarding,
                     child: Text('common.skip'.tr()),
+                  ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 8.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'onboarding.welcome.title'.tr(),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    'onboarding.welcome.subtitle'.tr(),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),

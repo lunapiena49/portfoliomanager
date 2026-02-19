@@ -30,32 +30,39 @@
   "onboarding": {
     "welcome": {
       "title": "Benvenuto in Portfolio Manager",
-      "subtitle": "Il tuo compagno professionale per gli investimenti"
+      "subtitle": "Workspace professionale multipiattaforma per intelligence di portafoglio"
     },
     "features": {
+      "setup": {
+        "title": "Configura il tuo workspace",
+        "description": "Scegli lingua, valuta base e chiavi API opzionali. Le impostazioni si applicano subito su layout desktop e mobile."
+      },
       "import": {
-        "title": "Importa il Tuo Portafoglio",
-        "description": "Importa facilmente portafogli dai principali broker come Interactive Brokers, TD Ameritrade e altri tramite file CSV o PDF."
+        "title": "Importa da estratti del broker",
+        "description": "Importa file CSV/PDF da broker supportati, controlla l'anteprima righe e gestisci i duplicati con strategie di merge prima del salvataggio."
       },
       "analysis": {
-        "title": "Analisi con Intelligenza Artificiale",
-        "description": "Ottieni approfondimenti intelligenti sui tuoi investimenti grazie alla tecnologia AI avanzata."
+        "title": "Analisi AI e chat",
+        "description": "Usa analisi basata su Gemini, fai domande personalizzate sul portafoglio e genera insight strutturati su rischio, allocazione e performance."
       },
       "tracking": {
-        "title": "Monitoraggio in Tempo Reale",
-        "description": "Monitora le performance del tuo portafoglio con grafici e statistiche dettagliate."
+        "title": "Prezzi live e performance",
+        "description": "Monitora prezzi posizioni con badge fonte e logica di fallback: EODHD real-time -> FMP -> snapshot giornaliero."
       },
       "goals": {
-        "title": "Imposta i Tuoi Obiettivi",
-        "description": "Definisci obiettivi di investimento e monitora i progressi verso la libertà finanziaria."
+        "title": "Obiettivi e ribilanciamento",
+        "description": "Imposta target, segui i progressi e usa il ribilanciamento per confrontare allocazione attuale e pesi desiderati."
       },
       "market": {
-        "title": "Dati di Mercato Live — Gratuiti",
-        "description": "Top 20 rialzi e ribassi per 10 mercati globali aggiornati ogni giorno tramite feed serverless gratuito. Nessuna chiave API richiesta. Aggiungi la tua chiave EODHD opzionale per quotazioni in tempo reale del portafoglio."
+        "title": "Top mover globali gratis",
+        "description": "I migliori rialzi e ribassi arrivano ogni giorno da snapshot pubblico serverless. Nessuna chiave API richiesta per i top mover."
+      },
+      "security": {
+        "title": "Gestione chiavi orientata alla privacy",
+        "description": "Le chiavi API sono gestite localmente nelle impostazioni. Decidi tu provider, refresh dati e quando inviare richieste esterne."
       }
     },
-    "get_started": "Inizia",
-    "already_user": "Hai gia dei dati? Importa ora"
+    "get_started": "Inizia"
   },
   "navigation": {
     "portfolio": "Portafoglio",
@@ -347,9 +354,7 @@
       "lse": "Regno Unito",
       "xetra": "Germania",
       "pa": "Francia",
-      "mi": "Italia",
       "to": "Canada",
-      "tse": "Giappone",
       "hk": "Hong Kong",
       "au": "Australia",
       "nse": "India"
@@ -433,7 +438,9 @@
       "export": "Esporta Dati",
       "backup": "Backup",
       "restore": "Ripristina",
-      "clear": "Cancella Tutti i Dati"
+      "clear": "Cancella Tutti i Dati",
+      "clear_confirm_message": "Questa azione elimina dati portafoglio, obiettivi, stato onboarding e impostazioni locali da questo dispositivo. Operazione irreversibile.",
+      "clear_success": "Tutti i dati locali sono stati eliminati correttamente"
     },
     "ai": {
       "title": "Impostazioni AI",
@@ -460,6 +467,8 @@
     "about": {
       "title": "Informazioni",
       "version": "Versione",
+      "review_onboarding": "Rivedi onboarding",
+      "onboarding_reset_message": "Onboarding ripristinato. L'app riaprira il flusso di onboarding.",
       "privacy": "Informativa sulla Privacy",
       "terms": "Termini di Servizio",
       "licenses": "Licenze Open Source",
@@ -471,24 +480,39 @@
     "title": "Guida Utente",
     "sections": {
       "getting_started": {
-        "title": "Per Iniziare",
-        "content": "Configura portafoglio, lingua e chiavi API opzionali per iniziare a monitorare gli investimenti.",
-        "details": "1. Crea un nuovo portafoglio o importa un CSV/PDF dal tuo broker\n2. Imposta lingua e valuta base in Impostazioni > Generali\n3. Inserisci la chiave API Gemini in Impostazioni > Impostazioni AI per attivare Analisi e Chat AI\n4. *(Opzionale)* Inserisci la chiave EODHD in Impostazioni > EODHD per quotazioni in tempo reale del portafoglio\n5. *(Opzionale)* Inserisci la chiave FMP come alternativa per le quotazioni\n6. Esplora le schede Portafoglio, Mercato e Obiettivi — i Top Movers funzionano senza chiavi!\n7. Aggiorna i dati dopo operazioni importanti\n\n**Come funzionano i dati di mercato:**\n- Top 20 rialzi/ribassi per 10 mercati globali aggiornati ogni giorno tramite feed serverless (nessuna chiave richiesta)\n- Prezzi posizioni portafoglio: chiave EODHD (real-time) → chiave FMP → snapshot giornaliero\n\n**Suggerimenti:**\n- Mantieni una sola valuta base per portafoglio\n- Verifica i ticker prima di importare\n- Usa il tasto ? per riaprire questa guida"
+        "title": "Per iniziare",
+        "content": "Configura lingua, valuta, portafogli e chiavi API opzionali prima della prima analisi.",
+        "details": "1. Apri Impostazioni > Generali e scegli lingua + valuta base\n2. Crea un portafoglio vuoto o importane uno da file broker\n3. Inserisci chiave Gemini in Impostazioni > AI per sbloccare analisi e chat\n4. (Opzionale) Inserisci chiave EODHD per quotazioni real-time posizioni\n5. (Opzionale) Inserisci chiave FMP come fallback quotazioni\n6. Apri la scheda Mercato per i mover giornalieri gratuiti (nessuna chiave)\n7. Esegui refresh dopo operazioni rilevanti\n\n**Flusso avvio (tecnico):**\n- Splash controlla selezione lingua e stato onboarding\n- Completamento onboarding salvato localmente\n- Impostazioni caricate prima da storage locale, poi da eventuali env compile-time\n\n**Note UX cross-device:**\n- Su mobile schermate con card scrollabili e spaziatura adattiva\n- Su desktop/web full-width stesso ordine funzioni e azioni"
       },
       "importing": {
         "title": "Importazione Dati",
-        "content": "Istruzioni per importare file CSV/PDF dai broker supportati.",
-        "details": "**Interactive Brokers (IBKR)**\n1. Accedi al Client Portal\n2. Vai a Performance & Reports > Statements\n3. Seleziona \"Flex Queries\"\n4. Crea o esegui una Activity Flex Query\n5. Scarica il report in CSV o PDF\n\n**Altri broker**\nEsporta posizioni o estratti conto in CSV/PDF, poi usa \"Importa Portafoglio\" e scegli il broker.\nSe il tuo broker non e in elenco, usa \"Altro (CSV Generico)\" e segui il formato colonne mostrato nella schermata.\n\n**Risoluzione problemi:**\n- Controlla i separatori decimali in base alla lingua\n- Rimuovi righe di intestazione vuote\n- Verifica che simboli, quantita e prezzi siano presenti"
+        "content": "Importa estratti CSV/PDF, controlla i risultati parser e integra in sicurezza nei portafogli.",
+        "details": "**Flusso supportato**\n1. Scegli profilo broker nella pagina Import\n2. Carica documenti CSV o PDF\n3. Verifica anteprima posizioni prima del salvataggio\n4. Scegli destinazione: nuovo portafoglio o esistente\n5. Risolvi simboli duplicati con modalita merge\n\n**Gestione duplicati**\n- Ignora duplicati\n- Sostituisci righe esistenti\n- Somma quantita alle righe esistenti\n\n**Campi minimi CSV generico**\n- Simbolo\n- Quantita\n- Prezzo o costo base\n- Valuta (consigliata)\n- Exchange (consigliato per mapping quotazioni)\n\n**Errori comuni**\n- Separatore decimale non corretto\n- Righe header extra nell'export\n- Colonne simbolo o quantita mancanti"
       },
       "analysis": {
-        "title": "Analisi & Dati di Mercato",
-        "content": "Scopri come funzionano gli insight AI e i dati di mercato.",
-        "details": "Portfolio Manager usa Gemini AI per insight sul portafoglio e chat AI. I top movers di mercato sono forniti da uno snapshot serverless gratuito — nessuna chiave richiesta.\n\n**Per attivare l'AI:**\n1. Ottieni una chiave API Gemini gratuita da Google AI Studio\n2. Inseriscila in Impostazioni > Impostazioni AI\n3. Usa la scheda Analisi per generare report o chattare\n\n**Dati mercato (top movers — nessuna chiave richiesta):**\n- Aggiornati ogni giorno tramite GitHub Actions + dati bulk EODHD\n- 20 migliori rialzi e ribassi per mercato per Oggi / Settimana / Mese / Anno\n- 10 mercati globali: US, UK, Germania, Francia, Italia, Canada, Giappone, HK, Australia, India\n\n**Quotazioni portafoglio in tempo reale (opzionale):**\n- Aggiungi la chiave EODHD in Impostazioni > EODHD per quotazioni real-time\n- Oppure aggiungi la chiave FMP come alternativa\n- Senza chiave, l'app usa i prezzi dell'ultimo snapshot giornaliero\n\n**Metriche principali:**\n- Indice di Sharpe, Volatilità, Beta, Alpha, Max Drawdown\n- Allocazione e analisi del rischio"
+        "title": "Comprendere Analisi e Chat AI",
+        "content": "Scopri come vengono generate le risposte AI, quali input vengono usati e come le fonti prezzo influenzano i risultati.",
+        "details": "**Motore AI**\n- Provider: Gemini API\n- Modello predefinito: gemini-2.5-flash\n- Configurato con safety settings e controlli token/temperatura\n\n**Cosa vede l'AI**\n- Posizioni portafoglio e allocazione\n- Costo base e metriche performance\n- Prompt personalizzato inserito dall'utente\n\n**Cosa l'AI non fa automaticamente**\n- Non esegue ordini\n- Non si collega direttamente ai broker\n- Non salva chat esternamente salvo eventuali log provider\n\n**Suggerimenti qualita risposta**\n- Mantieni ticker puliti prima dell'import\n- Fai domande esplicite (rischio, diversificazione, concentrazione)\n- Aggiorna quotazioni prima di una nuova analisi"
       },
       "market_data": {
         "title": "Dati di Mercato & Snapshot",
-        "content": "Come vengono distribuiti i dati di mercato senza richiedere una chiave API.",
-        "details": "**Snapshot Serverless**\nOgni giorno feriale dopo la chiusura del mercato US, un workflow automatizzato scarica i dati bulk EODHD per 10 borse globali, calcola i top 20 rialzi e ribassi per 4 timeframe e pubblica i risultati su GitHub Pages.\n\n**Nessuna chiave per i top movers:**\nLa scheda Mercato scarica automaticamente i dati di mercato dall'URL snapshot pubblico. Tutti gli utenti vedono gli stessi dati senza alcuna configurazione.\n\n**Chiave EODHD opzionale:**\nAggiungi la tua chiave EODHD in Impostazioni > Dati di Mercato EODHD per ottenere quotazioni in tempo reale per le posizioni del portafoglio.\n\n**Chiave FMP opzionale:**\nIn alternativa, aggiungi una chiave FMP come fallback per le quotazioni del portafoglio.\n\n**Dati storici:**\nIl workflow mantiene un database storico che abilita le classifiche weekly/monthly/yearly basate su calcoli reali di variazione dei prezzi."
+        "content": "Comprendi la differenza tra mover pubblici gratuiti e provider quotazioni privati opzionali.",
+        "details": "**Feed mover gratuiti (senza chiave)**\n- Top gainers/losers giornalieri da snapshot pubblico distribuito\n- Timeframe: 1D, 5D, 1M, 1Y\n- Mercati coperti: US, UK, Germania, Francia, Canada, Hong Kong, Australia, India\n\n**Catena quotazioni portafoglio (chiavi opzionali)**\n1. EODHD real-time\n2. EODHD end-of-day fallback\n3. FMP fallback\n4. Snapshot price fallback\n\n**Salvaguardie affidabilita**\n- Filtro volume sui mover\n- Controlli staleness su date quotazione\n- Blocco outlier per salti sospetti"
+      },
+      "data_pipeline": {
+        "title": "Pipeline Dati (Tecnica)",
+        "content": "Panoramica tecnica di come vengono costruiti e distribuiti gli snapshot di mercato.",
+        "details": "**Stack di automazione**\n- Workflow GitHub Actions su schedule, push su main e avvio manuale\n- Il workflow inietta il secret EODHD_API_KEY\n- Script Python calcola i mover e produce artifact snapshot\n\n**Artifact**\n- Dati pubblici JSON/zip consumati dall'app\n- Database milestone storico per ranking multi-periodo\n- Log build caricati come artifact workflow\n\n**Perche questa architettura**\n- Riduce tempi di avvio app\n- Elimina chiave API obbligatoria per i mover pubblici\n- Sposta il calcolo pesante in CI invece che sul device utente"
+      },
+      "privacy_security": {
+        "title": "Privacy e Sicurezza",
+        "content": "Come l'app gestisce credenziali e dati finanziari locali.",
+        "details": "**Persistenza locale**\n- Impostazioni, stato onboarding e dati portafoglio sono salvati sul dispositivo\n- Cancella dati rimuove box locali e preferenze\n\n**Chiavi API**\n- Le chiavi sono inserite dall'utente in Impostazioni\n- Le chiavi vengono inviate solo agli endpoint provider necessari\n- I top mover funzionano senza chiavi personali\n\n**Best practice operative**\n- Ruota periodicamente le chiavi\n- Evita screenshot che mostrano chiavi\n- Revoca subito chiavi compromesse dal pannello provider"
+      },
+      "troubleshooting": {
+        "title": "Risoluzione Problemi",
+        "content": "Risolvi rapidamente i problemi piu comuni di import, quotazioni e analisi.",
+        "details": "**Problemi di import**\n- Verifica formato broker selezionato\n- Rimuovi header duplicati e righe vuote\n- Controlla formato numerico di quantita/prezzo\n\n**Nessun prezzo live**\n- Conferma salvataggio chiave EODHD/FMP in Impostazioni\n- Verifica mapping exchange nei dettagli posizione\n- Esegui refresh dopo aggiornamento chiavi\n\n**Errore analisi AI**\n- Testa connessione Gemini in Impostazioni\n- Verifica validita chiave e quota provider\n- Riprova con prompt piu corto\n\n**Comportamento UI inatteso**\n- Riapri onboarding da Impostazioni > Informazioni\n- Cancella dati locali solo se persistono problemi migrazione\n- Reimporta il portafoglio dopo reset dati"
       },
       "charts": {
         "title": "Grafici Portafoglio",
@@ -507,8 +531,8 @@
       },
       "glossary": {
         "title": "Glossario degli Investimenti",
-        "content": "Definizioni dei termini principali usati nell'app.",
-        "details": "**P&L**: Profit & Loss (valore attuale meno costo base)\n\n**Costo Base**: Prezzo di acquisto originario\n\n**Allocazione**: Peso di un asset nel portafoglio\n\n**Volatilita**: Variazione del prezzo nel tempo\n\n**Drawdown**: Calo dal picco al minimo\n\n**Valuta Base**: Valuta principale per i report"
+        "content": "Definizioni dei termini principali di analisi portafoglio usati nell'app.",
+        "details": "**P&L**: Valore attuale meno costo base\n\n**Costo Base**: Valore di acquisto originario della posizione\n\n**Allocazione**: Peso di una posizione sul valore totale portafoglio\n\n**Volatilita**: Dispersione dei rendimenti nel tempo\n\n**Drawdown**: Discesa dal picco locale al minimo successivo\n\n**Sharpe Ratio**: Rendimento aggiustato per volatilita totale\n\n**Sortino Ratio**: Rendimento aggiustato per sola volatilita negativa\n\n**Beta**: Sensibilita rispetto ai movimenti del benchmark\n\n**Alpha**: Extra rendimento oltre quello atteso dal modello\n\n**Valuta Base**: Valuta di reporting per totali e confronti"
       }
     }
   },

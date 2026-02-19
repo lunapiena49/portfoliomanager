@@ -12,6 +12,11 @@ const String _fmpApiKeyFromEnvironment = String.fromEnvironment(
   defaultValue: '',
 );
 
+const String _eodhdApiKeyFromEnvironment = String.fromEnvironment(
+  'EODHD_API_KEY',
+  defaultValue: '',
+);
+
 // ==================== EVENTS ====================
 
 abstract class SettingsEvent extends Equatable {
@@ -226,6 +231,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     if (localApiKey != null && localApiKey.trim().isNotEmpty) {
       return localApiKey.trim();
     }
+
+    final envApiKey = _eodhdApiKeyFromEnvironment.trim();
+    if (envApiKey.isNotEmpty) {
+      return envApiKey;
+    }
+
     return null;
   }
 

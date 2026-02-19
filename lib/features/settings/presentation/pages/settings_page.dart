@@ -149,7 +149,7 @@ class _SettingsPageState extends State<SettingsPage> {
               _buildAboutTile(
                 context,
                 icon: Icons.replay,
-                title: 'Rivedi Onboarding',
+                title: 'settings.about.review_onboarding'.tr(),
                 onTap: () => _resetOnboarding(context),
               ),
               _buildAboutTile(
@@ -564,7 +564,7 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('settings.data.clear'.tr()),
-        content: const Text('This will delete all your portfolio data. This action cannot be undone.'),
+        content: Text('settings.data.clear_confirm_message'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -582,7 +582,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (confirmed == true && mounted) {
       context.read<SettingsBloc>().add(ClearAllDataEvent());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All data cleared')),
+        SnackBar(content: Text('settings.data.clear_success'.tr())),
       );
     }
   }
@@ -614,7 +614,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void _resetOnboarding(BuildContext context) {
     context.read<OnboardingBloc>().add(ResetOnboardingEvent());
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Onboarding resettato. Riavvia l\'app.')),
+      SnackBar(content: Text('settings.about.onboarding_reset_message'.tr())),
     );
     // Navigate to splash to restart onboarding flow
     context.go(RouteNames.splash);

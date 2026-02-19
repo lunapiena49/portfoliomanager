@@ -17,15 +17,6 @@ class CompleteOnboardingEvent extends OnboardingEvent {}
 
 class ResetOnboardingEvent extends OnboardingEvent {}
 
-class UpdateOnboardingPageEvent extends OnboardingEvent {
-  final int pageIndex;
-
-  const UpdateOnboardingPageEvent(this.pageIndex);
-
-  @override
-  List<Object?> get props => [pageIndex];
-}
-
 // ==================== STATES ====================
 
 abstract class OnboardingState extends Equatable {
@@ -40,12 +31,7 @@ class OnboardingInitial extends OnboardingState {}
 class OnboardingLoading extends OnboardingState {}
 
 class OnboardingRequired extends OnboardingState {
-  final int currentPage;
-
-  const OnboardingRequired({this.currentPage = 0});
-
-  @override
-  List<Object?> get props => [currentPage];
+  const OnboardingRequired();
 }
 
 class OnboardingCompleted extends OnboardingState {}
@@ -57,7 +43,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<CheckOnboardingStatusEvent>(_onCheckStatus);
     on<CompleteOnboardingEvent>(_onComplete);
     on<ResetOnboardingEvent>(_onReset);
-    on<UpdateOnboardingPageEvent>(_onUpdatePage);
   }
 
   Future<void> _onCheckStatus(
@@ -89,14 +74,5 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   ) async {
     await LocalStorageService.setOnboardingComplete(false);
     emit(const OnboardingRequired());
-  }
-
-  void _onUpdatePage(
-    UpdateOnboardingPageEvent event,
-    Emitter<OnboardingState> emit,
-  ) {
-    if (state is OnboardingRequired) {
-      emit(OnboardingRequired(currentPage: event.pageIndex));
-    }
   }
 }
