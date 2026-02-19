@@ -62,7 +62,7 @@ KNOWN_MARKET_DEFINITIONS: dict[str, tuple[str, str]] = {
     "AU": ("Australia", "AUD"),
     "NSE": ("India", "INR"),
 }
-DEFAULT_MARKETS = "US,LSE,XETRA,PA,MI,TO,TSE,HK,AU,NSE"
+DEFAULT_MARKETS = "US,LSE,XETRA,PA,TO,HK,AU,NSE"
 # Slot names and their target refresh age in calendar days.
 MILESTONE_SLOTS: dict[str, int] = {"7d": 7, "30d": 30, "365d": 365}
 
@@ -156,7 +156,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_MARKETS,
         help=(
             "Comma-separated EODHD market codes to process "
-            "(example: US,LSE,XETRA,PA,MI,TO,TSE,HK,AU,NSE)."
+            "(example: US,LSE,XETRA,PA,TO,HK,AU,NSE)."
         ),
     )
     parser.add_argument(
@@ -295,6 +295,12 @@ def extract_change_percent(record: dict[str, Any], close: float) -> Optional[flo
         derived_previous = close - absolute_change
         if derived_previous != 0:
             return absolute_change / derived_previous * 100.0
+
+    # Bulk endpoint fallback: many exchanges expose open/close only.
+    # This is an intraday move proxy (close vs open), not close vs prev close.
+    open_price = parse_float(record.get("open"))
+    if open_price not in (None, 0):
+        return (close - open_price) / open_price * 100.0
 
     return None
 
@@ -626,13 +632,13 @@ def get_milestone_meta(conn: sqlite3.Connection) -> dict[str, str]:
 
 def load_milestone_prices(
     conn: sqlite3.Connection, slot: str
-) -> dict[tuple[str, str], tuple[float, str, str]]:
-    """Return {(market_code, ticker): (close, currency, name)} for a slot."""
+) -> dict[tuple[str, str], tuple[float, str, str, str]]:
+    """Return {(market_code, ticker): (close, currency, name, as_of_date)} for a slot."""
     cursor = conn.execute(
-        "SELECT market_code, ticker, close, currency, name FROM milestone_prices WHERE slot = ?",
+        "SELECT market_code, ticker, close, currency, name, as_of_date FROM milestone_prices WHERE slot = ?",
         (slot,),
     )
-    return {(r[0], r[1]): (float(r[2]), r[3], r[4]) for r in cursor}
+    return {(r[0], r[1]): (float(r[2]), r[3], r[4], r[5]) for r in cursor}
 
 
 def replace_milestone_slot(
@@ -700,7 +706,7 @@ def build_top_movers_payload(
     with sqlite3.connect(milestone_db_path) as conn:
         ensure_milestone_schema(conn)
         meta = get_milestone_meta(conn)
-        slot_prices: dict[str, dict[tuple[str, str], tuple[float, str, str]]] = {
+        slot_prices: dict[str, dict[tuple[str, str], tuple[float, str, str, str]]] = {
             slot: load_milestone_prices(conn, slot) for slot in MILESTONE_SLOTS
         }
 
@@ -730,13 +736,22 @@ def build_top_movers_payload(
             # Multi-day: compare to milestone slot.
             for slot, tf_label in slot_to_tf.items():
                 slot_date = meta.get(f"{slot}_date", "")
-                if not slot_date or slot_date == as_of_date:
-                    # Slot not initialised yet or just set today — skip.
+                if not slot_date:
+                    # Slot not initialised yet.
                     continue
                 ref = slot_prices[slot].get((row.market_code, row.ticker))
                 if ref is None:
                     continue
-                ref_close = ref[0]
+
+                ref_close, _, _, ref_as_of_date = ref
+                # Skip non-older references; prevents zeroed movers on re-runs
+                # when milestone rows and current rows share the same market date.
+                if ref_as_of_date:
+                    if ref_as_of_date >= row.as_of_date:
+                        continue
+                elif slot_date == as_of_date:
+                    continue
+
                 pct = safe_percent_change(row.close, ref_close)
                 if pct is not None:
                     ranked[tf_label].append((row, pct))
@@ -744,10 +759,12 @@ def build_top_movers_payload(
         timeframes_payload: dict[str, Any] = {}
         for tf in TIMEFRAME_KEYS:
             pool = ranked[tf]
-            gainers = sorted(pool, key=lambda x: x[1], reverse=True)[:top_limit]
-            losers = sorted(pool, key=lambda x: x[1])[:top_limit]
+            positive_pool = [item for item in pool if item[1] > 0]
+            negative_pool = [item for item in pool if item[1] < 0]
+            gainers = sorted(positive_pool, key=lambda x: x[1], reverse=True)[:top_limit]
+            losers = sorted(negative_pool, key=lambda x: x[1])[:top_limit]
             timeframes_payload[tf] = {
-                "eligible_symbols": len(pool),
+                "eligible_symbols": len(positive_pool) + len(negative_pool),
                 "gainers": [row_to_mover_json(r, c) for r, c in gainers],
                 "losers": [row_to_mover_json(r, c) for r, c in losers],
             }
