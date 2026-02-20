@@ -512,7 +512,7 @@
       "data_pipeline": {
         "title": "Data Pipeline (Technical)",
         "content": "Technical overview of how market snapshots are built and deployed.",
-        "details": "**Automation stack**\n- GitHub Actions workflow runs on schedule, on main push, and manual dispatch\n- Workflow injects secret EODHD_API_KEY\n- Python script computes movers and writes snapshot artifacts\n\n**Artifacts**\n- Public JSON/zip data for app consumption\n- Historical milestone database for multi-period ranking\n- Build logs uploaded as workflow artifacts\n\n**Why this architecture**\n- Keeps app startup fast\n- Removes API-key requirement for public movers\n- Centralizes heavy computation in CI rather than on user device"
+        "details": "**Automation stack**\n- GitHub Actions workflow runs on schedule, on main push, and manual dispatch\n- Workflow injects secret EODHD_API_KEY\n- Python script computes movers and writes snapshot artifacts\n\n**Artifacts**\n- Public JSON/zip data for app consumption\n- Rolling 365-day history database for multi-period ranking\n- Build logs uploaded as workflow artifacts\n\n**Why this architecture**\n- Keeps app startup fast\n- Removes API-key requirement for public movers\n- Centralizes heavy computation in CI rather than on user device"
       },
       "privacy_security": {
         "title": "Privacy and Security",

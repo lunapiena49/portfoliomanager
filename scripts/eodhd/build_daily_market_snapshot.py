@@ -1,20 +1,9 @@
 #!/usr/bin/env python3
 """Build serverless market snapshot from EODHD bulk daily data.
 
-Historical approach: lightweight milestone_prices.db that stores only 3 reference
-snapshots (7d, 30d, 365d ago).  No large history dump needed — the file is a few
-MB and grows naturally from the first run.
-
-Lifecycle of each slot:
-  - First run: slot is empty → mover for that timeframe not computed, slot
-    initialised with today's prices.
-  - After N calendar days: slot is old enough → comparison yields a meaningful
-    return; slot is replaced with today's prices so the window resets.
-
-Comparison accuracy:
-  - 5D window:  slot refreshes every  7 calendar days  (~5 trading days)
-  - 1M window:  slot refreshes every 30 calendar days
-  - 1Y window:  slot refreshes every 365 calendar days
+This pipeline keeps a compact rolling history DB, bootstraps the required
+lookback anchors (7d/30d/365d), and updates it with the latest trading day on
+each run.
 """
 
 from __future__ import annotations
@@ -42,6 +31,7 @@ BULK_LAST_DAY_URL_TEMPLATE = "https://eodhd.com/api/eod-bulk-last-day/{market}"
 USER_AGENT = "portfolio-manager-market-pipeline/1.0"
 TIMEFRAME_KEYS = ("1D", "5D", "1M", "1Y")
 DEFAULT_MIN_VOLUME = 1_000_000
+TIMEFRAME_LOOKBACK_DAYS: dict[str, int] = {"5D": 7, "1M": 30, "1Y": 365}
 
 
 @dataclass(frozen=True)
@@ -56,16 +46,12 @@ KNOWN_MARKET_DEFINITIONS: dict[str, tuple[str, str]] = {
     "LSE": ("United Kingdom", "GBP"),
     "XETRA": ("Germany", "EUR"),
     "PA": ("France", "EUR"),
-    "MI": ("Italy", "EUR"),
     "TO": ("Canada", "CAD"),
-    "TSE": ("Japan", "JPY"),
     "HK": ("Hong Kong", "HKD"),
     "AU": ("Australia", "AUD"),
     "NSE": ("India", "INR"),
 }
 DEFAULT_MARKETS = "US,LSE,XETRA,PA,TO,HK,AU,NSE"
-# Slot names and their target refresh age in calendar days.
-MILESTONE_SLOTS: dict[str, int] = {"7d": 7, "30d": 30, "365d": 365}
 
 
 @dataclass(frozen=True)
@@ -190,21 +176,30 @@ def parse_args() -> argparse.Namespace:
         help="Log filename (relative to output dir) or absolute log path.",
     )
     parser.add_argument(
-        "--milestone-db-name",
-        default="milestone_prices.db",
-        help="Filename for the lightweight milestone SQLite database.",
+        "--history-db-name",
+        default="market_history.db",
+        help="Filename for the rolling market history SQLite database.",
     )
     parser.add_argument(
-        "--milestone-db-zip-name",
-        default="milestone_prices.db.zip",
-        help="Filename for the compressed milestone database.",
+        "--history-db-zip-name",
+        default="market_history.db.zip",
+        help="Filename for the compressed market history database.",
     )
     parser.add_argument(
-        "--milestone-db-url",
+        "--history-db-url",
         default="",
         help=(
-            "URL of the existing milestone_prices.db.zip published on GitHub Pages. "
+            "URL of the existing market_history.db.zip published on GitHub Pages. "
             "The script downloads it at the start of each run and updates it in place."
+        ),
+    )
+    parser.add_argument(
+        "--history-bootstrap-backtrack-days",
+        type=int,
+        default=12,
+        help=(
+            "When bootstrapping missing 5D/1M/1Y anchors, backtrack this many "
+            "calendar days from the target date to find a valid market day."
         ),
     )
     parser.add_argument(
@@ -318,11 +313,14 @@ def fetch_bulk_last_day(
     timeout_seconds: int,
     max_retries: int,
     logger: logging.Logger,
+    trading_date: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     params = {
         "api_token": api_key,
         "fmt": "json",
     }
+    if trading_date:
+        params["date"] = trading_date
     request_url = (
         f"{BULK_LAST_DAY_URL_TEMPLATE.format(market=market_code)}?{urlencode(params)}"
     )
@@ -331,8 +329,9 @@ def fetch_bulk_last_day(
     for attempt in range(1, max_retries + 1):
         try:
             logger.info(
-                "Downloading EODHD %s bulk daily data (attempt %s/%s)...",
+                "Downloading EODHD %s bulk daily data%s (attempt %s/%s)...",
                 market_code,
+                f" for {trading_date}" if trading_date else "",
                 attempt,
                 max_retries,
             )
@@ -345,15 +344,17 @@ def fetch_bulk_last_day(
                 raise ValueError(f"Unexpected EODHD payload type: {type(data).__name__}")
 
             logger.info(
-                "EODHD payload downloaded successfully for %s. Rows: %s",
+                "EODHD payload downloaded successfully for %s%s. Rows: %s",
                 market_code,
+                f" ({trading_date})" if trading_date else "",
                 len(data),
             )
             return [item for item in data if isinstance(item, dict)]
         except HTTPError as exc:
             last_error = RuntimeError(
                 "HTTP error while downloading EODHD bulk data "
-                f"for {market_code}: status={exc.code}, reason={exc.reason}"
+                f"for {market_code}{f' ({trading_date})' if trading_date else ''}: "
+                f"status={exc.code}, reason={exc.reason}"
             )
             logger.warning("EODHD request failed: %s", last_error)
             if attempt < max_retries:
@@ -363,7 +364,8 @@ def fetch_bulk_last_day(
         except URLError as exc:
             safe_reason = sanitize_sensitive_text(str(exc.reason), [api_key])
             last_error = RuntimeError(
-                f"Network error while downloading EODHD bulk data for {market_code}: {safe_reason}"
+                "Network error while downloading EODHD bulk data for "
+                f"{market_code}{f' ({trading_date})' if trading_date else ''}: {safe_reason}"
             )
             logger.warning("EODHD request failed: %s", last_error)
             if attempt < max_retries:
@@ -373,7 +375,8 @@ def fetch_bulk_last_day(
         except (TimeoutError, json.JSONDecodeError, ValueError) as exc:
             safe_detail = sanitize_sensitive_text(str(exc), [api_key])
             last_error = RuntimeError(
-                f"{exc.__class__.__name__} while downloading EODHD bulk data for {market_code}: {safe_detail}"
+                f"{exc.__class__.__name__} while downloading EODHD bulk data for "
+                f"{market_code}{f' ({trading_date})' if trading_date else ''}: {safe_detail}"
             )
             logger.warning("EODHD request failed: %s", last_error)
             if attempt < max_retries:
@@ -384,7 +387,7 @@ def fetch_bulk_last_day(
             safe_detail = sanitize_sensitive_text(str(exc), [api_key])
             last_error = RuntimeError(
                 "Unexpected error while downloading EODHD bulk data "
-                f"for {market_code}: "
+                f"for {market_code}{f' ({trading_date})' if trading_date else ''}: "
                 f"{exc.__class__.__name__}: {safe_detail}"
             )
             logger.warning("EODHD request failed: %s", last_error)
@@ -394,7 +397,9 @@ def fetch_bulk_last_day(
                 time.sleep(wait_seconds)
 
     raise RuntimeError(
-        f"Unable to download EODHD {market_code} bulk data after {max_retries} attempts."
+        "Unable to download EODHD "
+        f"{market_code}{f' ({trading_date})' if trading_date else ''} "
+        f"bulk data after {max_retries} attempts."
     ) from last_error
 
 
@@ -406,6 +411,7 @@ def build_price_rows(
 ) -> list[DailyPriceRow]:
     rows_by_ticker: dict[str, DailyPriceRow] = {}
     skipped_rows = 0
+    skipped_non_positive_close = 0
     duplicate_tickers = 0
 
     for row in raw_rows:
@@ -415,6 +421,9 @@ def build_price_rows(
 
         if not ticker or close is None:
             skipped_rows += 1
+            continue
+        if close <= 0:
+            skipped_non_positive_close += 1
             continue
 
         security_name = (row.get("name") or row.get("short_name") or ticker)
@@ -451,10 +460,12 @@ def build_price_rows(
     cleaned_rows = list(rows_by_ticker.values())
 
     logger.info(
-        "Rows prepared for SQLite [%s]. Valid unique: %s | Skipped invalid: %s | Duplicate tickers replaced: %s",
+        "Rows prepared for SQLite [%s]. Valid unique: %s | Skipped invalid: %s | "
+        "Skipped non-positive close: %s | Duplicate tickers replaced: %s",
         market.code,
         len(cleaned_rows),
         skipped_rows,
+        skipped_non_positive_close,
         duplicate_tickers,
     )
 
@@ -573,21 +584,21 @@ def compress_file(source_path: Path, zip_path: Path, logger: logging.Logger) -> 
 
 
 # ---------------------------------------------------------------------------
-# Milestone DB helpers
+# Rolling history DB helpers
 # ---------------------------------------------------------------------------
 
-def fetch_milestone_db(
+def fetch_history_db(
     db_path: Path,
-    milestone_url: str,
+    history_url: str,
     timeout_seconds: int,
     logger: logging.Logger,
 ) -> None:
-    """Download and extract milestone_prices.db.zip from GitHub Pages if available."""
-    url = milestone_url.strip()
+    """Download and extract market_history.db.zip from GitHub Pages if available."""
+    url = history_url.strip()
     if not url or db_path.exists():
         return
     try:
-        logger.info("Fetching existing milestone DB from %s", url)
+        logger.info("Fetching existing rolling history DB from %s", url)
         req = Request(url, headers={"User-Agent": USER_AGENT})
         with urlopen(req, timeout=timeout_seconds) as resp:
             data = resp.read()
@@ -596,35 +607,60 @@ def fetch_milestone_db(
                 (n for n in zf.namelist() if n.lower().endswith(".db")), None
             )
             if entry is None:
-                raise RuntimeError("No .db file found in milestone archive.")
+                raise RuntimeError("No .db file found in history archive.")
             db_path.parent.mkdir(parents=True, exist_ok=True)
             with zf.open(entry) as src, db_path.open("wb") as dst:
                 dst.write(src.read())
-        logger.info("Milestone DB fetched: %s", db_path)
+        logger.info("Rolling history DB fetched: %s", db_path)
     except Exception as exc:
         logger.warning(
-            "Could not fetch milestone DB (will start fresh): %s", exc
+            "Could not fetch rolling history DB (will start fresh): %s", exc
         )
 
 
-def ensure_milestone_schema(conn: sqlite3.Connection) -> None:
+def ensure_history_schema(conn: sqlite3.Connection) -> None:
     conn.execute(
         """
-        CREATE TABLE IF NOT EXISTS milestone_prices (
-            slot        TEXT NOT NULL,
+        CREATE TABLE IF NOT EXISTS history_prices (
             market_code TEXT NOT NULL,
             ticker      TEXT NOT NULL,
             name        TEXT NOT NULL,
             currency    TEXT NOT NULL,
             close       REAL NOT NULL,
+            volume      INTEGER NOT NULL,
+            change_percent REAL,
             as_of_date  TEXT NOT NULL,
-            PRIMARY KEY (slot, market_code, ticker)
+            PRIMARY KEY (market_code, ticker, as_of_date)
         )
+        """
+    )
+
+    existing_columns = {
+        str(row[1])
+        for row in conn.execute("PRAGMA table_info(history_prices)").fetchall()
+    }
+    if "volume" not in existing_columns:
+        conn.execute(
+            "ALTER TABLE history_prices ADD COLUMN volume INTEGER NOT NULL DEFAULT 0"
+        )
+    if "change_percent" not in existing_columns:
+        conn.execute("ALTER TABLE history_prices ADD COLUMN change_percent REAL")
+
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_history_prices_market_date
+            ON history_prices(market_code, as_of_date)
         """
     )
     conn.execute(
         """
-        CREATE TABLE IF NOT EXISTS milestone_meta (
+        CREATE INDEX IF NOT EXISTS idx_history_prices_ticker_date
+            ON history_prices(ticker, as_of_date)
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS history_meta (
             key   TEXT PRIMARY KEY,
             value TEXT NOT NULL
         )
@@ -632,45 +668,248 @@ def ensure_milestone_schema(conn: sqlite3.Connection) -> None:
     )
 
 
-def get_milestone_meta(conn: sqlite3.Connection) -> dict[str, str]:
-    rows = conn.execute("SELECT key, value FROM milestone_meta").fetchall()
-    return {k: v for k, v in rows}
-
-
-def load_milestone_prices(
-    conn: sqlite3.Connection, slot: str
-) -> dict[tuple[str, str], tuple[float, str, str, str]]:
-    """Return {(market_code, ticker): (close, currency, name, as_of_date)} for a slot."""
-    cursor = conn.execute(
-        "SELECT market_code, ticker, close, currency, name, as_of_date FROM milestone_prices WHERE slot = ?",
-        (slot,),
-    )
-    return {(r[0], r[1]): (float(r[2]), r[3], r[4], r[5]) for r in cursor}
-
-
-def replace_milestone_slot(
-    conn: sqlite3.Connection,
-    slot: str,
-    rows: list[DailyPriceRow],
-    today: str,
-    logger: logging.Logger,
-) -> None:
-    conn.execute("DELETE FROM milestone_prices WHERE slot = ?", (slot,))
+def upsert_history_rows(conn: sqlite3.Connection, rows: list[DailyPriceRow]) -> None:
+    if not rows:
+        return
     conn.executemany(
         """
-        INSERT INTO milestone_prices (slot, market_code, ticker, name, currency, close, as_of_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO history_prices (
+            market_code,
+            ticker,
+            name,
+            currency,
+            close,
+            volume,
+            change_percent,
+            as_of_date
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(market_code, ticker, as_of_date)
+        DO UPDATE SET
+            name = excluded.name,
+            currency = excluded.currency,
+            close = excluded.close,
+            volume = excluded.volume,
+            change_percent = excluded.change_percent
         """,
         [
-            (slot, r.market_code, r.ticker, r.name, r.currency, r.close, r.as_of_date)
-            for r in rows
+            (
+                row.market_code,
+                row.ticker,
+                row.name,
+                row.currency,
+                row.close,
+                row.volume,
+                row.change_percent,
+                row.as_of_date,
+            )
+            for row in rows
         ],
     )
-    conn.execute(
-        "INSERT OR REPLACE INTO milestone_meta(key, value) VALUES (?, ?)",
-        (f"{slot}_date", today),
+
+
+def has_history_market_date(
+    conn: sqlite3.Connection,
+    market_code: str,
+    as_of_date: str,
+) -> bool:
+    row = conn.execute(
+        """
+        SELECT 1
+        FROM history_prices
+        WHERE market_code = ? AND as_of_date = ?
+        LIMIT 1
+        """,
+        (market_code, as_of_date),
+    ).fetchone()
+    return row is not None
+
+
+def find_history_anchor_date(
+    conn: sqlite3.Connection,
+    market_code: str,
+    as_of_date: str,
+    timeframe_key: str,
+    backtrack_days: int,
+) -> Optional[str]:
+    lookback_days = TIMEFRAME_LOOKBACK_DAYS.get(timeframe_key)
+    if lookback_days is None:
+        return None
+
+    target_date = iso_days_ago(as_of_date, lookback_days)
+    lower_bound = iso_days_ago(target_date, max(backtrack_days, 0))
+
+    row = conn.execute(
+        """
+        SELECT MAX(as_of_date)
+        FROM history_prices
+        WHERE market_code = ?
+          AND as_of_date < ?
+          AND as_of_date <= ?
+          AND as_of_date >= ?
+        """,
+        (market_code, as_of_date, target_date, lower_bound),
+    ).fetchone()
+
+    if row is None or row[0] is None:
+        return None
+    return str(row[0])
+
+
+def bootstrap_missing_history_anchors(
+    api_key: str,
+    conn: sqlite3.Connection,
+    markets: list[MarketDefinition],
+    rows_by_market: dict[str, list[DailyPriceRow]],
+    timeout_seconds: int,
+    max_retries: int,
+    backtrack_days: int,
+    logger: logging.Logger,
+) -> None:
+    for market in markets:
+        market_rows = rows_by_market.get(market.code, [])
+        if not market_rows:
+            continue
+
+        as_of_date = Counter(row.as_of_date for row in market_rows).most_common(1)[0][0]
+
+        for timeframe_key, lookback_days in TIMEFRAME_LOOKBACK_DAYS.items():
+            anchor_date = find_history_anchor_date(
+                conn=conn,
+                market_code=market.code,
+                as_of_date=as_of_date,
+                timeframe_key=timeframe_key,
+                backtrack_days=backtrack_days,
+            )
+            if anchor_date:
+                logger.info(
+                    "History anchor available [%s %s] at %s",
+                    market.code,
+                    timeframe_key,
+                    anchor_date,
+                )
+                continue
+
+            target_date = iso_days_ago(as_of_date, lookback_days)
+            logger.info(
+                "Bootstrapping history anchor [%s %s] around target=%s",
+                market.code,
+                timeframe_key,
+                target_date,
+            )
+
+            anchor_found = False
+            for offset in range(max(backtrack_days, 0) + 1):
+                candidate_date = iso_days_ago(target_date, offset)
+                if candidate_date >= as_of_date:
+                    continue
+
+                if has_history_market_date(conn, market.code, candidate_date):
+                    logger.info(
+                        "History anchor resolved by existing market date [%s] %s",
+                        market.code,
+                        candidate_date,
+                    )
+                    anchor_found = True
+                    break
+
+                try:
+                    raw_data = fetch_bulk_last_day(
+                        api_key=api_key,
+                        market_code=market.code,
+                        timeout_seconds=timeout_seconds,
+                        max_retries=max_retries,
+                        logger=logger,
+                        trading_date=candidate_date,
+                    )
+                    bootstrap_rows = build_price_rows(
+                        market=market,
+                        raw_rows=raw_data,
+                        fallback_date=candidate_date,
+                        logger=logger,
+                    )
+                    upsert_history_rows(conn, bootstrap_rows)
+                    conn.commit()
+                    logger.info(
+                        "History bootstrap stored %d rows for %s on %s",
+                        len(bootstrap_rows),
+                        market.code,
+                        candidate_date,
+                    )
+                    anchor_found = True
+                    break
+                except Exception as exc:
+                    safe_detail = sanitize_sensitive_text(str(exc), [api_key])
+                    logger.warning(
+                        "History bootstrap fetch failed [%s %s %s]: %s",
+                        market.code,
+                        timeframe_key,
+                        candidate_date,
+                        safe_detail,
+                    )
+
+            if not anchor_found:
+                logger.warning(
+                    "Unable to bootstrap history anchor for %s [%s] after %d days backtrack.",
+                    market.code,
+                    timeframe_key,
+                    backtrack_days,
+                )
+
+
+def prune_history_rows(
+    conn: sqlite3.Connection,
+    reference_date: str,
+    backtrack_days: int,
+    logger: logging.Logger,
+) -> None:
+    retention_days = max(TIMEFRAME_LOOKBACK_DAYS.values()) + max(backtrack_days, 0) + 2
+    cutoff_date = iso_days_ago(reference_date, retention_days)
+    deleted_rows = conn.execute(
+        "DELETE FROM history_prices WHERE as_of_date < ?",
+        (cutoff_date,),
+    ).rowcount
+    logger.info(
+        "History retention applied. Cutoff=%s (retention=%d days). Rows removed: %s",
+        cutoff_date,
+        retention_days,
+        deleted_rows,
     )
-    logger.info("Milestone slot '%s' updated with %d rows (%s)", slot, len(rows), today)
+
+
+def load_reference_prices_for_timeframe(
+    conn: sqlite3.Connection,
+    market_code: str,
+    as_of_date: str,
+    timeframe_key: str,
+    backtrack_days: int,
+) -> dict[str, tuple[float, str]]:
+    lookback_days = TIMEFRAME_LOOKBACK_DAYS[timeframe_key]
+    target_date = iso_days_ago(as_of_date, lookback_days)
+    lower_bound = iso_days_ago(target_date, max(backtrack_days, 0))
+
+    cursor = conn.execute(
+        """
+        WITH latest_reference AS (
+            SELECT ticker, MAX(as_of_date) AS reference_date
+            FROM history_prices
+            WHERE market_code = ?
+              AND as_of_date < ?
+              AND as_of_date <= ?
+              AND as_of_date >= ?
+            GROUP BY ticker
+        )
+        SELECT h.ticker, h.close, h.as_of_date
+        FROM history_prices h
+        INNER JOIN latest_reference lr
+            ON lr.ticker = h.ticker
+           AND lr.reference_date = h.as_of_date
+        WHERE h.market_code = ?
+        """,
+        (market_code, as_of_date, target_date, lower_bound, market_code),
+    )
+
+    return {str(row[0]): (float(row[1]), str(row[2])) for row in cursor}
 
 
 def safe_percent_change(current: float, reference: float) -> Optional[float]:
@@ -702,107 +941,109 @@ def build_top_movers_payload(
     markets: list[MarketDefinition],
     top_limit: int,
     min_volume: int,
-    milestone_db_path: Path,
+    history_db_path: Path,
+    history_backtrack_days: int,
     logger: logging.Logger,
 ) -> dict[str, Any]:
-    """Compute top movers for all markets using milestone reference prices."""
+    """Compute top movers for all markets using rolling history references."""
     rows_by_market: dict[str, list[DailyPriceRow]] = {}
     for row in rows:
         rows_by_market.setdefault(row.market_code, []).append(row)
 
-    # Load milestone reference prices for all slots.
-    with sqlite3.connect(milestone_db_path) as conn:
-        ensure_milestone_schema(conn)
-        meta = get_milestone_meta(conn)
-        slot_prices: dict[str, dict[tuple[str, str], tuple[float, str, str, str]]] = {
-            slot: load_milestone_prices(conn, slot) for slot in MILESTONE_SLOTS
-        }
-
     markets_payload: list[dict[str, Any]] = []
 
-    for market in markets:
-        market_rows = rows_by_market.get(market.code, [])
-        if not market_rows:
-            continue
+    with sqlite3.connect(history_db_path) as conn:
+        ensure_history_schema(conn)
 
-        as_of_date = Counter(
-            row.as_of_date for row in market_rows
-        ).most_common(1)[0][0]
+        for market in markets:
+            market_rows = rows_by_market.get(market.code, [])
+            if not market_rows:
+                continue
 
-        # Slot → timeframe label mapping.
-        slot_to_tf: dict[str, str] = {"7d": "5D", "30d": "1M", "365d": "1Y"}
+            as_of_date = Counter(
+                row.as_of_date for row in market_rows
+            ).most_common(1)[0][0]
 
-        ranked: dict[str, list[tuple[DailyPriceRow, float]]] = {
-            tf: [] for tf in TIMEFRAME_KEYS
-        }
+            ranked: dict[str, list[tuple[DailyPriceRow, float]]] = {
+                tf: [] for tf in TIMEFRAME_KEYS
+            }
 
-        for row in market_rows:
-            # 1D: from EODHD change_percent field.
-            if row.change_percent is not None and math.isfinite(row.change_percent):
-                ranked["1D"].append((row, row.change_percent))
+            for row in market_rows:
+                # 1D from the current EODHD payload.
+                if row.change_percent is not None and math.isfinite(row.change_percent):
+                    ranked["1D"].append((row, row.change_percent))
 
-            # Multi-day: compare to milestone slot.
-            for slot, tf_label in slot_to_tf.items():
-                slot_date = meta.get(f"{slot}_date", "")
-                if not slot_date:
-                    # Slot not initialised yet.
-                    continue
-                ref = slot_prices[slot].get((row.market_code, row.ticker))
-                if ref is None:
-                    continue
+            for timeframe_key in TIMEFRAME_LOOKBACK_DAYS:
+                reference_by_ticker = load_reference_prices_for_timeframe(
+                    conn=conn,
+                    market_code=market.code,
+                    as_of_date=as_of_date,
+                    timeframe_key=timeframe_key,
+                    backtrack_days=history_backtrack_days,
+                )
 
-                ref_close, _, _, ref_as_of_date = ref
-                # Skip non-older references; prevents zeroed movers on re-runs
-                # when milestone rows and current rows share the same market date.
-                if ref_as_of_date:
-                    if ref_as_of_date >= row.as_of_date:
+                if not reference_by_ticker:
+                    logger.warning(
+                        "No rolling-history references found [%s %s] as_of=%s",
+                        market.code,
+                        timeframe_key,
+                        as_of_date,
+                    )
+
+                for row in market_rows:
+                    reference = reference_by_ticker.get(row.ticker)
+                    if reference is None:
                         continue
-                elif slot_date == as_of_date:
-                    continue
 
-                pct = safe_percent_change(row.close, ref_close)
-                if pct is not None:
-                    ranked[tf_label].append((row, pct))
+                    reference_close, reference_date = reference
+                    if reference_date >= row.as_of_date:
+                        continue
 
-        timeframes_payload: dict[str, Any] = {}
-        for tf in TIMEFRAME_KEYS:
-            pool = ranked[tf]
-            volume_filtered_pool = [item for item in pool if item[0].volume >= min_volume]
-            positive_pool = [item for item in volume_filtered_pool if item[1] > 0]
-            negative_pool = [item for item in volume_filtered_pool if item[1] < 0]
-            gainers = sorted(positive_pool, key=lambda x: x[1], reverse=True)[:top_limit]
-            losers = sorted(negative_pool, key=lambda x: x[1])[:top_limit]
-            timeframes_payload[tf] = {
-                "eligible_symbols": len(positive_pool) + len(negative_pool),
-                "eligible_before_volume_filter": len(pool),
-                "eligible_after_volume_filter": len(volume_filtered_pool),
-                "gainers": [row_to_mover_json(r, c) for r, c in gainers],
-                "losers": [row_to_mover_json(r, c) for r, c in losers],
-            }
+                    pct = safe_percent_change(row.close, reference_close)
+                    if pct is not None:
+                        ranked[timeframe_key].append((row, pct))
 
-        logger.info(
-            "Top movers [%s] min_volume>=%d | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after/before)",
-            market.code,
-            min_volume,
-            timeframes_payload["1D"]["eligible_after_volume_filter"],
-            timeframes_payload["1D"]["eligible_before_volume_filter"],
-            timeframes_payload["5D"]["eligible_after_volume_filter"],
-            timeframes_payload["5D"]["eligible_before_volume_filter"],
-            timeframes_payload["1M"]["eligible_after_volume_filter"],
-            timeframes_payload["1M"]["eligible_before_volume_filter"],
-            timeframes_payload["1Y"]["eligible_after_volume_filter"],
-            timeframes_payload["1Y"]["eligible_before_volume_filter"],
-        )
+            timeframes_payload: dict[str, Any] = {}
+            for tf in TIMEFRAME_KEYS:
+                pool = ranked[tf]
+                volume_filtered_pool = [
+                    item for item in pool if item[0].volume >= min_volume
+                ]
+                positive_pool = [item for item in volume_filtered_pool if item[1] > 0]
+                negative_pool = [item for item in volume_filtered_pool if item[1] < 0]
+                gainers = sorted(positive_pool, key=lambda x: x[1], reverse=True)[:top_limit]
+                losers = sorted(negative_pool, key=lambda x: x[1])[:top_limit]
+                timeframes_payload[tf] = {
+                    "eligible_symbols": len(positive_pool) + len(negative_pool),
+                    "eligible_before_volume_filter": len(pool),
+                    "eligible_after_volume_filter": len(volume_filtered_pool),
+                    "gainers": [row_to_mover_json(r, c) for r, c in gainers],
+                    "losers": [row_to_mover_json(r, c) for r, c in losers],
+                }
 
-        markets_payload.append(
-            {
-                "code": market.code,
-                "name": market.name,
-                "currency": market.default_currency,
-                "as_of_date": as_of_date,
-                "timeframes": timeframes_payload,
-            }
-        )
+            logger.info(
+                "Top movers [%s] min_volume>=%d | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after/before)",
+                market.code,
+                min_volume,
+                timeframes_payload["1D"]["eligible_after_volume_filter"],
+                timeframes_payload["1D"]["eligible_before_volume_filter"],
+                timeframes_payload["5D"]["eligible_after_volume_filter"],
+                timeframes_payload["5D"]["eligible_before_volume_filter"],
+                timeframes_payload["1M"]["eligible_after_volume_filter"],
+                timeframes_payload["1M"]["eligible_before_volume_filter"],
+                timeframes_payload["1Y"]["eligible_after_volume_filter"],
+                timeframes_payload["1Y"]["eligible_before_volume_filter"],
+            )
+
+            markets_payload.append(
+                {
+                    "code": market.code,
+                    "name": market.name,
+                    "currency": market.default_currency,
+                    "as_of_date": as_of_date,
+                    "timeframes": timeframes_payload,
+                }
+            )
 
     payload: dict[str, Any] = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -911,7 +1152,7 @@ def main() -> int:
 
     logger = configure_logger(log_path)
     logger.info(
-        "Market snapshot workflow started (milestone mode). Markets: %s",
+        "Market snapshot workflow started (rolling history mode). Markets: %s",
         ", ".join(m.code for m in markets),
     )
 
@@ -950,70 +1191,80 @@ def main() -> int:
         if failed_markets:
             logger.warning("Markets skipped: %s", ", ".join(failed_markets))
 
+        rows_by_market: dict[str, list[DailyPriceRow]] = {}
+        for row in rows:
+            rows_by_market.setdefault(row.market_code, []).append(row)
+
+        latest_reference_date = max(row.as_of_date for row in rows)
+
         # --- 2. Prepare paths ---
         db_path = output_dir / "daily_market.db"
         db_zip_path = output_dir / "daily_market.db.zip"
-        milestone_db_path = output_dir / args.milestone_db_name
-        milestone_zip_path = output_dir / args.milestone_db_zip_name
+        history_db_path = output_dir / args.history_db_name
+        history_zip_path = output_dir / args.history_db_zip_name
         top_movers_path = output_dir / "top_movers.json"
         prices_index_path = output_dir / "prices_index.json"
 
-        # --- 3. Download existing milestone DB from GitHub Pages (if configured) ---
-        fetch_milestone_db(
-            db_path=milestone_db_path,
-            milestone_url=args.milestone_db_url,
+        # --- 3. Download existing rolling-history DB from GitHub Pages (if configured) ---
+        fetch_history_db(
+            db_path=history_db_path,
+            history_url=args.history_db_url,
             timeout_seconds=args.timeout_seconds,
             logger=logger,
         )
 
-        # --- 4. Compute top movers using milestone reference prices ---
+        # --- 4. Upsert latest market day and bootstrap missing anchors ---
+        with sqlite3.connect(history_db_path) as conn:
+            ensure_history_schema(conn)
+            upsert_history_rows(conn, rows)
+            conn.commit()
+
+            bootstrap_missing_history_anchors(
+                api_key=api_key,
+                conn=conn,
+                markets=markets,
+                rows_by_market=rows_by_market,
+                timeout_seconds=args.timeout_seconds,
+                max_retries=args.max_retries,
+                backtrack_days=args.history_bootstrap_backtrack_days,
+                logger=logger,
+            )
+
+            prune_history_rows(
+                conn=conn,
+                reference_date=latest_reference_date,
+                backtrack_days=args.history_bootstrap_backtrack_days,
+                logger=logger,
+            )
+
+            conn.execute(
+                "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
+                ("last_run_utc", datetime.now(timezone.utc).isoformat()),
+            )
+            conn.execute(
+                "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
+                ("last_reference_date", latest_reference_date),
+            )
+            conn.commit()
+
+        # --- 5. Compute top movers using rolling-history reference prices ---
         payload = build_top_movers_payload(
             rows=rows,
             markets=markets,
             top_limit=args.top_limit,
             min_volume=args.min_volume,
-            milestone_db_path=milestone_db_path,
+            history_db_path=history_db_path,
+            history_backtrack_days=args.history_bootstrap_backtrack_days,
             logger=logger,
         )
         write_json(top_movers_path, payload, logger)
-
-        # --- 5. Update milestone slots (AFTER computing movers) ---
-        with sqlite3.connect(milestone_db_path) as conn:
-            ensure_milestone_schema(conn)
-            meta = get_milestone_meta(conn)
-            for slot, target_days in MILESTONE_SLOTS.items():
-                slot_date = meta.get(f"{slot}_date", "")
-                needs_update = (
-                    not slot_date
-                    or (
-                        datetime.strptime(today_utc, "%Y-%m-%d")
-                        - datetime.strptime(slot_date, "%Y-%m-%d")
-                    ).days
-                    >= target_days
-                )
-                if needs_update:
-                    replace_milestone_slot(conn, slot, rows, today_utc, logger)
-                else:
-                    logger.info(
-                        "Milestone slot '%s' is %s days old — no update needed.",
-                        slot,
-                        (
-                            datetime.strptime(today_utc, "%Y-%m-%d")
-                            - datetime.strptime(slot_date, "%Y-%m-%d")
-                        ).days,
-                    )
-            conn.execute(
-                "INSERT OR REPLACE INTO milestone_meta(key, value) VALUES (?, ?)",
-                ("last_run_utc", datetime.now(timezone.utc).isoformat()),
-            )
-            conn.commit()
 
         # --- 6. Write today's daily snapshot DB (for reference / debugging) ---
         write_sqlite_snapshot(db_path=db_path, rows=rows, markets=markets, logger=logger)
         compress_file(source_path=db_path, zip_path=db_zip_path, logger=logger)
 
-        # --- 7. Compress updated milestone DB for GitHub Pages upload ---
-        compress_file(source_path=milestone_db_path, zip_path=milestone_zip_path, logger=logger)
+        # --- 7. Compress updated history DB for GitHub Pages upload ---
+        compress_file(source_path=history_db_path, zip_path=history_zip_path, logger=logger)
 
         # --- 8. Write prices_index.json ---
         prices_index_payload = build_prices_index_payload(rows=rows, markets=markets)
@@ -1021,10 +1272,17 @@ def main() -> int:
 
         # --- 9. Cleanup uncompressed files ---
         if not args.keep_uncompressed_db:
-            for p in (db_path, milestone_db_path):
+            for p in (db_path, history_db_path):
                 if p.exists():
-                    p.unlink()
-                    logger.info("Removed uncompressed file: %s", p)
+                    try:
+                        p.unlink()
+                        logger.info("Removed uncompressed file: %s", p)
+                    except OSError as exc:
+                        logger.warning(
+                            "Could not remove uncompressed file %s (continuing): %s",
+                            p,
+                            exc,
+                        )
 
         logger.info("Workflow completed successfully.")
         return 0

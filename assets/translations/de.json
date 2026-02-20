@@ -515,7 +515,7 @@
       "data_pipeline": {
         "title": "Datenpipeline (Technisch)",
         "content": "Technischer Ueberblick, wie Markt-Snapshots erzeugt und bereitgestellt werden.",
-        "details": "**Automations-Stack**\n- GitHub-Workflow laeuft geplant, bei Push auf main und manuell\n- Workflow injiziert Secret EODHD_API_KEY\n- Python-Skript berechnet Mover und erzeugt Snapshot-Artefakte\n\n**Artefakte**\n- Oeffentliche JSON/ZIP-Daten fuer die App\n- Historische Milestone-Datenbank fuer Multi-Perioden-Rankings\n- Build-Logs als Workflow-Artefakte\n\n**Warum diese Architektur**\n- Schneller App-Start\n- Kein API-Key-Zwang fuer oeffentliche Mover\n- Rechenlast in CI statt auf dem Geraet"
+        "details": "**Automations-Stack**\n- GitHub-Workflow laeuft geplant, bei Push auf main und manuell\n- Workflow injiziert Secret EODHD_API_KEY\n- Python-Skript berechnet Mover und erzeugt Snapshot-Artefakte\n\n**Artefakte**\n- Oeffentliche JSON/ZIP-Daten fuer die App\n- Rollierende 365-Tage-Historien-Datenbank fuer Multi-Perioden-Rankings\n- Build-Logs als Workflow-Artefakte\n\n**Warum diese Architektur**\n- Schneller App-Start\n- Kein API-Key-Zwang fuer oeffentliche Mover\n- Rechenlast in CI statt auf dem Geraet"
       },
       "privacy_security": {
         "title": "Datenschutz und Sicherheit",

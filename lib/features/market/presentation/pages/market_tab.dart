@@ -542,6 +542,40 @@ class _MarketTabState extends State<MarketTab>
     return translated == key ? normalized : translated;
   }
 
+  String _normalizeTickerForQuotes(String symbol) {
+    final normalized = _snapshotService.normalizeTicker(symbol);
+    if (normalized.isNotEmpty) {
+      return normalized;
+    }
+    return symbol.trim().toUpperCase().replaceAll(' ', '');
+  }
+
+  bool _shouldUseCompactTimeframeLabels(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final scaledWidth =
+        mediaQuery.size.width / mediaQuery.textScaler.scale(1.0);
+    return scaledWidth < 920;
+  }
+
+  String _timeframeTabLabel(String timeframeKey, {required bool compact}) {
+    if (compact) {
+      return timeframeKey;
+    }
+
+    switch (timeframeKey) {
+      case _dailyTimeframeKey:
+        return 'market.timeframes.today'.tr();
+      case _weeklyTimeframeKey:
+        return 'market.timeframes.week'.tr();
+      case _monthlyTimeframeKey:
+        return 'market.timeframes.month'.tr();
+      case _yearlyTimeframeKey:
+        return 'market.timeframes.year'.tr();
+      default:
+        return timeframeKey;
+    }
+  }
+
   List<MarketMover> _mapSnapshotMovers(
     dynamic payload, {
     required bool isGainer,
@@ -1576,9 +1610,13 @@ class _MarketTabState extends State<MarketTab>
       for (var index = 0; index < entries.length; index++) {
         final symbol = entries[index].key;
         final position = entries[index].value;
+        final requestSymbol = _normalizeTickerForQuotes(symbol);
         final eodhdMarket = _eodhdMarketForExchange(position.exchange) ?? 'US';
         try {
-          final data = await _eodhdService.fetchBestQuote(symbol, eodhdMarket);
+          final data = await _eodhdService.fetchBestQuote(
+            requestSymbol,
+            eodhdMarket,
+          );
           final rawPrice =
               data?['close'] ?? data?['last'] ?? data?['adjusted_close'];
           final price = _parseFmpDouble(rawPrice);
@@ -1613,8 +1651,9 @@ class _MarketTabState extends State<MarketTab>
       for (var index = 0; index < entries.length; index++) {
         final symbol = entries[index].key;
         final position = entries[index].value;
+        final requestSymbol = _normalizeTickerForQuotes(symbol);
         try {
-          final quotePayload = await _fmpService.fetchQuoteShort(symbol);
+          final quotePayload = await _fmpService.fetchQuoteShort(requestSymbol);
           final price = _parseFmpDouble(quotePayload?['price']);
           quotes.add(PositionMarketPrice(
             symbol: symbol,
@@ -1648,10 +1687,11 @@ class _MarketTabState extends State<MarketTab>
       for (final entry in entries) {
         final symbol = entry.key;
         final position = entry.value;
+        final requestSymbol = _normalizeTickerForQuotes(symbol);
         final eodhdMarket = _eodhdMarketForExchange(position.exchange);
         final snapshotEntry = _snapshotService.lookupPrice(
           pricesIndex,
-          ticker: symbol,
+          ticker: requestSymbol,
           marketCode: eodhdMarket,
         );
         double price = 0;
@@ -1913,6 +1953,7 @@ class _MarketTabState extends State<MarketTab>
     }
 
     final theme = Theme.of(context);
+    final compactTimeframeLabels = _shouldUseCompactTimeframeLabels(context);
     return Column(
       children: [
         Material(
@@ -1928,12 +1969,54 @@ class _MarketTabState extends State<MarketTab>
               labelStyle: theme.textTheme.titleSmall?.copyWith(height: 1.2),
               unselectedLabelStyle:
                   theme.textTheme.titleSmall?.copyWith(height: 1.2),
-              labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+              labelPadding: EdgeInsets.symmetric(
+                horizontal: compactTimeframeLabels ? 12 : 16,
+              ),
               tabs: [
-                Tab(text: 'market.timeframes.today'.tr()),
-                Tab(text: 'market.timeframes.week'.tr()),
-                Tab(text: 'market.timeframes.month'.tr()),
-                Tab(text: 'market.timeframes.year'.tr()),
+                Tab(
+                  child: Text(
+                    _timeframeTabLabel(
+                      _dailyTimeframeKey,
+                      compact: compactTimeframeLabels,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    _timeframeTabLabel(
+                      _weeklyTimeframeKey,
+                      compact: compactTimeframeLabels,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    _timeframeTabLabel(
+                      _monthlyTimeframeKey,
+                      compact: compactTimeframeLabels,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    _timeframeTabLabel(
+                      _yearlyTimeframeKey,
+                      compact: compactTimeframeLabels,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                  ),
+                ),
               ],
             ),
           ),

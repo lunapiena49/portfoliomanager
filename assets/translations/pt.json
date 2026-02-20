@@ -515,7 +515,7 @@
       "data_pipeline": {
         "title": "Pipeline de Dados (Tecnico)",
         "content": "Visao tecnica de como os snapshots de mercado sao construidos e publicados.",
-        "details": "**Stack de automacao**\n- Workflow no GitHub Actions por agenda, push na main e disparo manual\n- Workflow injeta o secret EODHD_API_KEY\n- Script Python calcula movers e gera artefatos de snapshot\n\n**Artefatos**\n- Dados publicos JSON/zip consumidos pelo app\n- Base historica milestone para ranking de multiplos periodos\n- Logs de build enviados como artefatos\n\n**Por que essa arquitetura**\n- Mantem inicializacao do app rapida\n- Remove exigencia de chave API para movers publicos\n- Centraliza calculo pesado em CI em vez do dispositivo do usuario"
+        "details": "**Stack de automacao**\n- Workflow no GitHub Actions por agenda, push na main e disparo manual\n- Workflow injeta o secret EODHD_API_KEY\n- Script Python calcula movers e gera artefatos de snapshot\n\n**Artefatos**\n- Dados publicos JSON/zip consumidos pelo app\n- Base historica rolling de 365 dias para ranking de multiplos periodos\n- Logs de build enviados como artefatos\n\n**Por que essa arquitetura**\n- Mantem inicializacao do app rapida\n- Remove exigencia de chave API para movers publicos\n- Centraliza calculo pesado em CI em vez do dispositivo do usuario"
       },
       "privacy_security": {
         "title": "Privacidade e Seguranca",

@@ -14,7 +14,7 @@
 
 .EXAMPLE
     .\push_to_github.ps1
-    .\push_to_github.ps1 -Message "feat: aggiorno pipeline milestone"
+    .\push_to_github.ps1 -Message "feat: aggiorno pipeline rolling history"
     .\push_to_github.ps1 -Message "fix: correzione" -Branch main
 #>
 param(

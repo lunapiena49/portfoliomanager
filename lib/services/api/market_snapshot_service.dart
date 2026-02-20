@@ -6,6 +6,35 @@ import '../../core/constants/app_constants.dart';
 class MarketSnapshotService {
   final Dio _dio;
 
+  static const Set<String> _exchangeSuffixes = <String>{
+    'US',
+    'USA',
+    'NASDAQ',
+    'NYSE',
+    'AMEX',
+    'BATS',
+    'OTC',
+    'OTCBB',
+    'LSE',
+    'LON',
+    'XETRA',
+    'FRA',
+    'FSE',
+    'PA',
+    'EPA',
+    'EURONEXT',
+    'TO',
+    'TSX',
+    'TSXV',
+    'HK',
+    'HKG',
+    'AU',
+    'AX',
+    'ASX',
+    'NSE',
+    'BSE',
+  };
+
   /// In-memory cache for prices_index to avoid repeated downloads in a session.
   Map<String, dynamic>? _cachedPricesIndex;
   DateTime? _pricesIndexCachedAt;
@@ -35,7 +64,8 @@ class MarketSnapshotService {
   ///
   /// Returns a map keyed by ``MARKET:TICKER`` and ``TICKER`` (flat) with
   /// compact price entries: {c: close, cu: currency, m: market, d: date}.
-  Future<Map<String, dynamic>?> fetchPricesIndex({bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>?> fetchPricesIndex(
+      {bool forceRefresh = false}) async {
     if (!isConfigured) return null;
 
     final now = DateTime.now();
@@ -66,19 +96,89 @@ class MarketSnapshotService {
   ///
   /// Lookup order: ``{MARKET}:{TICKER}`` → flat ``{TICKER}``.
   /// Returns ``{c, cu, m, d}`` or null if not found.
+  ///
+  /// It also normalizes common broker symbol formats (e.g. ``AAPL.US``,
+  /// ``BRK.B``) to reduce false "price not found" cases.
   Map<String, dynamic>? lookupPrice(
     Map<String, dynamic> pricesIndex, {
     required String ticker,
     String? marketCode,
   }) {
-    final t = ticker.trim().toUpperCase();
-    if (marketCode != null && marketCode.trim().isNotEmpty) {
-      final mk = '${marketCode.trim().toUpperCase()}:$t';
-      final entry = pricesIndex[mk];
-      if (entry is Map) return Map<String, dynamic>.from(entry);
+    final candidates = _buildTickerCandidates(ticker);
+    if (candidates.isEmpty) {
+      return null;
     }
-    final flat = pricesIndex[t];
-    if (flat is Map) return Map<String, dynamic>.from(flat);
+
+    final normalizedMarket = marketCode?.trim().toUpperCase();
+    if (normalizedMarket != null && normalizedMarket.isNotEmpty) {
+      for (final candidate in candidates) {
+        final mk = '$normalizedMarket:$candidate';
+        final entry = pricesIndex[mk];
+        if (entry is Map) return Map<String, dynamic>.from(entry);
+      }
+    }
+
+    for (final candidate in candidates) {
+      final flat = pricesIndex[candidate];
+      if (flat is Map) return Map<String, dynamic>.from(flat);
+    }
+
+    return null;
+  }
+
+  /// Normalizes a symbol used by broker imports/API inputs into snapshot format.
+  String normalizeTicker(String ticker) {
+    final candidates = _buildTickerCandidates(ticker);
+    return candidates.isEmpty ? '' : candidates.first;
+  }
+
+  List<String> _buildTickerCandidates(String ticker) {
+    final raw = ticker.trim().toUpperCase().replaceAll(' ', '');
+    if (raw.isEmpty) {
+      return const <String>[];
+    }
+
+    final candidates = <String>{raw};
+
+    final stripped = _stripExchangeSuffix(raw);
+    if (stripped != null && stripped.isNotEmpty) {
+      candidates.add(stripped);
+    }
+
+    final toInspect = <String>{...candidates};
+    for (final value in toInspect) {
+      final classMatch =
+          RegExp(r'^([A-Z0-9]+)[./-]([A-Z0-9]{1,2})$').firstMatch(value);
+      if (classMatch != null) {
+        final base = classMatch.group(1)!;
+        final shareClass = classMatch.group(2)!;
+        candidates.add('$base-$shareClass');
+        candidates.add('$base.$shareClass');
+        candidates.add('$base/$shareClass');
+      }
+
+      if (value.contains('.')) {
+        candidates.add(value.replaceAll('.', '-'));
+      }
+      if (value.contains('/')) {
+        candidates.add(value.replaceAll('/', '-'));
+      }
+    }
+
+    return candidates.toList(growable: false);
+  }
+
+  String? _stripExchangeSuffix(String ticker) {
+    for (final separator in const ['.', ':', '/', '-']) {
+      final idx = ticker.lastIndexOf(separator);
+      if (idx <= 0 || idx >= ticker.length - 1) {
+        continue;
+      }
+      final suffix = ticker.substring(idx + 1);
+      if (_exchangeSuffixes.contains(suffix)) {
+        return ticker.substring(0, idx);
+      }
+    }
     return null;
   }
 

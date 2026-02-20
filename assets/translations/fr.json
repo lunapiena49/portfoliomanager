@@ -515,7 +515,7 @@
       "data_pipeline": {
         "title": "Pipeline de Donnees (Technique)",
         "content": "Vue technique de la construction et de la publication des snapshots de marche.",
-        "details": "**Pile d'automatisation**\n- Workflow GitHub Actions sur planning, push main et declenchement manuel\n- Injection du secret EODHD_API_KEY\n- Script Python qui calcule les movers et produit les artefacts snapshot\n\n**Artefacts**\n- Donnees publiques JSON/zip consommees par l'app\n- Base milestone historique pour classements multi-periodes\n- Logs de build publies en artefacts workflow\n\n**Pourquoi cette architecture**\n- Demarrage app plus rapide\n- Pas de cle API obligatoire pour les movers publics\n- Calcul lourd centralise en CI plutot que sur l'appareil"
+        "details": "**Pile d'automatisation**\n- Workflow GitHub Actions sur planning, push main et declenchement manuel\n- Injection du secret EODHD_API_KEY\n- Script Python qui calcule les movers et produit les artefacts snapshot\n\n**Artefacts**\n- Donnees publiques JSON/zip consommees par l'app\n- Base historique rolling sur 365 jours pour classements multi-periodes\n- Logs de build publies en artefacts workflow\n\n**Pourquoi cette architecture**\n- Demarrage app plus rapide\n- Pas de cle API obligatoire pour les movers publics\n- Calcul lourd centralise en CI plutot que sur l'appareil"
       },
       "privacy_security": {
         "title": "Confidentialite et Securite",
