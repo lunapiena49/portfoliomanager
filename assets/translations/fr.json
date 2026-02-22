@@ -306,8 +306,9 @@
     "title": "Apercu du Marche",
     "top_gainers": "Meilleures Hausses",
     "top_losers": "Pires Baisses",
-    "mover_volume_filter": "Les top movers incluent uniquement les actions avec volume >= {volume}",
+    "mover_filters": "Les top movers incluent uniquement les actions avec volume >= {volume} et capitalisation >= {marketCap}",
     "mover_volume": "Volume : {volume}",
+    "mover_market_cap": "Capitalisation : {marketCap}",
     "calendar": "Calendrier Economique",
     "news": "Actualites du Marche",
     "refresh": "Actualiser",
@@ -343,9 +344,9 @@
     },
     "timeframes": {
       "today": "Aujourd'hui",
-      "week": "Cette Semaine",
-      "month": "Ce Mois",
-      "year": "365 derniers jours"
+      "week": "5 Jours",
+      "month": "1 Mois",
+      "year": "1 An"
     },
     "markets": {
       "us": "Etats-Unis",

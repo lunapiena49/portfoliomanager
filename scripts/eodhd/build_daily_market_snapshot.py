@@ -30,7 +30,9 @@ from urllib.request import Request, urlopen
 BULK_LAST_DAY_URL_TEMPLATE = "https://eodhd.com/api/eod-bulk-last-day/{market}"
 USER_AGENT = "portfolio-manager-market-pipeline/1.0"
 TIMEFRAME_KEYS = ("1D", "5D", "1M", "1Y")
-DEFAULT_MIN_VOLUME = 1_000_000
+DEFAULT_MIN_VOLUME = 1_500_000
+DEFAULT_MIN_MARKET_CAP = 300_000_000
+DEFAULT_HISTORY_BACKFILL_DAYS = 365
 TIMEFRAME_LOOKBACK_DAYS: dict[str, int] = {"5D": 7, "1M": 30, "1Y": 365}
 
 
@@ -54,6 +56,10 @@ KNOWN_MARKET_DEFINITIONS: dict[str, tuple[str, str]] = {
 DEFAULT_MARKETS = "US,LSE,XETRA,PA,TO,HK,AU,NSE"
 
 
+class PaymentRequiredError(RuntimeError):
+    """Raised when the EODHD API returns HTTP 402 (credits exhausted)."""
+
+
 @dataclass(frozen=True)
 class DailyPriceRow:
     market_code: str
@@ -63,6 +69,7 @@ class DailyPriceRow:
     currency: str
     close: float
     volume: int
+    market_cap: int
     change_percent: Optional[float]
     as_of_date: str
 
@@ -159,6 +166,12 @@ def parse_args() -> argparse.Namespace:
         help="Minimum daily volume required for inclusion in top_movers.json.",
     )
     parser.add_argument(
+        "--min-market-cap",
+        type=int,
+        default=DEFAULT_MIN_MARKET_CAP,
+        help="Minimum market cap required for inclusion in top_movers.json.",
+    )
+    parser.add_argument(
         "--max-retries",
         type=int,
         default=4,
@@ -200,6 +213,15 @@ def parse_args() -> argparse.Namespace:
         help=(
             "When bootstrapping missing 5D/1M/1Y anchors, backtrack this many "
             "calendar days from the target date to find a valid market day."
+        ),
+    )
+    parser.add_argument(
+        "--history-backfill-days",
+        type=int,
+        default=DEFAULT_HISTORY_BACKFILL_DAYS,
+        help=(
+            "Ensure rolling history contains at least this many days before the "
+            "latest market date by backfilling missing daily snapshots."
         ),
     )
     parser.add_argument(
@@ -307,6 +329,20 @@ def extract_change_percent(record: dict[str, Any], close: float) -> Optional[flo
     return None
 
 
+def extract_market_cap(record: dict[str, Any]) -> int:
+    for key in (
+        "market_cap",
+        "marketCap",
+        "market_capitalization",
+        "marketCapitalization",
+        "capitalization",
+    ):
+        value = parse_int(record.get(key))
+        if value is not None and value > 0:
+            return value
+    return 0
+
+
 def fetch_bulk_last_day(
     api_key: str,
     market_code: str,
@@ -357,6 +393,12 @@ def fetch_bulk_last_day(
                 f"status={exc.code}, reason={exc.reason}"
             )
             logger.warning("EODHD request failed: %s", last_error)
+            if exc.code == 402:
+                raise PaymentRequiredError(
+                    f"EODHD API credits exhausted (HTTP 402) while downloading "
+                    f"{market_code}{f' ({trading_date})' if trading_date else ''}. "
+                    f"No retries attempted."
+                ) from exc
             if attempt < max_retries:
                 wait_seconds = min(5 * attempt, 30)
                 logger.info("Retrying in %s seconds...", wait_seconds)
@@ -439,6 +481,7 @@ def build_price_rows(
         )
 
         volume = parse_int(row.get("volume")) or 0
+        market_cap = extract_market_cap(row)
         as_of_date = normalize_date(row.get("date"), fallback_date)
         change_percent = extract_change_percent(row, close)
 
@@ -453,6 +496,7 @@ def build_price_rows(
             currency=normalized_currency,
             close=close,
             volume=volume,
+            market_cap=market_cap,
             change_percent=change_percent,
             as_of_date=as_of_date,
         )
@@ -496,6 +540,7 @@ def write_sqlite_snapshot(
                 currency TEXT NOT NULL,
                 close REAL NOT NULL,
                 volume INTEGER NOT NULL,
+                market_cap INTEGER NOT NULL,
                 change_percent REAL,
                 as_of_date TEXT NOT NULL,
                 PRIMARY KEY (market_code, ticker)
@@ -511,6 +556,9 @@ def write_sqlite_snapshot(
         connection.execute(
             "CREATE INDEX idx_daily_prices_change_percent ON daily_prices(change_percent)"
         )
+        connection.execute(
+            "CREATE INDEX idx_daily_prices_market_cap ON daily_prices(market_cap)"
+        )
 
         connection.executemany(
             """
@@ -522,10 +570,11 @@ def write_sqlite_snapshot(
                 currency,
                 close,
                 volume,
+                market_cap,
                 change_percent,
                 as_of_date
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 (
@@ -536,6 +585,7 @@ def write_sqlite_snapshot(
                     r.currency,
                     r.close,
                     r.volume,
+                    r.market_cap,
                     r.change_percent,
                     r.as_of_date,
                 )
@@ -628,6 +678,7 @@ def ensure_history_schema(conn: sqlite3.Connection) -> None:
             currency    TEXT NOT NULL,
             close       REAL NOT NULL,
             volume      INTEGER NOT NULL,
+            market_cap  INTEGER NOT NULL,
             change_percent REAL,
             as_of_date  TEXT NOT NULL,
             PRIMARY KEY (market_code, ticker, as_of_date)
@@ -643,6 +694,10 @@ def ensure_history_schema(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE history_prices ADD COLUMN volume INTEGER NOT NULL DEFAULT 0"
         )
+    if "market_cap" not in existing_columns:
+        conn.execute(
+            "ALTER TABLE history_prices ADD COLUMN market_cap INTEGER NOT NULL DEFAULT 0"
+        )
     if "change_percent" not in existing_columns:
         conn.execute("ALTER TABLE history_prices ADD COLUMN change_percent REAL")
 
@@ -656,6 +711,12 @@ def ensure_history_schema(conn: sqlite3.Connection) -> None:
         """
         CREATE INDEX IF NOT EXISTS idx_history_prices_ticker_date
             ON history_prices(ticker, as_of_date)
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_history_prices_market_cap
+            ON history_prices(market_code, market_cap)
         """
     )
     conn.execute(
@@ -680,16 +741,18 @@ def upsert_history_rows(conn: sqlite3.Connection, rows: list[DailyPriceRow]) -> 
             currency,
             close,
             volume,
+            market_cap,
             change_percent,
             as_of_date
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(market_code, ticker, as_of_date)
         DO UPDATE SET
             name = excluded.name,
             currency = excluded.currency,
             close = excluded.close,
             volume = excluded.volume,
+            market_cap = excluded.market_cap,
             change_percent = excluded.change_percent
         """,
         [
@@ -700,6 +763,7 @@ def upsert_history_rows(conn: sqlite3.Connection, rows: list[DailyPriceRow]) -> 
                 row.currency,
                 row.close,
                 row.volume,
+                row.market_cap,
                 row.change_percent,
                 row.as_of_date,
             )
@@ -723,6 +787,119 @@ def has_history_market_date(
         (market_code, as_of_date),
     ).fetchone()
     return row is not None
+
+
+def iso_date_range(start_date: str, end_date: str) -> list[str]:
+    start = parse_iso_date(start_date)
+    end = parse_iso_date(end_date)
+    if end < start:
+        return []
+    days = (end - start).days
+    return [
+        (start + timedelta(days=offset)).strftime("%Y-%m-%d")
+        for offset in range(days + 1)
+    ]
+
+
+def backfill_history_window(
+    api_key: str,
+    conn: sqlite3.Connection,
+    markets: list[MarketDefinition],
+    rows_by_market: dict[str, list[DailyPriceRow]],
+    history_backfill_days: int,
+    timeout_seconds: int,
+    max_retries: int,
+    logger: logging.Logger,
+) -> None:
+    if history_backfill_days <= 0:
+        return
+
+    for market in markets:
+        market_rows = rows_by_market.get(market.code, [])
+        if not market_rows:
+            continue
+
+        reference_date = Counter(
+            row.as_of_date for row in market_rows
+        ).most_common(1)[0][0]
+        window_start = iso_days_ago(reference_date, max(history_backfill_days - 1, 0))
+
+        existing_dates = {
+            str(row[0])
+            for row in conn.execute(
+                """
+                SELECT DISTINCT as_of_date
+                FROM history_prices
+                WHERE market_code = ?
+                  AND as_of_date >= ?
+                  AND as_of_date <= ?
+                """,
+                (market.code, window_start, reference_date),
+            )
+        }
+
+        fetched_days = 0
+        inserted_rows = 0
+        skipped_days = 0
+
+        for candidate_date in iso_date_range(window_start, reference_date):
+            if candidate_date in existing_dates:
+                continue
+
+            # Most exchanges are closed on Saturday/Sunday.
+            if parse_iso_date(candidate_date).weekday() >= 5:
+                skipped_days += 1
+                continue
+
+            try:
+                raw_data = fetch_bulk_last_day(
+                    api_key=api_key,
+                    market_code=market.code,
+                    timeout_seconds=timeout_seconds,
+                    max_retries=max_retries,
+                    logger=logger,
+                    trading_date=candidate_date,
+                )
+                backfill_rows = build_price_rows(
+                    market=market,
+                    raw_rows=raw_data,
+                    fallback_date=candidate_date,
+                    logger=logger,
+                )
+            except PaymentRequiredError:
+                logger.error(
+                    "API credits exhausted during backfill [%s %s]. "
+                    "Aborting remaining dates for this market.",
+                    market.code,
+                    candidate_date,
+                )
+                break
+            except Exception as exc:
+                skipped_days += 1
+                safe_detail = sanitize_sensitive_text(str(exc), [api_key])
+                logger.info(
+                    "History backfill skipped [%s %s]: %s",
+                    market.code,
+                    candidate_date,
+                    safe_detail,
+                )
+                continue
+
+            upsert_history_rows(conn, backfill_rows)
+            conn.commit()
+            existing_dates.add(candidate_date)
+            fetched_days += 1
+            inserted_rows += len(backfill_rows)
+
+        logger.info(
+            "History backfill complete [%s]. Window=%s..%s | fetched_days=%d | inserted_rows=%d | skipped_days=%d",
+            market.code,
+            window_start,
+            reference_date,
+            fetched_days,
+            inserted_rows,
+            skipped_days,
+        )
 
 
 def find_history_anchor_date(
@@ -838,6 +1015,15 @@ def bootstrap_missing_history_anchors(
                     )
                     anchor_found = True
                     break
+                except PaymentRequiredError:
+                    logger.error(
+                        "API credits exhausted during bootstrap [%s %s %s]. "
+                        "Aborting anchor search.",
+                        market.code,
+                        timeframe_key,
+                        candidate_date,
+                    )
+                    break
                 except Exception as exc:
                     safe_detail = sanitize_sensitive_text(str(exc), [api_key])
                     logger.warning(
@@ -861,9 +1047,14 @@ def prune_history_rows(
     conn: sqlite3.Connection,
     reference_date: str,
     backtrack_days: int,
+    history_backfill_days: int,
     logger: logging.Logger,
 ) -> None:
-    retention_days = max(TIMEFRAME_LOOKBACK_DAYS.values()) + max(backtrack_days, 0) + 2
+    minimum_anchor_retention = max(TIMEFRAME_LOOKBACK_DAYS.values()) + max(
+        backtrack_days, 0
+    ) + 2
+    rolling_retention = max(history_backfill_days, 0) + 2
+    retention_days = max(minimum_anchor_retention, rolling_retention)
     cutoff_date = iso_days_ago(reference_date, retention_days)
     deleted_rows = conn.execute(
         "DELETE FROM history_prices WHERE as_of_date < ?",
@@ -928,6 +1119,8 @@ def row_to_mover_json(row: DailyPriceRow, change_percent: float) -> dict[str, An
         "price": round(row.close, 6),
         "close": round(row.close, 6),
         "volume": row.volume,
+        "market_cap": row.market_cap,
+        "marketCap": row.market_cap,
         "currency": row.currency,
         "change_percent": round(change_percent, 6),
         "changePercent": round(change_percent, 6),
@@ -941,6 +1134,7 @@ def build_top_movers_payload(
     markets: list[MarketDefinition],
     top_limit: int,
     min_volume: int,
+    min_market_cap: int,
     history_db_path: Path,
     history_backtrack_days: int,
     logger: logging.Logger,
@@ -1009,29 +1203,35 @@ def build_top_movers_payload(
                 volume_filtered_pool = [
                     item for item in pool if item[0].volume >= min_volume
                 ]
-                positive_pool = [item for item in volume_filtered_pool if item[1] > 0]
-                negative_pool = [item for item in volume_filtered_pool if item[1] < 0]
+                cap_filtered_pool = [
+                    item for item in volume_filtered_pool
+                    if item[0].market_cap == 0 or item[0].market_cap >= min_market_cap
+                ]
+                positive_pool = [item for item in cap_filtered_pool if item[1] > 0]
+                negative_pool = [item for item in cap_filtered_pool if item[1] < 0]
                 gainers = sorted(positive_pool, key=lambda x: x[1], reverse=True)[:top_limit]
                 losers = sorted(negative_pool, key=lambda x: x[1])[:top_limit]
                 timeframes_payload[tf] = {
                     "eligible_symbols": len(positive_pool) + len(negative_pool),
                     "eligible_before_volume_filter": len(pool),
                     "eligible_after_volume_filter": len(volume_filtered_pool),
+                    "eligible_after_market_cap_filter": len(cap_filtered_pool),
                     "gainers": [row_to_mover_json(r, c) for r, c in gainers],
                     "losers": [row_to_mover_json(r, c) for r, c in losers],
                 }
 
             logger.info(
-                "Top movers [%s] min_volume>=%d | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after/before)",
+                "Top movers [%s] min_volume>=%d min_market_cap>=%d | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after all filters/before)",
                 market.code,
                 min_volume,
-                timeframes_payload["1D"]["eligible_after_volume_filter"],
+                min_market_cap,
+                timeframes_payload["1D"]["eligible_after_market_cap_filter"],
                 timeframes_payload["1D"]["eligible_before_volume_filter"],
-                timeframes_payload["5D"]["eligible_after_volume_filter"],
+                timeframes_payload["5D"]["eligible_after_market_cap_filter"],
                 timeframes_payload["5D"]["eligible_before_volume_filter"],
-                timeframes_payload["1M"]["eligible_after_volume_filter"],
+                timeframes_payload["1M"]["eligible_after_market_cap_filter"],
                 timeframes_payload["1M"]["eligible_before_volume_filter"],
-                timeframes_payload["1Y"]["eligible_after_volume_filter"],
+                timeframes_payload["1Y"]["eligible_after_market_cap_filter"],
                 timeframes_payload["1Y"]["eligible_before_volume_filter"],
             )
 
@@ -1051,6 +1251,7 @@ def build_top_movers_payload(
         "timeframes": list(TIMEFRAME_KEYS),
         "filters": {
             "min_volume": min_volume,
+            "min_market_cap": min_market_cap,
             "top_limit": top_limit,
         },
         "markets": markets_payload,
@@ -1149,6 +1350,12 @@ def main() -> int:
     if args.min_volume < 0:
         print("ERROR: --min-volume must be >= 0.", file=sys.stderr)
         return 2
+    if args.min_market_cap < 0:
+        print("ERROR: --min-market-cap must be >= 0.", file=sys.stderr)
+        return 2
+    if args.history_backfill_days < 0:
+        print("ERROR: --history-backfill-days must be >= 0.", file=sys.stderr)
+        return 2
 
     logger = configure_logger(log_path)
     logger.info(
@@ -1219,6 +1426,17 @@ def main() -> int:
             upsert_history_rows(conn, rows)
             conn.commit()
 
+            backfill_history_window(
+                api_key=api_key,
+                conn=conn,
+                markets=markets,
+                rows_by_market=rows_by_market,
+                history_backfill_days=args.history_backfill_days,
+                timeout_seconds=args.timeout_seconds,
+                max_retries=args.max_retries,
+                logger=logger,
+            )
+
             bootstrap_missing_history_anchors(
                 api_key=api_key,
                 conn=conn,
@@ -1234,6 +1452,7 @@ def main() -> int:
                 conn=conn,
                 reference_date=latest_reference_date,
                 backtrack_days=args.history_bootstrap_backtrack_days,
+                history_backfill_days=args.history_backfill_days,
                 logger=logger,
             )
 
@@ -1245,6 +1464,18 @@ def main() -> int:
                 "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
                 ("last_reference_date", latest_reference_date),
             )
+            conn.execute(
+                "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
+                ("history_backfill_days", str(args.history_backfill_days)),
+            )
+            conn.execute(
+                "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
+                ("mover_min_volume", str(args.min_volume)),
+            )
+            conn.execute(
+                "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
+                ("mover_min_market_cap", str(args.min_market_cap)),
+            )
             conn.commit()
 
         # --- 5. Compute top movers using rolling-history reference prices ---
@@ -1253,6 +1484,7 @@ def main() -> int:
             markets=markets,
             top_limit=args.top_limit,
             min_volume=args.min_volume,
+            min_market_cap=args.min_market_cap,
             history_db_path=history_db_path,
             history_backtrack_days=args.history_bootstrap_backtrack_days,
             logger=logger,

@@ -308,8 +308,9 @@
     "title": "Panoramica Mercato",
     "top_gainers": "Migliori Rialzi",
     "top_losers": "Peggiori Ribassi",
-    "mover_volume_filter": "I top mover includono solo titoli con volume >= {volume}",
+    "mover_filters": "I top mover includono solo titoli con volume >= {volume} e market cap >= {marketCap}",
     "mover_volume": "Volume: {volume}",
+    "mover_market_cap": "Capitalizzazione: {marketCap}",
     "calendar": "Calendario Economico",
     "news": "Notizie di Mercato",
     "refresh": "Aggiorna",
@@ -345,9 +346,9 @@
     },
     "timeframes": {
       "today": "Oggi",
-      "week": "Questa Settimana",
-      "month": "Questo Mese",
-      "year": "Ultimi 365 giorni"
+      "week": "5 Giorni",
+      "month": "1 Mese",
+      "year": "1 Anno"
     },
     "markets": {
       "us": "Stati Uniti",

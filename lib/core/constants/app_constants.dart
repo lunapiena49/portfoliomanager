@@ -39,7 +39,7 @@ class AppConstants {
   static const String eodhdApiKeyKey = 'eodhd_api_key';
   static const String marketSnapshotBaseUrl = String.fromEnvironment(
     'MARKET_SNAPSHOT_BASE_URL',
-    defaultValue: '',
+    defaultValue: 'https://lunapiena49.github.io/portfoliomanager',
   );
 
   // Timeouts

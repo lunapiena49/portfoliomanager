@@ -306,8 +306,9 @@
     "title": "Vision General del Mercado",
     "top_gainers": "Mayores Alzas",
     "top_losers": "Mayores Bajas",
-    "mover_volume_filter": "Los top movers incluyen solo acciones con volumen >= {volume}",
+    "mover_filters": "Los top movers incluyen solo acciones con volumen >= {volume} y capitalizacion bursatil >= {marketCap}",
     "mover_volume": "Volumen: {volume}",
+    "mover_market_cap": "Capitalizacion: {marketCap}",
     "calendar": "Calendario Economico",
     "news": "Noticias del Mercado",
     "refresh": "Actualizar",
@@ -343,9 +344,9 @@
     },
     "timeframes": {
       "today": "Hoy",
-      "week": "Esta Semana",
-      "month": "Este Mes",
-      "year": "Ultimos 365 dias"
+      "week": "5 Dias",
+      "month": "1 Mes",
+      "year": "1 Ano"
     },
     "markets": {
       "us": "Estados Unidos",

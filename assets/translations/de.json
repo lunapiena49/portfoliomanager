@@ -306,8 +306,9 @@
     "title": "Marktuebersicht",
     "top_gainers": "Top-Gewinner",
     "top_losers": "Top-Verlierer",
-    "mover_volume_filter": "Top-Mover enthalten nur Aktien mit Volumen >= {volume}",
+    "mover_filters": "Top-Mover enthalten nur Aktien mit Volumen >= {volume} und Marktkapitalisierung >= {marketCap}",
     "mover_volume": "Volumen: {volume}",
+    "mover_market_cap": "Marktkapitalisierung: {marketCap}",
     "calendar": "Wirtschaftskalender",
     "news": "Marktnachrichten",
     "refresh": "Aktualisieren",
@@ -343,9 +344,9 @@
     },
     "timeframes": {
       "today": "Heute",
-      "week": "Diese Woche",
-      "month": "Dieser Monat",
-      "year": "Letzte 365 Tage"
+      "week": "5 Tage",
+      "month": "1 Monat",
+      "year": "1 Jahr"
     },
     "markets": {
       "us": "Vereinigte Staaten",

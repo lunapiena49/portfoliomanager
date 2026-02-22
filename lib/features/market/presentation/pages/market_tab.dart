@@ -21,6 +21,7 @@ class MarketMover {
   final double changePercent;
   final double price;
   final int volume;
+  final int marketCap;
   final String currency;
   final String? source;
   final String? asOf;
@@ -32,6 +33,7 @@ class MarketMover {
     required this.changePercent,
     required this.price,
     this.volume = 0,
+    this.marketCap = 0,
     required this.currency,
     this.source,
     this.asOf,
@@ -70,6 +72,23 @@ class MarketMover {
       parsedVolume = 0;
     }
 
+    final rawMarketCap = json['market_cap'] ??
+        json['marketCap'] ??
+        json['market_capitalization'] ??
+        json['marketCapitalization'] ??
+        json['capitalization'];
+    var parsedMarketCap = 0;
+    if (rawMarketCap is num) {
+      parsedMarketCap = rawMarketCap.toInt();
+    } else if (rawMarketCap is String) {
+      final sanitized = rawMarketCap.trim().replaceAll(',', '');
+      parsedMarketCap = int.tryParse(sanitized) ??
+          (double.tryParse(rawMarketCap.replaceAll(',', '.'))?.toInt() ?? 0);
+    }
+    if (parsedMarketCap < 0) {
+      parsedMarketCap = 0;
+    }
+
     final rawReliability =
         json['isReliable'] ?? json['reliable'] ?? json['priceReliable'];
     bool parsedReliability = parsedPrice > 0;
@@ -93,6 +112,7 @@ class MarketMover {
       changePercent: parsedChange,
       price: parsedPrice,
       volume: parsedVolume,
+      marketCap: parsedMarketCap,
       currency: (json['currency']?.toString() ?? 'USD').trim().toUpperCase(),
       source: (rawSource == null || rawSource.isEmpty) ? null : rawSource,
       asOf: (rawAsOf == null || rawAsOf.isEmpty) ? null : rawAsOf,
@@ -163,6 +183,7 @@ class _MoverSnapshot {
   final String name;
   final double price;
   final int volume;
+  final int marketCap;
   final String currency;
   final String? source;
 
@@ -171,6 +192,7 @@ class _MoverSnapshot {
     required this.name,
     required this.price,
     required this.volume,
+    required this.marketCap,
     required this.currency,
     this.source,
   });
@@ -234,6 +256,7 @@ class _MarketTabState extends State<MarketTab>
   String _selectedMarket = 'US';
   bool _isUsingDistributedSnapshot = false;
   int _activeMoverMinVolume = _minimumMoverVolume;
+  int _activeMoverMinMarketCap = _minimumMoverMarketCap;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -260,7 +283,8 @@ class _MarketTabState extends State<MarketTab>
   static const double _maxOutlierJumpRatio = 5.0;
   static const double _splitRatioTolerance = 0.12;
   static const int _moverUniverseSideLimit = 25;
-  static const int _minimumMoverVolume = 1000000;
+  static const int _minimumMoverVolume = 1500000;
+  static const int _minimumMoverMarketCap = 300000000;
   static const List<String> _preferredMarketOrder = <String>[
     'US',
     'LSE',
@@ -372,12 +396,31 @@ class _MarketTabState extends State<MarketTab>
     return formatter.format(volume);
   }
 
+  String _formatMarketCap(int marketCap, {bool compact = false}) {
+    final locale = context.locale.toString();
+    final formatter = compact
+        ? NumberFormat.compact(locale: locale)
+        : NumberFormat.decimalPattern(locale);
+    return formatter.format(marketCap);
+  }
+
   String? _parseNullableText(dynamic rawValue) {
     final text = rawValue?.toString().trim();
     if (text == null || text.isEmpty) {
       return null;
     }
     return text;
+  }
+
+  int _extractMarketCap(Map<String, dynamic> item) {
+    return _parseNullableInt(
+          item['market_cap'] ??
+              item['marketCap'] ??
+              item['market_capitalization'] ??
+              item['marketCapitalization'] ??
+              item['capitalization'],
+        ) ??
+        0;
   }
 
   String _fmpTimePeriodFor(String period) {
@@ -412,6 +455,10 @@ class _MarketTabState extends State<MarketTab>
       if (volume < _minimumMoverVolume) {
         continue;
       }
+      final marketCap = _extractMarketCap(item);
+      if (marketCap > 0 && marketCap < _minimumMoverMarketCap) {
+        continue;
+      }
 
       final rawPercent = _parseFmpDouble(
         item['changesPercentage'] ?? item['changePercent'],
@@ -428,6 +475,7 @@ class _MarketTabState extends State<MarketTab>
           changePercent: normalizedPercent,
           price: price,
           volume: volume,
+          marketCap: marketCap,
           currency:
               ((item['currency']?.toString().trim().toUpperCase() ?? 'USD')),
           source: source,
@@ -528,6 +576,7 @@ class _MarketTabState extends State<MarketTab>
     _yearlyLosers = const <MarketMover>[];
     _isUsingDistributedSnapshot = false;
     _activeMoverMinVolume = _minimumMoverVolume;
+    _activeMoverMinMarketCap = _minimumMoverMarketCap;
   }
 
   String _marketLabelFor(String marketCode) {
@@ -550,18 +599,7 @@ class _MarketTabState extends State<MarketTab>
     return symbol.trim().toUpperCase().replaceAll(' ', '');
   }
 
-  bool _shouldUseCompactTimeframeLabels(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final scaledWidth =
-        mediaQuery.size.width / mediaQuery.textScaler.scale(1.0);
-    return scaledWidth < 920;
-  }
-
-  String _timeframeTabLabel(String timeframeKey, {required bool compact}) {
-    if (compact) {
-      return timeframeKey;
-    }
-
+  String _timeframeTabLabel(String timeframeKey) {
     switch (timeframeKey) {
       case _dailyTimeframeKey:
         return 'market.timeframes.today'.tr();
@@ -581,6 +619,7 @@ class _MarketTabState extends State<MarketTab>
     required bool isGainer,
     required String marketCode,
     required int minVolume,
+    required int minMarketCap,
     required String fallbackAsOf,
     required String fallbackCurrency,
   }) {
@@ -610,6 +649,10 @@ class _MarketTabState extends State<MarketTab>
       if (volume < minVolume) {
         continue;
       }
+      final marketCap = _extractMarketCap(item);
+      if (marketCap > 0 && marketCap < minMarketCap) {
+        continue;
+      }
       final rawCurrency = (item['currency']?.toString().trim().toUpperCase() ??
               fallbackCurrency)
           .trim();
@@ -627,6 +670,7 @@ class _MarketTabState extends State<MarketTab>
           changePercent: normalizedChange,
           price: rawPrice,
           volume: volume,
+          marketCap: marketCap,
           currency: rawCurrency.isEmpty ? fallbackCurrency : rawCurrency,
           source: source,
           asOf: rawAsOf,
@@ -642,6 +686,7 @@ class _MarketTabState extends State<MarketTab>
     dynamic payload, {
     required String marketCode,
     required int minVolume,
+    required int minMarketCap,
     required String fallbackAsOf,
     required String fallbackCurrency,
   }) {
@@ -659,6 +704,7 @@ class _MarketTabState extends State<MarketTab>
         isGainer: true,
         marketCode: marketCode,
         minVolume: minVolume,
+        minMarketCap: minMarketCap,
         fallbackAsOf: fallbackAsOf,
         fallbackCurrency: fallbackCurrency,
       ),
@@ -667,6 +713,7 @@ class _MarketTabState extends State<MarketTab>
         isGainer: false,
         marketCode: marketCode,
         minVolume: minVolume,
+        minMarketCap: minMarketCap,
         fallbackAsOf: fallbackAsOf,
         fallbackCurrency: fallbackCurrency,
       ),
@@ -688,11 +735,16 @@ class _MarketTabState extends State<MarketTab>
 
       final rawFilters = payload['filters'];
       var snapshotMinVolume = _minimumMoverVolume;
+      var snapshotMinMarketCap = _minimumMoverMarketCap;
       if (rawFilters is Map) {
         final filters = Map<String, dynamic>.from(rawFilters);
         snapshotMinVolume =
             _parseNullableInt(filters['min_volume'] ?? filters['minVolume']) ??
                 _minimumMoverVolume;
+        snapshotMinMarketCap = _parseNullableInt(
+              filters['min_market_cap'] ?? filters['minMarketCap'],
+            ) ??
+            _minimumMoverMarketCap;
       }
 
       final rawMarkets = payload['markets'];
@@ -742,6 +794,7 @@ class _MarketTabState extends State<MarketTab>
           timeframes[_dailyTimeframeKey],
           marketCode: marketCode,
           minVolume: snapshotMinVolume,
+          minMarketCap: snapshotMinMarketCap,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
@@ -749,6 +802,7 @@ class _MarketTabState extends State<MarketTab>
           timeframes[_weeklyTimeframeKey],
           marketCode: marketCode,
           minVolume: snapshotMinVolume,
+          minMarketCap: snapshotMinMarketCap,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
@@ -756,6 +810,7 @@ class _MarketTabState extends State<MarketTab>
           timeframes[_monthlyTimeframeKey],
           marketCode: marketCode,
           minVolume: snapshotMinVolume,
+          minMarketCap: snapshotMinMarketCap,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
@@ -763,6 +818,7 @@ class _MarketTabState extends State<MarketTab>
           timeframes[_yearlyTimeframeKey],
           marketCode: marketCode,
           minVolume: snapshotMinVolume,
+          minMarketCap: snapshotMinMarketCap,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
         );
@@ -810,6 +866,7 @@ class _MarketTabState extends State<MarketTab>
       setState(() {
         _isUsingDistributedSnapshot = true;
         _activeMoverMinVolume = snapshotMinVolume;
+        _activeMoverMinMarketCap = snapshotMinMarketCap;
         _marketDisplayNames
           ..clear()
           ..addAll(marketDisplayNames);
@@ -1142,6 +1199,7 @@ class _MarketTabState extends State<MarketTab>
       setState(() {
         _isUsingDistributedSnapshot = false;
         _activeMoverMinVolume = _minimumMoverVolume;
+        _activeMoverMinMarketCap = _minimumMoverMarketCap;
         _marketDisplayNames
           ..clear()
           ..['US'] = _marketLabelFor('US');
@@ -1195,6 +1253,10 @@ class _MarketTabState extends State<MarketTab>
       if (volume < _minimumMoverVolume) {
         return;
       }
+      final marketCap = _extractMarketCap(item);
+      if (marketCap > 0 && marketCap < _minimumMoverMarketCap) {
+        return;
+      }
 
       final candidate = _MoverSnapshot(
         symbol: symbol,
@@ -1203,6 +1265,7 @@ class _MarketTabState extends State<MarketTab>
             : (item['name']?.toString() ?? '').trim(),
         price: _parseFmpDouble(item['price']),
         volume: volume,
+        marketCap: marketCap,
         currency: (item['currency']?.toString().trim().toUpperCase() ?? 'USD'),
         source: _parseNullableText(item['exchange']),
       );
@@ -1219,6 +1282,8 @@ class _MarketTabState extends State<MarketTab>
           existing.price > 0 ? existing.price : candidate.price;
       final resolvedVolume =
           existing.volume > 0 ? existing.volume : candidate.volume;
+      final resolvedMarketCap =
+          existing.marketCap > 0 ? existing.marketCap : candidate.marketCap;
       final resolvedCurrency =
           existing.currency.isNotEmpty ? existing.currency : candidate.currency;
       final resolvedSource = existing.source ?? candidate.source;
@@ -1228,6 +1293,7 @@ class _MarketTabState extends State<MarketTab>
         name: resolvedName,
         price: resolvedPrice,
         volume: resolvedVolume,
+        marketCap: resolvedMarketCap,
         currency: resolvedCurrency,
         source: resolvedSource,
       );
@@ -1355,6 +1421,7 @@ class _MarketTabState extends State<MarketTab>
         changePercent: changePercent,
         price: snapshot.price,
         volume: snapshot.volume,
+        marketCap: snapshot.marketCap,
         currency: snapshot.currency,
         source: snapshot.source,
         asOf: asOf,
@@ -1953,72 +2020,45 @@ class _MarketTabState extends State<MarketTab>
     }
 
     final theme = Theme.of(context);
-    final compactTimeframeLabels = _shouldUseCompactTimeframeLabels(context);
     return Column(
       children: [
         Material(
           color: theme.colorScheme.surface,
           elevation: 1,
-          child: Padding(
-            padding: EdgeInsets.only(top: 6.h, bottom: 8.h),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              indicatorSize: TabBarIndicatorSize.label,
-              dividerHeight: 1,
-              labelStyle: theme.textTheme.titleSmall?.copyWith(height: 1.2),
-              unselectedLabelStyle:
-                  theme.textTheme.titleSmall?.copyWith(height: 1.2),
-              labelPadding: EdgeInsets.symmetric(
-                horizontal: compactTimeframeLabels ? 12 : 16,
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: false,
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerHeight: 1,
+            labelStyle: theme.textTheme.titleSmall?.copyWith(height: 1.2),
+            unselectedLabelStyle:
+                theme.textTheme.titleSmall?.copyWith(height: 1.2),
+            tabs: [
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(_timeframeTabLabel(_dailyTimeframeKey)),
+                ),
               ),
-              tabs: [
-                Tab(
-                  child: Text(
-                    _timeframeTabLabel(
-                      _dailyTimeframeKey,
-                      compact: compactTimeframeLabels,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                  ),
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(_timeframeTabLabel(_weeklyTimeframeKey)),
                 ),
-                Tab(
-                  child: Text(
-                    _timeframeTabLabel(
-                      _weeklyTimeframeKey,
-                      compact: compactTimeframeLabels,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                  ),
+              ),
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(_timeframeTabLabel(_monthlyTimeframeKey)),
                 ),
-                Tab(
-                  child: Text(
-                    _timeframeTabLabel(
-                      _monthlyTimeframeKey,
-                      compact: compactTimeframeLabels,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                  ),
+              ),
+              Tab(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(_timeframeTabLabel(_yearlyTimeframeKey)),
                 ),
-                Tab(
-                  child: Text(
-                    _timeframeTabLabel(
-                      _yearlyTimeframeKey,
-                      compact: compactTimeframeLabels,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         if (_lastUpdated != null)
@@ -2335,7 +2375,7 @@ class _MarketTabState extends State<MarketTab>
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         _buildAdaptivePriceText(
-          '${position.currency} ${position.closePrice.toStringAsFixed(2)}',
+          '${position.currency} ${position.closePrice.toStringAsFixed(3)}',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         if (!isDuplicatedValueLine) ...[
@@ -2473,9 +2513,10 @@ class _MarketTabState extends State<MarketTab>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'market.mover_volume_filter'.tr(
+              'market.mover_filters'.tr(
                 namedArgs: {
                   'volume': _formatVolume(_activeMoverMinVolume),
+                  'marketCap': _formatMarketCap(_activeMoverMinMarketCap),
                 },
               ),
               style: Theme.of(context).textTheme.bodySmall,
@@ -2536,11 +2577,18 @@ class _MarketTabState extends State<MarketTab>
         : '?';
 
     final priceLabel = hasReliablePrice
-        ? '${mover.currency} ${mover.price.toStringAsFixed(2)}'
+        ? '${mover.currency} ${mover.price.toStringAsFixed(3)}'
         : 'market.price_unavailable'.tr();
     final volumeLabel = 'market.mover_volume'.tr(
       namedArgs: {'volume': _formatVolume(mover.volume, compact: true)},
     );
+    final marketCapLabel = mover.marketCap > 0
+        ? 'market.mover_market_cap'.tr(
+            namedArgs: {
+              'marketCap': _formatMarketCap(mover.marketCap, compact: true),
+            },
+          )
+        : null;
 
     final changeLabel =
         '${mover.changePercent >= 0 ? '+' : ''}${mover.changePercent.toStringAsFixed(2)}%';
@@ -2598,6 +2646,15 @@ class _MarketTabState extends State<MarketTab>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (marketCapLabel != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    marketCapLabel,
+                    style: Theme.of(context).textTheme.labelSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 if (!hasReliablePrice) ...[
                   const SizedBox(height: 4),
                   _buildStatusBadge(

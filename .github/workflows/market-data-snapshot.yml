@@ -50,8 +50,10 @@ jobs:
             --history-db-zip-name market_history.db.zip \
             --history-db-url "$HISTORY_URL" \
             --history-bootstrap-backtrack-days 12 \
+            --history-backfill-days 365 \
             --top-limit 20 \
-            --min-volume 1000000
+            --min-volume 1500000 \
+            --min-market-cap 300000000
 
       - name: Upload build logs
         if: always()

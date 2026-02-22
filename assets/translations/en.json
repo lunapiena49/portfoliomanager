@@ -308,8 +308,9 @@
     "title": "Market Overview",
     "top_gainers": "Top Gainers",
     "top_losers": "Top Losers",
-    "mover_volume_filter": "Top movers include only stocks with volume >= {volume}",
+    "mover_filters": "Top movers include only stocks with volume >= {volume} and market cap >= {marketCap}",
     "mover_volume": "Volume: {volume}",
+    "mover_market_cap": "Market cap: {marketCap}",
     "calendar": "Economic Calendar",
     "news": "Market News",
     "refresh": "Refresh",
@@ -345,9 +346,9 @@
     },
     "timeframes": {
       "today": "Today",
-      "week": "This Week",
-      "month": "This Month",
-      "year": "Last 365 Days"
+      "week": "5 Days",
+      "month": "1 Month",
+      "year": "1 Year"
     },
     "markets": {
       "us": "United States",
