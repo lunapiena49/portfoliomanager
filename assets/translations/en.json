@@ -308,9 +308,9 @@
     "title": "Market Overview",
     "top_gainers": "Top Gainers",
     "top_losers": "Top Losers",
-    "mover_filters": "Top movers include only stocks with volume >= {volume} and market cap >= {marketCap}",
+    "mover_filters": "Top movers include only stocks with dollar volume >= {dollarVolume} and price >= {minPrice}",
     "mover_volume": "Volume: {volume}",
-    "mover_market_cap": "Market cap: {marketCap}",
+    "mover_dollar_volume": "Dollar volume: {dollarVolume}",
     "calendar": "Economic Calendar",
     "news": "Market News",
     "refresh": "Refresh",
@@ -508,12 +508,12 @@
       "market_data": {
         "title": "Market Data & Snapshots",
         "content": "Understand the difference between free public movers and optional private quote providers.",
-        "details": "**Free movers feed (no key)**\n- Daily top gainers/losers are fetched from public distributed snapshot\n- Timeframes: 1D, 5D, 1M, 1Y\n- Markets currently covered: US, UK, Germany, France, Canada, Hong Kong, Australia, India\n\n**Portfolio quote chain (optional keys)**\n1. EODHD real-time quote\n2. EODHD end-of-day fallback\n3. FMP fallback\n4. Snapshot price fallback\n\n**Reliability safeguards**\n- Volume filter applied to movers\n- Staleness checks on quote dates\n- Outlier blocking for suspicious jumps"
+        "details": "**Free movers feed (no key)**\n- Daily top gainers/losers are fetched from public distributed snapshot\n- Timeframes: 1D, 5D, 1M, 1Y\n- Markets currently covered: US, UK, Germany, France, Canada, Hong Kong, Australia, India\n\n**Selection logic used before ranking**\n- Dollar Volume = close * volume must be >= 1,000,000 per day\n- Close price must be >= 1.00 to exclude penny stocks\n- Ranking then uses separate positive/negative pools for gainers and losers\n\n**Portfolio quote chain (optional keys)**\n1. EODHD real-time quote\n2. EODHD end-of-day fallback\n3. FMP fallback\n4. Snapshot price fallback\n\n**Reliability safeguards**\n- Date staleness checks on quote timestamps\n- Outlier blocking for suspicious jumps\n- Exchange/ticker normalization before quote lookup"
       },
       "data_pipeline": {
         "title": "Data Pipeline (Technical)",
         "content": "Technical overview of how market snapshots are built and deployed.",
-        "details": "**Automation stack**\n- GitHub Actions workflow runs on schedule, on main push, and manual dispatch\n- Workflow injects secret EODHD_API_KEY\n- Python script computes movers and writes snapshot artifacts\n\n**Artifacts**\n- Public JSON/zip data for app consumption\n- Rolling 365-day history database for multi-period ranking\n- Build logs uploaded as workflow artifacts\n\n**Why this architecture**\n- Keeps app startup fast\n- Removes API-key requirement for public movers\n- Centralizes heavy computation in CI rather than on user device"
+        "details": "**Automation stack**\n- GitHub Actions workflow runs on schedule, on main push, and manual dispatch\n- Workflow injects secret EODHD_API_KEY\n- Python script computes movers and writes snapshot artifacts\n\n**Rolling history model**\n- Script downloads latest market_history.db.zip from GitHub Pages at run start\n- New daily rows are upserted, missing lookback anchors are backfilled\n- Retention keeps a rolling window with enough depth for 1Y comparisons\n\n**Artifacts**\n- top_movers.json (public movers + active filters metadata)\n- prices_index.json (flat and market-prefixed ticker lookup)\n- market_history.db.zip (rolling history used by pipeline)\n- Build logs uploaded as workflow artifacts\n\n**Operational notes**\n- App users consume published JSON snapshots and do not need local cron jobs\n- Local manual run can reproduce pipeline output for debugging\n- Heavy computation stays in CI to keep mobile/web runtime lightweight"
       },
       "privacy_security": {
         "title": "Privacy and Security",

@@ -308,9 +308,9 @@
     "title": "Panoramica Mercato",
     "top_gainers": "Migliori Rialzi",
     "top_losers": "Peggiori Ribassi",
-    "mover_filters": "I top mover includono solo titoli con volume >= {volume} e market cap >= {marketCap}",
+    "mover_filters": "I top mover includono solo titoli con dollar volume >= {dollarVolume} e prezzo >= {minPrice}",
     "mover_volume": "Volume: {volume}",
-    "mover_market_cap": "Capitalizzazione: {marketCap}",
+    "mover_dollar_volume": "Controvalore: {dollarVolume}",
     "calendar": "Calendario Economico",
     "news": "Notizie di Mercato",
     "refresh": "Aggiorna",
@@ -498,12 +498,12 @@
       "market_data": {
         "title": "Dati di Mercato & Snapshot",
         "content": "Comprendi la differenza tra mover pubblici gratuiti e provider quotazioni privati opzionali.",
-        "details": "**Feed mover gratuiti (senza chiave)**\n- Top gainers/losers giornalieri da snapshot pubblico distribuito\n- Timeframe: 1D, 5D, 1M, 1Y\n- Mercati coperti: US, UK, Germania, Francia, Canada, Hong Kong, Australia, India\n\n**Catena quotazioni portafoglio (chiavi opzionali)**\n1. EODHD real-time\n2. EODHD end-of-day fallback\n3. FMP fallback\n4. Snapshot price fallback\n\n**Salvaguardie affidabilita**\n- Filtro volume sui mover\n- Controlli staleness su date quotazione\n- Blocco outlier per salti sospetti"
+        "details": "**Feed mover gratuiti (senza chiave)**\n- Top gainers/losers giornalieri da snapshot pubblico distribuito\n- Timeframe: 1D, 5D, 1M, 1Y\n- Mercati coperti: US, UK, Germania, Francia, Canada, Hong Kong, Australia, India\n\n**Logica di selezione prima del ranking**\n- Dollar Volume = prezzo di chiusura * volume deve essere >= 1.000.000 al giorno\n- Prezzo di chiusura deve essere >= 1.00 per escludere penny stock\n- Ranking costruito separando pool positivi e negativi per rialzi/ribassi\n\n**Catena quotazioni portafoglio (chiavi opzionali)**\n1. EODHD real-time\n2. EODHD end-of-day fallback\n3. FMP fallback\n4. Snapshot price fallback\n\n**Salvaguardie affidabilita**\n- Controlli staleness sulle date quote\n- Blocco outlier per salti sospetti\n- Normalizzazione ticker/exchange prima della ricerca quote"
       },
       "data_pipeline": {
         "title": "Pipeline Dati (Tecnica)",
         "content": "Panoramica tecnica di come vengono costruiti e distribuiti gli snapshot di mercato.",
-        "details": "**Stack di automazione**\n- Workflow GitHub Actions su schedule, push su main e avvio manuale\n- Il workflow inietta il secret EODHD_API_KEY\n- Script Python calcola i mover e produce artifact snapshot\n\n**Artifact**\n- Dati pubblici JSON/zip consumati dall'app\n- Database storico rolling a 365 giorni per ranking multi-periodo\n- Log build caricati come artifact workflow\n\n**Perche questa architettura**\n- Riduce tempi di avvio app\n- Elimina chiave API obbligatoria per i mover pubblici\n- Sposta il calcolo pesante in CI invece che sul device utente"
+        "details": "**Stack di automazione**\n- Workflow GitHub Actions su schedule, push su main e avvio manuale\n- Il workflow inietta il secret EODHD_API_KEY\n- Script Python calcola i mover e produce artifact snapshot\n\n**Modello storico rolling**\n- Lo script scarica market_history.db.zip piu recente da GitHub Pages a inizio run\n- I nuovi dati giornalieri vengono aggiornati con upsert, con backfill automatico degli anchor mancanti\n- La retention mantiene una finestra rolling sufficiente per i confronti 1Y\n\n**Artifact pubblicati**\n- top_movers.json (mover + metadata filtri attivi)\n- prices_index.json (lookup ticker flat e market:ticker)\n- market_history.db.zip (storico rolling usato dalla pipeline)\n- Log build caricati come artifact workflow\n\n**Note operative**\n- L'app consuma i JSON pubblicati e non richiede cron locale\n- Un run locale manuale puo riprodurre gli output per debugging\n- Il calcolo pesante resta in CI per mantenere leggera l'esecuzione su mobile/web"
       },
       "privacy_security": {
         "title": "Privacy e Sicurezza",

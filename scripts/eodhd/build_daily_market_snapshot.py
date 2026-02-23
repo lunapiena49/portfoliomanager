@@ -30,8 +30,8 @@ from urllib.request import Request, urlopen
 BULK_LAST_DAY_URL_TEMPLATE = "https://eodhd.com/api/eod-bulk-last-day/{market}"
 USER_AGENT = "portfolio-manager-market-pipeline/1.0"
 TIMEFRAME_KEYS = ("1D", "5D", "1M", "1Y")
-DEFAULT_MIN_VOLUME = 1_500_000
-DEFAULT_MIN_MARKET_CAP = 300_000_000
+DEFAULT_MIN_DOLLAR_VOLUME = 1_000_000
+DEFAULT_MIN_PRICE = 1.0
 DEFAULT_HISTORY_BACKFILL_DAYS = 365
 TIMEFRAME_LOOKBACK_DAYS: dict[str, int] = {"5D": 7, "1M": 30, "1Y": 365}
 
@@ -69,6 +69,7 @@ class DailyPriceRow:
     currency: str
     close: float
     volume: int
+    dollar_volume: float
     market_cap: int
     change_percent: Optional[float]
     as_of_date: str
@@ -160,16 +161,19 @@ def parse_args() -> argparse.Namespace:
         help="Number of gainers/losers to keep in top_movers.json.",
     )
     parser.add_argument(
-        "--min-volume",
+        "--min-dollar-volume",
         type=int,
-        default=DEFAULT_MIN_VOLUME,
-        help="Minimum daily volume required for inclusion in top_movers.json.",
+        default=DEFAULT_MIN_DOLLAR_VOLUME,
+        help=(
+            "Minimum daily dollar volume (close * volume) required for inclusion "
+            "in top_movers.json."
+        ),
     )
     parser.add_argument(
-        "--min-market-cap",
-        type=int,
-        default=DEFAULT_MIN_MARKET_CAP,
-        help="Minimum market cap required for inclusion in top_movers.json.",
+        "--min-price",
+        type=float,
+        default=DEFAULT_MIN_PRICE,
+        help="Minimum close price required for inclusion in top_movers.json.",
     )
     parser.add_argument(
         "--max-retries",
@@ -480,7 +484,8 @@ def build_price_rows(
             else market.default_currency
         )
 
-        volume = parse_int(row.get("volume")) or 0
+        volume = max(parse_int(row.get("volume")) or 0, 0)
+        dollar_volume = close * volume
         market_cap = extract_market_cap(row)
         as_of_date = normalize_date(row.get("date"), fallback_date)
         change_percent = extract_change_percent(row, close)
@@ -496,6 +501,7 @@ def build_price_rows(
             currency=normalized_currency,
             close=close,
             volume=volume,
+            dollar_volume=dollar_volume,
             market_cap=market_cap,
             change_percent=change_percent,
             as_of_date=as_of_date,
@@ -540,6 +546,7 @@ def write_sqlite_snapshot(
                 currency TEXT NOT NULL,
                 close REAL NOT NULL,
                 volume INTEGER NOT NULL,
+                dollar_volume REAL NOT NULL,
                 market_cap INTEGER NOT NULL,
                 change_percent REAL,
                 as_of_date TEXT NOT NULL,
@@ -559,6 +566,9 @@ def write_sqlite_snapshot(
         connection.execute(
             "CREATE INDEX idx_daily_prices_market_cap ON daily_prices(market_cap)"
         )
+        connection.execute(
+            "CREATE INDEX idx_daily_prices_dollar_volume ON daily_prices(dollar_volume)"
+        )
 
         connection.executemany(
             """
@@ -570,11 +580,12 @@ def write_sqlite_snapshot(
                 currency,
                 close,
                 volume,
+                dollar_volume,
                 market_cap,
                 change_percent,
                 as_of_date
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 (
@@ -585,6 +596,7 @@ def write_sqlite_snapshot(
                     r.currency,
                     r.close,
                     r.volume,
+                    r.dollar_volume,
                     r.market_cap,
                     r.change_percent,
                     r.as_of_date,
@@ -678,6 +690,7 @@ def ensure_history_schema(conn: sqlite3.Connection) -> None:
             currency    TEXT NOT NULL,
             close       REAL NOT NULL,
             volume      INTEGER NOT NULL,
+            dollar_volume REAL NOT NULL,
             market_cap  INTEGER NOT NULL,
             change_percent REAL,
             as_of_date  TEXT NOT NULL,
@@ -693,6 +706,10 @@ def ensure_history_schema(conn: sqlite3.Connection) -> None:
     if "volume" not in existing_columns:
         conn.execute(
             "ALTER TABLE history_prices ADD COLUMN volume INTEGER NOT NULL DEFAULT 0"
+        )
+    if "dollar_volume" not in existing_columns:
+        conn.execute(
+            "ALTER TABLE history_prices ADD COLUMN dollar_volume REAL NOT NULL DEFAULT 0"
         )
     if "market_cap" not in existing_columns:
         conn.execute(
@@ -721,6 +738,12 @@ def ensure_history_schema(conn: sqlite3.Connection) -> None:
     )
     conn.execute(
         """
+        CREATE INDEX IF NOT EXISTS idx_history_prices_dollar_volume
+            ON history_prices(market_code, dollar_volume)
+        """
+    )
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS history_meta (
             key   TEXT PRIMARY KEY,
             value TEXT NOT NULL
@@ -741,17 +764,19 @@ def upsert_history_rows(conn: sqlite3.Connection, rows: list[DailyPriceRow]) -> 
             currency,
             close,
             volume,
+            dollar_volume,
             market_cap,
             change_percent,
             as_of_date
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(market_code, ticker, as_of_date)
         DO UPDATE SET
             name = excluded.name,
             currency = excluded.currency,
             close = excluded.close,
             volume = excluded.volume,
+            dollar_volume = excluded.dollar_volume,
             market_cap = excluded.market_cap,
             change_percent = excluded.change_percent
         """,
@@ -763,6 +788,7 @@ def upsert_history_rows(conn: sqlite3.Connection, rows: list[DailyPriceRow]) -> 
                 row.currency,
                 row.close,
                 row.volume,
+                row.dollar_volume,
                 row.market_cap,
                 row.change_percent,
                 row.as_of_date,
@@ -1119,6 +1145,8 @@ def row_to_mover_json(row: DailyPriceRow, change_percent: float) -> dict[str, An
         "price": round(row.close, 6),
         "close": round(row.close, 6),
         "volume": row.volume,
+        "dollar_volume": round(row.dollar_volume, 2),
+        "dollarVolume": round(row.dollar_volume, 2),
         "market_cap": row.market_cap,
         "marketCap": row.market_cap,
         "currency": row.currency,
@@ -1133,8 +1161,8 @@ def build_top_movers_payload(
     rows: list[DailyPriceRow],
     markets: list[MarketDefinition],
     top_limit: int,
-    min_volume: int,
-    min_market_cap: int,
+    min_dollar_volume: int,
+    min_price: float,
     history_db_path: Path,
     history_backtrack_days: int,
     logger: logging.Logger,
@@ -1200,39 +1228,46 @@ def build_top_movers_payload(
             timeframes_payload: dict[str, Any] = {}
             for tf in TIMEFRAME_KEYS:
                 pool = ranked[tf]
-                volume_filtered_pool = [
-                    item for item in pool if item[0].volume >= min_volume
+                price_filtered_pool = [
+                    item for item in pool if item[0].close >= min_price
                 ]
-                cap_filtered_pool = [
-                    item for item in volume_filtered_pool
-                    if item[0].market_cap == 0 or item[0].market_cap >= min_market_cap
+                dollar_volume_filtered_pool = [
+                    item
+                    for item in price_filtered_pool
+                    if item[0].dollar_volume >= min_dollar_volume
                 ]
-                positive_pool = [item for item in cap_filtered_pool if item[1] > 0]
-                negative_pool = [item for item in cap_filtered_pool if item[1] < 0]
+                positive_pool = [
+                    item for item in dollar_volume_filtered_pool if item[1] > 0
+                ]
+                negative_pool = [
+                    item for item in dollar_volume_filtered_pool if item[1] < 0
+                ]
                 gainers = sorted(positive_pool, key=lambda x: x[1], reverse=True)[:top_limit]
                 losers = sorted(negative_pool, key=lambda x: x[1])[:top_limit]
                 timeframes_payload[tf] = {
                     "eligible_symbols": len(positive_pool) + len(negative_pool),
-                    "eligible_before_volume_filter": len(pool),
-                    "eligible_after_volume_filter": len(volume_filtered_pool),
-                    "eligible_after_market_cap_filter": len(cap_filtered_pool),
+                    "eligible_before_filters": len(pool),
+                    "eligible_after_price_filter": len(price_filtered_pool),
+                    "eligible_after_dollar_volume_filter": len(
+                        dollar_volume_filtered_pool
+                    ),
                     "gainers": [row_to_mover_json(r, c) for r, c in gainers],
                     "losers": [row_to_mover_json(r, c) for r, c in losers],
                 }
 
             logger.info(
-                "Top movers [%s] min_volume>=%d min_market_cap>=%d | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after all filters/before)",
+                "Top movers [%s] min_dollar_volume>=%d min_price>=%.2f | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after filters/before)",
                 market.code,
-                min_volume,
-                min_market_cap,
-                timeframes_payload["1D"]["eligible_after_market_cap_filter"],
-                timeframes_payload["1D"]["eligible_before_volume_filter"],
-                timeframes_payload["5D"]["eligible_after_market_cap_filter"],
-                timeframes_payload["5D"]["eligible_before_volume_filter"],
-                timeframes_payload["1M"]["eligible_after_market_cap_filter"],
-                timeframes_payload["1M"]["eligible_before_volume_filter"],
-                timeframes_payload["1Y"]["eligible_after_market_cap_filter"],
-                timeframes_payload["1Y"]["eligible_before_volume_filter"],
+                min_dollar_volume,
+                min_price,
+                timeframes_payload["1D"]["eligible_after_dollar_volume_filter"],
+                timeframes_payload["1D"]["eligible_before_filters"],
+                timeframes_payload["5D"]["eligible_after_dollar_volume_filter"],
+                timeframes_payload["5D"]["eligible_before_filters"],
+                timeframes_payload["1M"]["eligible_after_dollar_volume_filter"],
+                timeframes_payload["1M"]["eligible_before_filters"],
+                timeframes_payload["1Y"]["eligible_after_dollar_volume_filter"],
+                timeframes_payload["1Y"]["eligible_before_filters"],
             )
 
             markets_payload.append(
@@ -1250,8 +1285,8 @@ def build_top_movers_payload(
         "source": "EODHD_BULK_LAST_DAY",
         "timeframes": list(TIMEFRAME_KEYS),
         "filters": {
-            "min_volume": min_volume,
-            "min_market_cap": min_market_cap,
+            "min_dollar_volume": min_dollar_volume,
+            "min_price": min_price,
             "top_limit": top_limit,
         },
         "markets": markets_payload,
@@ -1347,11 +1382,11 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    if args.min_volume < 0:
-        print("ERROR: --min-volume must be >= 0.", file=sys.stderr)
+    if args.min_dollar_volume < 0:
+        print("ERROR: --min-dollar-volume must be >= 0.", file=sys.stderr)
         return 2
-    if args.min_market_cap < 0:
-        print("ERROR: --min-market-cap must be >= 0.", file=sys.stderr)
+    if args.min_price < 0:
+        print("ERROR: --min-price must be >= 0.", file=sys.stderr)
         return 2
     if args.history_backfill_days < 0:
         print("ERROR: --history-backfill-days must be >= 0.", file=sys.stderr)
@@ -1470,11 +1505,11 @@ def main() -> int:
             )
             conn.execute(
                 "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
-                ("mover_min_volume", str(args.min_volume)),
+                ("mover_min_dollar_volume", str(args.min_dollar_volume)),
             )
             conn.execute(
                 "INSERT OR REPLACE INTO history_meta(key, value) VALUES (?, ?)",
-                ("mover_min_market_cap", str(args.min_market_cap)),
+                ("mover_min_price", str(args.min_price)),
             )
             conn.commit()
 
@@ -1483,8 +1518,8 @@ def main() -> int:
             rows=rows,
             markets=markets,
             top_limit=args.top_limit,
-            min_volume=args.min_volume,
-            min_market_cap=args.min_market_cap,
+            min_dollar_volume=args.min_dollar_volume,
+            min_price=args.min_price,
             history_db_path=history_db_path,
             history_backtrack_days=args.history_bootstrap_backtrack_days,
             logger=logger,

@@ -306,9 +306,9 @@
     "title": "Visao Geral do Mercado",
     "top_gainers": "Maiores Altas",
     "top_losers": "Maiores Baixas",
-    "mover_filters": "Os top movers incluem apenas acoes com volume >= {volume} e capitalizacao de mercado >= {marketCap}",
+    "mover_filters": "Os top movers incluem apenas acoes com dollar volume >= {dollarVolume} e preco >= {minPrice}",
     "mover_volume": "Volume: {volume}",
-    "mover_market_cap": "Capitalizacao: {marketCap}",
+    "mover_dollar_volume": "Volume financeiro: {dollarVolume}",
     "calendar": "Calendario Economico",
     "news": "Noticias do Mercado",
     "refresh": "Atualizar",
@@ -511,12 +511,12 @@
       "market_data": {
         "title": "Dados de Mercado e Snapshots",
         "content": "Entenda a diferenca entre movers publicos gratuitos e provedores privados opcionais de cotacao.",
-        "details": "**Feed de movers gratuitos (sem chave)**\n- Top ganhadores/perdedores diarios de snapshot publico distribuido\n- Timeframes: 1D, 5D, 1M, 1Y\n- Mercados cobertos: US, UK, Alemanha, Franca, Canada, Hong Kong, Australia, India\n\n**Cadeia de cotacoes da carteira (chaves opcionais)**\n1. EODHD tempo real\n2. EODHD fim de dia como fallback\n3. FMP como fallback\n4. Preco de snapshot como fallback\n\n**Salvaguardas de confiabilidade**\n- Filtro de volume aplicado aos movers\n- Verificacao de staleness por data de cotacao\n- Bloqueio de outliers para saltos suspeitos"
+        "details": "**Feed de movers gratuitos (sem chave)**\n- Top ganhadores/perdedores diarios de snapshot publico distribuido\n- Timeframes: 1D, 5D, 1M, 1Y\n- Mercados cobertos: US, UK, Alemanha, Franca, Canada, Hong Kong, Australia, India\n\n**Logica de selecao antes do ranking**\n- Dollar Volume = fechamento * volume deve ser >= 1.000.000 por dia\n- Preco de fechamento deve ser >= 1.00 para excluir penny stocks\n- O ranking usa pools positivos e negativos separados para altas e baixas\n\n**Cadeia de cotacoes da carteira (chaves opcionais)**\n1. EODHD tempo real\n2. EODHD fim de dia como fallback\n3. FMP como fallback\n4. Preco de snapshot como fallback\n\n**Salvaguardas de confiabilidade**\n- Verificacao de staleness por data de cotacao\n- Bloqueio de outliers para saltos suspeitos\n- Normalizacao de ticker/exchange antes do lookup"
       },
       "data_pipeline": {
         "title": "Pipeline de Dados (Tecnico)",
         "content": "Visao tecnica de como os snapshots de mercado sao construidos e publicados.",
-        "details": "**Stack de automacao**\n- Workflow no GitHub Actions por agenda, push na main e disparo manual\n- Workflow injeta o secret EODHD_API_KEY\n- Script Python calcula movers e gera artefatos de snapshot\n\n**Artefatos**\n- Dados publicos JSON/zip consumidos pelo app\n- Base historica rolling de 365 dias para ranking de multiplos periodos\n- Logs de build enviados como artefatos\n\n**Por que essa arquitetura**\n- Mantem inicializacao do app rapida\n- Remove exigencia de chave API para movers publicos\n- Centraliza calculo pesado em CI em vez do dispositivo do usuario"
+        "details": "**Stack de automacao**\n- Workflow no GitHub Actions por agenda, push na main e disparo manual\n- Workflow injeta o secret EODHD_API_KEY\n- Script Python calcula movers e gera artefatos de snapshot\n\n**Modelo historico rolling**\n- O script baixa market_history.db.zip mais recente do GitHub Pages no inicio do run\n- Novos dados diarios sao aplicados com upsert e backfill automatico de anchors faltantes\n- A retencao mantem janela rolling com profundidade suficiente para comparacoes 1Y\n\n**Artefatos publicados**\n- top_movers.json (movers + metadata dos filtros ativos)\n- prices_index.json (lookup ticker flat e market:ticker)\n- market_history.db.zip (historico rolling usado pela pipeline)\n- Logs de build enviados como artefatos\n\n**Notas operacionais**\n- O app consome snapshots publicados e nao exige cron local\n- Um run local manual pode reproduzir saidas para debugging\n- O calculo pesado fica na CI para manter mobile/web leve"
       },
       "privacy_security": {
         "title": "Privacidade e Seguranca",

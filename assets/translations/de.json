@@ -306,9 +306,9 @@
     "title": "Marktuebersicht",
     "top_gainers": "Top-Gewinner",
     "top_losers": "Top-Verlierer",
-    "mover_filters": "Top-Mover enthalten nur Aktien mit Volumen >= {volume} und Marktkapitalisierung >= {marketCap}",
+    "mover_filters": "Top-Mover enthalten nur Aktien mit Dollar-Volumen >= {dollarVolume} und Preis >= {minPrice}",
     "mover_volume": "Volumen: {volume}",
-    "mover_market_cap": "Marktkapitalisierung: {marketCap}",
+    "mover_dollar_volume": "Dollar-Volumen: {dollarVolume}",
     "calendar": "Wirtschaftskalender",
     "news": "Marktnachrichten",
     "refresh": "Aktualisieren",
@@ -511,12 +511,12 @@
       "market_data": {
         "title": "Marktdaten & Snapshots",
         "content": "Verstehen Sie den Unterschied zwischen kostenlosen oeffentlichen Movern und optionalen privaten Kursprovidern.",
-        "details": "**Kostenloser Mover-Feed (ohne Schluessel)**\n- Taegliche Top-Gewinner/-Verlierer aus oeffentlichem verteiltem Snapshot\n- Zeitraeume: 1D, 5D, 1M, 1Y\n- Aktuelle Maerkte: US, UK, Deutschland, Frankreich, Kanada, Hong Kong, Australien, Indien\n\n**Portfolio-Quote-Kette (optionale Schluessel)**\n1. EODHD Echtzeit\n2. EODHD End-of-Day Fallback\n3. FMP Fallback\n4. Snapshot-Preis Fallback\n\n**Zuverlaessigkeits-Schutz**\n- Volumenfilter fuer Mover\n- Staleness-Pruefungen auf Kursdatum\n- Outlier-Blockierung bei verdaechtigen Spruengen"
+        "details": "**Kostenloser Mover-Feed (ohne Schluessel)**\n- Taegliche Top-Gewinner/-Verlierer aus oeffentlichem verteiltem Snapshot\n- Zeitraeume: 1D, 5D, 1M, 1Y\n- Aktuelle Maerkte: US, UK, Deutschland, Frankreich, Kanada, Hong Kong, Australien, Indien\n\n**Auswahllogik vor dem Ranking**\n- Dollar-Volumen = Schlusskurs * Volumen muss >= 1.000.000 pro Tag sein\n- Schlusskurs muss >= 1.00 sein, um Penny Stocks auszuschliessen\n- Ranking nutzt getrennte positive/negative Pools fuer Gewinner und Verlierer\n\n**Portfolio-Quote-Kette (optionale Schluessel)**\n1. EODHD Echtzeit\n2. EODHD End-of-Day Fallback\n3. FMP Fallback\n4. Snapshot-Preis Fallback\n\n**Zuverlaessigkeits-Schutz**\n- Staleness-Pruefungen auf Kursdatum\n- Outlier-Blockierung bei verdaechtigen Spruengen\n- Exchange/Ticker-Normalisierung vor dem Quote-Lookup"
       },
       "data_pipeline": {
         "title": "Datenpipeline (Technisch)",
         "content": "Technischer Ueberblick, wie Markt-Snapshots erzeugt und bereitgestellt werden.",
-        "details": "**Automations-Stack**\n- GitHub-Workflow laeuft geplant, bei Push auf main und manuell\n- Workflow injiziert Secret EODHD_API_KEY\n- Python-Skript berechnet Mover und erzeugt Snapshot-Artefakte\n\n**Artefakte**\n- Oeffentliche JSON/ZIP-Daten fuer die App\n- Rollierende 365-Tage-Historien-Datenbank fuer Multi-Perioden-Rankings\n- Build-Logs als Workflow-Artefakte\n\n**Warum diese Architektur**\n- Schneller App-Start\n- Kein API-Key-Zwang fuer oeffentliche Mover\n- Rechenlast in CI statt auf dem Geraet"
+        "details": "**Automations-Stack**\n- GitHub-Workflow laeuft geplant, bei Push auf main und manuell\n- Workflow injiziert Secret EODHD_API_KEY\n- Python-Skript berechnet Mover und erzeugt Snapshot-Artefakte\n\n**Rolling-Historienmodell**\n- Skript laedt zu Run-Beginn die neueste market_history.db.zip von GitHub Pages\n- Neue Tagesdaten werden per Upsert geschrieben, fehlende Anchors automatisch nachgezogen\n- Retention behaelt ein Rolling-Fenster mit genug Tiefe fuer 1Y-Vergleiche\n\n**Veroeffentlichte Artefakte**\n- top_movers.json (Mover + Metadaten zu aktiven Filtern)\n- prices_index.json (flaches und market:ticker Lookup)\n- market_history.db.zip (Rolling-Historie fuer die Pipeline)\n- Build-Logs als Workflow-Artefakte\n\n**Betriebliche Hinweise**\n- Die App nutzt veroeffentlichte Snapshots und braucht keinen lokalen Cron\n- Lokaler manueller Run kann Pipeline-Output fuer Debugging reproduzieren\n- Rechenlast bleibt in CI, damit Mobile/Web leichtgewichtig bleibt"
       },
       "privacy_security": {
         "title": "Datenschutz und Sicherheit",

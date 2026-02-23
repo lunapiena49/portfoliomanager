@@ -52,8 +52,8 @@ jobs:
             --history-bootstrap-backtrack-days 12 \
             --history-backfill-days 365 \
             --top-limit 20 \
-            --min-volume 1500000 \
-            --min-market-cap 300000000
+            --min-dollar-volume 1000000 \
+            --min-price 1.0
 
       - name: Upload build logs
         if: always()

@@ -306,9 +306,9 @@
     "title": "Apercu du Marche",
     "top_gainers": "Meilleures Hausses",
     "top_losers": "Pires Baisses",
-    "mover_filters": "Les top movers incluent uniquement les actions avec volume >= {volume} et capitalisation >= {marketCap}",
+    "mover_filters": "Les top movers incluent uniquement les actions avec dollar volume >= {dollarVolume} et prix >= {minPrice}",
     "mover_volume": "Volume : {volume}",
-    "mover_market_cap": "Capitalisation : {marketCap}",
+    "mover_dollar_volume": "Contre-valeur : {dollarVolume}",
     "calendar": "Calendrier Economique",
     "news": "Actualites du Marche",
     "refresh": "Actualiser",
@@ -511,12 +511,12 @@
       "market_data": {
         "title": "Donnees de Marche et Snapshots",
         "content": "Comprenez la difference entre movers publics gratuits et fournisseurs prives optionnels de cotation.",
-        "details": "**Flux movers gratuits (sans cle)**\n- Top gagnants/perdants quotidiens depuis snapshot public distribue\n- Periodes : 1D, 5D, 1M, 1Y\n- Marches couverts : US, UK, Allemagne, France, Canada, Hong Kong, Australie, Inde\n\n**Chaine de cotation portefeuille (cles optionnelles)**\n1. EODHD temps reel\n2. EODHD fin de journee en secours\n3. FMP en secours\n4. Prix snapshot en secours\n\n**Garde-fous fiabilite**\n- Filtre de volume applique aux movers\n- Verification de fraicheur des dates de cours\n- Blocage des outliers pour sauts suspects"
+        "details": "**Flux movers gratuits (sans cle)**\n- Top gagnants/perdants quotidiens depuis snapshot public distribue\n- Periodes : 1D, 5D, 1M, 1Y\n- Marches couverts : US, UK, Allemagne, France, Canada, Hong Kong, Australie, Inde\n\n**Logique de selection avant classement**\n- Dollar Volume = cloture * volume doit etre >= 1 000 000 par jour\n- Le prix de cloture doit etre >= 1.00 pour exclure les penny stocks\n- Le classement utilise des pools positifs et negatifs separes pour hausses et baisses\n\n**Chaine de cotation portefeuille (cles optionnelles)**\n1. EODHD temps reel\n2. EODHD fin de journee en secours\n3. FMP en secours\n4. Prix snapshot en secours\n\n**Garde-fous fiabilite**\n- Verification de fraicheur sur les dates de cotation\n- Blocage des outliers pour sauts suspects\n- Normalisation ticker/exchange avant lookup"
       },
       "data_pipeline": {
         "title": "Pipeline de Donnees (Technique)",
         "content": "Vue technique de la construction et de la publication des snapshots de marche.",
-        "details": "**Pile d'automatisation**\n- Workflow GitHub Actions sur planning, push main et declenchement manuel\n- Injection du secret EODHD_API_KEY\n- Script Python qui calcule les movers et produit les artefacts snapshot\n\n**Artefacts**\n- Donnees publiques JSON/zip consommees par l'app\n- Base historique rolling sur 365 jours pour classements multi-periodes\n- Logs de build publies en artefacts workflow\n\n**Pourquoi cette architecture**\n- Demarrage app plus rapide\n- Pas de cle API obligatoire pour les movers publics\n- Calcul lourd centralise en CI plutot que sur l'appareil"
+        "details": "**Pile d'automatisation**\n- Workflow GitHub Actions sur planning, push main et declenchement manuel\n- Injection du secret EODHD_API_KEY\n- Script Python qui calcule les movers et produit les artefacts snapshot\n\n**Modele historique rolling**\n- Le script telecharge market_history.db.zip le plus recent depuis GitHub Pages au demarrage\n- Les nouvelles donnees quotidiennes sont appliquees en upsert avec backfill des anchors manquants\n- La retention conserve une fenetre rolling suffisante pour les comparaisons 1Y\n\n**Artefacts publies**\n- top_movers.json (movers + metadata des filtres actifs)\n- prices_index.json (lookup ticker a plat et market:ticker)\n- market_history.db.zip (historique rolling utilise par la pipeline)\n- Logs de build publies en artefacts workflow\n\n**Notes operationnelles**\n- L'app consomme les snapshots publies et ne requiert pas de cron local\n- Un run local manuel peut reproduire les sorties pour le debugging\n- Le calcul lourd reste en CI pour garder mobile/web leger"
       },
       "privacy_security": {
         "title": "Confidentialite et Securite",

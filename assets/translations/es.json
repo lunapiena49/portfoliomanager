@@ -306,9 +306,9 @@
     "title": "Vision General del Mercado",
     "top_gainers": "Mayores Alzas",
     "top_losers": "Mayores Bajas",
-    "mover_filters": "Los top movers incluyen solo acciones con volumen >= {volume} y capitalizacion bursatil >= {marketCap}",
+    "mover_filters": "Los top movers incluyen solo acciones con dollar volume >= {dollarVolume} y precio >= {minPrice}",
     "mover_volume": "Volumen: {volume}",
-    "mover_market_cap": "Capitalizacion: {marketCap}",
+    "mover_dollar_volume": "Contravalor: {dollarVolume}",
     "calendar": "Calendario Economico",
     "news": "Noticias del Mercado",
     "refresh": "Actualizar",
@@ -511,12 +511,12 @@
       "market_data": {
         "title": "Datos de Mercado y Snapshots",
         "content": "Comprende la diferencia entre movers publicos gratuitos y proveedores privados opcionales de cotizaciones.",
-        "details": "**Feed de movers gratuitos (sin clave)**\n- Top ganadores/perdedores diarios desde snapshot publico distribuido\n- Marcos temporales: 1D, 5D, 1M, 1Y\n- Mercados cubiertos: US, UK, Alemania, Francia, Canada, Hong Kong, Australia, India\n\n**Cadena de cotizaciones de cartera (claves opcionales)**\n1. EODHD tiempo real\n2. EODHD fin de dia como respaldo\n3. FMP como respaldo\n4. Precio de snapshot como respaldo\n\n**Controles de fiabilidad**\n- Filtro de volumen aplicado a movers\n- Control de vigencia por fecha de cotizacion\n- Bloqueo de outliers para saltos sospechosos"
+        "details": "**Feed de movers gratuitos (sin clave)**\n- Top ganadores/perdedores diarios desde snapshot publico distribuido\n- Marcos temporales: 1D, 5D, 1M, 1Y\n- Mercados cubiertos: US, UK, Alemania, Francia, Canada, Hong Kong, Australia, India\n\n**Logica de seleccion antes del ranking**\n- Dollar Volume = cierre * volumen debe ser >= 1.000.000 por dia\n- El precio de cierre debe ser >= 1.00 para excluir penny stocks\n- El ranking usa pools positivos y negativos separados para alzas y bajas\n\n**Cadena de cotizaciones de cartera (claves opcionales)**\n1. EODHD tiempo real\n2. EODHD fin de dia como respaldo\n3. FMP como respaldo\n4. Precio de snapshot como respaldo\n\n**Controles de fiabilidad**\n- Verificacion de vigencia en fechas de cotizacion\n- Bloqueo de outliers para saltos sospechosos\n- Normalizacion de ticker/exchange antes del lookup"
       },
       "data_pipeline": {
         "title": "Pipeline de Datos (Tecnico)",
         "content": "Resumen tecnico de como se construyen y publican los snapshots de mercado.",
-        "details": "**Stack de automatizacion**\n- Workflow de GitHub Actions en horario, push a main y ejecucion manual\n- El workflow inyecta el secreto EODHD_API_KEY\n- Script Python calcula movers y genera artefactos snapshot\n\n**Artefactos**\n- Datos publicos JSON/zip para consumo de la app\n- Base historica rolling de 365 dias para ranking multiperiodo\n- Logs de build subidos como artefactos\n\n**Por que esta arquitectura**\n- Mantiene rapido el arranque de la app\n- Evita requerir clave API para movers publicos\n- Centraliza calculo pesado en CI en lugar del dispositivo"
+        "details": "**Stack de automatizacion**\n- Workflow de GitHub Actions en horario, push a main y ejecucion manual\n- El workflow inyecta el secreto EODHD_API_KEY\n- Script Python calcula movers y genera artefactos snapshot\n\n**Modelo historico rolling**\n- El script descarga market_history.db.zip mas reciente desde GitHub Pages al iniciar\n- Los nuevos datos diarios se aplican con upsert y backfill de anchors faltantes\n- La retencion conserva una ventana rolling suficiente para comparaciones 1Y\n\n**Artefactos publicados**\n- top_movers.json (movers + metadata de filtros activos)\n- prices_index.json (lookup plano y market:ticker)\n- market_history.db.zip (historico rolling usado por la pipeline)\n- Logs de build subidos como artefactos\n\n**Notas operativas**\n- La app consume snapshots publicados y no requiere cron local\n- Un run local manual puede reproducir salidas para debugging\n- El calculo pesado queda centralizado en CI para aligerar mobile/web"
       },
       "privacy_security": {
         "title": "Privacidad y Seguridad",
