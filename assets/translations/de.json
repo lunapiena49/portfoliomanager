@@ -92,6 +92,8 @@
     "add_position": "Position hinzufuegen",
     "create_portfolio": "Portfolio erstellen",
     "create_portfolio_info": "Erstellen Sie ein neues Portfolio und geben Sie ihm einen Namen. Sie koennen danach Positionen hinzufuegen.",
+    "create_empty_tab": "Leer erstellen",
+    "create_import_tab": "Von Broker importieren",
     "create_success": "Portfolio erfolgreich erstellt!",
     "manage_portfolios": "Portfolios verwalten",
     "rename_portfolio": "Portfolio umbenennen",

@@ -92,6 +92,8 @@
     "add_position": "Ajouter Position",
     "create_portfolio": "Creer un Portefeuille",
     "create_portfolio_info": "Creez un nouveau portefeuille et donnez-lui un nom. Vous pourrez ajouter des positions ensuite.",
+    "create_empty_tab": "Creer vide",
+    "create_import_tab": "Importer depuis broker",
     "create_success": "Portefeuille cree avec succes!",
     "manage_portfolios": "Gerer les Portefeuilles",
     "rename_portfolio": "Renommer le Portefeuille",

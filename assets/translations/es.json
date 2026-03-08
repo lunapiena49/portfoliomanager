@@ -92,6 +92,8 @@
     "add_position": "Agregar Posicion",
     "create_portfolio": "Crear Cartera",
     "create_portfolio_info": "Cree una nueva cartera y dele un nombre. Podra agregar posiciones despues de crearla.",
+    "create_empty_tab": "Crear Vacia",
+    "create_import_tab": "Importar desde Broker",
     "create_success": "Cartera creada con exito!",
     "manage_portfolios": "Administrar Carteras",
     "rename_portfolio": "Renombrar Cartera",

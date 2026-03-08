@@ -92,6 +92,8 @@
     "add_position": "Adicionar Posicao",
     "create_portfolio": "Criar Carteira",
     "create_portfolio_info": "Crie uma nova carteira e defina um nome. Voce podera adicionar posicoes depois.",
+    "create_empty_tab": "Criar vazia",
+    "create_import_tab": "Importar da corretora",
     "create_success": "Carteira criada com sucesso!",
     "manage_portfolios": "Gerenciar Carteiras",
     "rename_portfolio": "Renomear Carteira",
