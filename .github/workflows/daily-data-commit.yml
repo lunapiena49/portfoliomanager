@@ -1,0 +1,97 @@
+name: Daily Data Commit
+
+# Scopo: al primo utilizzo giornaliero dell'app (trigger cron mattutino + manuale)
+# scarica l'ultimo snapshot pubblicato su GitHub Pages dal workflow market-data-snapshot.yml
+# e committa su main il delta del top_movers.json + una riga in docs/DATA_SNAPSHOT_LOG.md.
+#
+# I file pesanti (prices_index.json ~13MB, market_history.db.zip ~950MB) restano solo
+# su Pages — il .gitignore li esclude dal repo.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 07:00 UTC = 08:00/09:00 CET, prima dell'orario tipico di utilizzo.
+    - cron: "0 7 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-data-commit
+  cancel-in-progress: false
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download latest snapshot from GitHub Pages
+        id: download
+        run: |
+          set -euo pipefail
+          BASE="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          mkdir -p dist/market-data
+          echo "Downloading top_movers.json from $BASE ..."
+          if ! curl -fsSL "$BASE/top_movers.json" -o dist/market-data/top_movers.json; then
+            echo "::warning::Pages artifact not reachable yet (404). Skipping commit."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Extract as_of_date from snapshot
+        if: steps.download.outputs.skip != 'true'
+        id: meta
+        run: |
+          set -euo pipefail
+          AS_OF=$(python -c "import json; d=json.load(open('dist/market-data/top_movers.json')); print(d.get('as_of_date') or d.get('generated_at_utc') or 'unknown')")
+          echo "as_of=$AS_OF" >> "$GITHUB_OUTPUT"
+          echo "Snapshot as_of: $AS_OF"
+
+      - name: Append to DATA_SNAPSHOT_LOG
+        if: steps.download.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p docs
+          LOG=docs/DATA_SNAPSHOT_LOG.md
+          TODAY=$(date -u +%Y-%m-%d)
+          AS_OF="${{ steps.meta.outputs.as_of }}"
+          if [ ! -f "$LOG" ]; then
+            {
+              echo "# Data Snapshot Log"
+              echo ""
+              echo "Storico append-only dei sync giornalieri prodotti da \`daily-data-commit.yml\`."
+              echo "Formato: \`| run_date_utc | snapshot_as_of |\`"
+              echo ""
+              echo "| Run (UTC) | Snapshot as_of |"
+              echo "|---|---|"
+            } > "$LOG"
+          fi
+          # Idempotenza: non appendere due volte la stessa coppia (TODAY, AS_OF).
+          if ! grep -qF "| $TODAY | $AS_OF |" "$LOG"; then
+            echo "| $TODAY | $AS_OF |" >> "$LOG"
+          else
+            echo "Row already present in log, skipping append."
+          fi
+
+      - name: Commit if changed
+        if: steps.download.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/market-data/top_movers.json docs/DATA_SNAPSHOT_LOG.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          DATE=$(date -u +%Y-%m-%d)
+          AS_OF="${{ steps.meta.outputs.as_of }}"
+          git commit -m "chore(data): daily snapshot $DATE (as_of $AS_OF)"
+          git push origin HEAD:main

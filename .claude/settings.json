@@ -1,0 +1,97 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/settings.json",
+  "env": {
+    "FORCE_COLOR": "0",
+    "FLUTTER_SUPPRESS_ANALYTICS": "true",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(rtk git:*)",
+      "Bash(rtk gh:*)",
+      "Bash(rtk flutter:*)",
+      "Bash(rtk dart:*)",
+      "Bash(rtk pnpm:*)",
+      "Bash(rtk npm:*)",
+      "Bash(rtk npx:*)",
+      "Bash(rtk ls:*)",
+      "Bash(rtk grep:*)",
+      "Bash(rtk find:*)",
+      "Bash(rtk read:*)",
+      "Bash(rtk err:*)",
+      "Bash(rtk gain:*)",
+      "Bash(rtk summary:*)",
+      "Bash(flutter analyze)",
+      "Bash(flutter test)",
+      "Bash(flutter test:*)",
+      "Bash(flutter pub get)",
+      "Bash(flutter pub run:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(flutter devices)",
+      "Bash(python scripts/eodhd/*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File scripts/eodhd/sync_market_snapshot_from_pages.ps1:*)",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(rtk git push --force*)",
+      "Bash(rtk git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(rtk git reset --hard*)",
+      "Bash(git clean -fd*)",
+      "Bash(rm -rf*)",
+      "Bash(del /s /q*)",
+      "Bash(flutter clean)",
+      "Bash(rtk flutter clean)"
+    ],
+    "ask": [
+      "Bash(git commit:*)",
+      "Bash(rtk git commit:*)",
+      "Bash(git push:*)",
+      "Bash(rtk git push:*)",
+      "Bash(rtk gh workflow run:*)",
+      "Bash(rtk gh pr create:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/session-start.ps1",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/rtk-rewrite.ps1",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File .claude/hooks/stop-wrap.ps1",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
