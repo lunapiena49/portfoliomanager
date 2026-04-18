@@ -5,7 +5,7 @@ description: Avvia l'app Portfolio Manager in modalita' debug su browser o devic
 
 # Skill: flutter-dev
 
-Avvia Portfolio Manager in debug mode. Segue [QUICK_START.md §4-5](../../../QUICK_START.md).
+Avvia Portfolio Manager in debug mode. Segue [QUICK_START.md sezione 4-5](../../../QUICK_START.md).
 
 ## Pre-flight
 
@@ -22,8 +22,8 @@ Se `doctor` mostra issue critiche (Flutter SDK mancante, Android toolchain rotta
 ## Decisione target
 
 1. Chiedi a quale device l'utente vuole fare il run (se non gia' specificato):
-   - `chrome` → browser web locale
-   - device ID dalla lista di `flutter devices` → mobile
+   - `chrome` -> browser web locale
+   - device ID dalla lista di `flutter devices` -> mobile
 2. Default intelligente: se c'e' un device Android connesso usa quello, altrimenti `chrome`.
 
 ## Avvio

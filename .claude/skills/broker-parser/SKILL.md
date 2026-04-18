@@ -15,7 +15,7 @@ Aggiunge un parser broker conforme al contract di `base_parser.dart`.
 4. **Decimali**: `1,234.56` (US) / `1.234,56` (EU).
 5. **File di esempio** (obbligatorio): chiedi di allegare un CSV/PDF reale anonimizzato per validare il parser.
 
-Se mancano → non procedere, chiedi il campione.
+Se mancano -> non procedere, chiedi il campione.
 
 ## Sequenza
 
@@ -27,7 +27,7 @@ Se mancano → non procedere, chiedi il campione.
 
 2. **Crea il parser** in [lib/services/parsers/](../../../lib/services/parsers/) seguendo il contract di `base_parser.dart`. Template minimo:
    - Classe `<Broker>Parser extends BaseParser`
-   - Override `parse(String content) → List<Position>`
+   - Override `parse(String content) -> List<Position>`
    - Helper `_isHeaderRow`, `_parseNumber`, `_inferAssetType` se serve
 
 3. **Registra in factory**: aggiungi import + case in [lib/services/parsers/parser_factory.dart](../../../lib/services/parsers/parser_factory.dart).
@@ -56,5 +56,5 @@ Fidelity BOM+footer, Schwab metadata pre-header).
 
 - Do: normalizza ticker (uppercase, trim exchange suffix se separato) prima di passarlo al motore quote.
 - Do: aggrega Buy+Sell in posizione netta se il broker esporta transazioni (vedi `revolut_parser.dart`, `trading212_parser.dart`, `xtb_parser.dart`).
-- Don't: hardcodare indici di colonna. Usa header name → index via mapping.
+- Don't: hardcodare indici di colonna. Usa header name -> index via mapping.
 - Don't: lanciare eccezioni su riga singola malformata; salta e logga.

@@ -19,8 +19,8 @@ Mantiene allineati i 6 file `assets/translations/{it,en,es,fr,de,pt}.json`.
 2. Computa set di chiavi (flatten path con `.`) per ciascun file.
 
 3. Per ogni coppia `(it, <target>)` riporta:
-   - Chiavi presenti in `it` ma mancanti in `target` → **da tradurre**.
-   - Chiavi presenti in `target` ma non in `it` → **orfane** (probabile refactor incompleto).
+   - Chiavi presenti in `it` ma mancanti in `target` -> **da tradurre**.
+   - Chiavi presenti in `target` ma non in `it` -> **orfane** (probabile refactor incompleto).
 
 4. Output report compatto:
    ```
@@ -42,7 +42,7 @@ Chiedi all'utente quale modalita':
 ## Validazione JSON
 
 Dopo ogni edit: valida che i file siano JSON parsabili (nessuna trailing comma, escape corretto).
-Non usare `flutter test` per questo — un `python -m json.tool` basta:
+Non usare `flutter test` per questo -- un `python -m json.tool` basta:
 
 ```bash
 rtk read assets/translations/en.json
@@ -51,12 +51,12 @@ rtk read assets/translations/en.json
 ## Note ortografia italiana
 
 Il progetto serve utenza IT come mercato primario. In `it.json`:
-- **Mantenere** diacritici corretti (`è`, `à`, `ò`, `ù`, `ì`).
-- Alcune stringhe legacy usano versione senza accenti (es. `Sanita`, `Volatilita`). **Non convertire in massa** senza conferma — rischio regressione su layout che si basa sulla larghezza stringa.
+- **Mantenere** diacritici corretti (`e`, `a`, `o`, `u`, `i`).
+- Alcune stringhe legacy usano versione senza accenti (es. `Sanita`, `Volatilita`). **Non convertire in massa** senza conferma -- rischio regressione su layout che si basa sulla larghezza stringa.
 
 ## Riferimenti
 
-- [assets/translations/it.json](../../../assets/translations/it.json) — source
+- [assets/translations/it.json](../../../assets/translations/it.json) -- source
 - [assets/translations/en.json](../../../assets/translations/en.json)
 - [assets/translations/es.json](../../../assets/translations/es.json)
 - [assets/translations/fr.json](../../../assets/translations/fr.json)

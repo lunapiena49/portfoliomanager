@@ -56,33 +56,33 @@ Storico implementazioni recuperabile da git e documentazione interna.
    - Eseguito `git pull --ff-only`.
    - Stato remoto: `Already up to date`.
 
-## Sessione 2026-04-18 — Ultrareview #1+#2+#3 (Claude Code + automazione daily)
+## Sessione 2026-04-18 -- Ultrareview #1+#2+#3 (Claude Code + automazione daily)
 
 Tre sessioni di ultrareview eseguite in sequenza nello stesso giorno, deliverable pianificati in
 [ULTRAREVIEW_PLAN.md](ULTRAREVIEW_PLAN.md).
 
-### Ultrareview #1 — Fondazioni Claude Code
+### Ultrareview #1 -- Fondazioni Claude Code
 
 - Creato `ULTRAREVIEW_PLAN.md`: piano 3 sessioni (fondazioni / skills+hooks / GH Action daily commit).
 - Creato `CLAUDE.md`: overview progetto, architettura `lib/`, comandi obbligatori `rtk`, regole traduzioni + API keys, convenzioni commit, riferimenti interni.
 - Creato `.claude/settings.json`: env + permissions allow/deny/ask per `rtk git/gh/flutter/...`, deny per `push --force`, `rm -rf`, `flutter clean`; ask per commit/push/workflow run.
 - Creato `USER_FEATURES.md`: catalogo funzioni utente per area con file:line.
 
-### Ultrareview #2 — Skills + hooks + RTK enforcement
+### Ultrareview #2 -- Skills + hooks + RTK enforcement
 
-- Creato hook `.claude/hooks/rtk-rewrite.ps1` (PreToolUse): blocca Bash con binari filtrati (`git`, `gh`, `flutter`, `npm`, …) non prefissati con `rtk`. Whitelist per `flutter analyze|test|pub get|doctor|devices`.
+- Creato hook `.claude/hooks/rtk-rewrite.ps1` (PreToolUse): blocca Bash con binari filtrati (`git`, `gh`, `flutter`, `npm`, ...) non prefissati con `rtk`. Whitelist per `flutter analyze|test|pub get|doctor|devices`.
 - Creato hook `.claude/hooks/session-start.ps1`: `git pull --ff-only` su main, check freshness `dist/market-data/top_movers.json`, warning se `daily-data-commit` workflow non eseguito da >24h.
 - Creato hook `.claude/hooks/stop-wrap.ps1`: se ci sono commit nuovi o modifiche in `lib/`/`translations/`/`workflows/`, suggerisce l'esecuzione della skill `session-wrap`.
 - Create 6 skills in `.claude/skills/`: `flutter-dev`, `flutter-release`, `broker-parser`, `translations-sync`, `market-data-local`, `session-wrap`.
-- Registrati hook in `.claude/settings.json`; aggiunte §7 Skills e §8 Hooks in `CLAUDE.md`.
+- Registrati hook in `.claude/settings.json`; aggiunte sezione 7 Skills e sezione 8 Hooks in `CLAUDE.md`.
 
-### Ultrareview #3 — GitHub Action daily commit + consolidation
+### Ultrareview #3 -- GitHub Action daily commit + consolidation
 
 - Creato workflow `.github/workflows/daily-data-commit.yml`: trigger cron `0 7 * * *` + `workflow_dispatch`, scarica `top_movers.json` dall'endpoint GitHub Pages pubblicato da `market-data-snapshot.yml`, committa su `main` solo se diff reale. Concurrency group dedicato, `cancel-in-progress: false` per non perdere giorni.
 - Creato `docs/DATA_SNAPSHOT_LOG.md`: log append-only dei sync giornalieri (popolato dal workflow stesso).
 - Aggiornato `.gitignore`: esclusi file pesanti di `dist/market-data/` (`market_history.db.zip` ~950MB, `prices_index.json` ~13MB, `daily_market.db.zip`, `.db`) tramite pattern negate; tracciato solo `top_movers.json` (~745KB/giorno). Escluso anche `.claude/settings.local.json`.
 - Riscritto `README.md`: sostituito placeholder Flutter default con overview reale, feature summary, quick start, struttura repo, pipeline dati, riferimenti a docs.
-- Archiviati `analisi_codice.md`, `lista_files.md`, `lista_moduli.md` in `docs/archive/codebase-snapshot-2026-02/` con README esplicativo (mappa codebase viva ora in `CLAUDE.md` §2).
+- Archiviati `analisi_codice.md`, `lista_files.md`, `lista_moduli.md` in `docs/archive/codebase-snapshot-2026-02/` con README esplicativo (mappa codebase viva ora in `CLAUDE.md` sezione 2).
 - Aggiornati riferimenti obsoleti in `CLAUDE.md` e `IMPLEMENTATION_HISTORY.md`.
 
 ### Outcome
@@ -91,7 +91,20 @@ Tre sessioni di ultrareview eseguite in sequenza nello stesso giorno, deliverabl
 - 3 workflow attivi: `market-data-snapshot.yml` (pubblicazione Pages, invariato), `daily-data-commit.yml` (nuovo, commit repo), e gli hook Claude Code che li orchestrano.
 - Requisito "git + commit e aggiornamento dati tramite GH Action cron ad ogni nuovo giorno di utilizzo" soddisfatto via: cron workflow + hook `SessionStart` che trigga il workflow manuale se l'ultimo run e' stale.
 
-Prossima sessione: commit finale dei deliverable + validazione pratica (dry-run workflow, smoke test hook su una Bash call).
+## Sessione 2026-04-18 -- Hardening + subagents
+
+Follow-up post-commit #1, in risposta a feedback utente:
+
+- **Regola ASCII-only nei file di codice** aggiunta in `CLAUDE.md` sezione 4.1. Motivo: em-dash `--` dentro stringhe PowerShell su Windows (default Windows-1252) aveva rotto il parsing di `session-start.ps1` nel commit precedente. Rimossi em-dash da tutti e 3 gli hook; regola ora mandatoria per `.ps1`, `.dart`, `.py`, `.yml`, `.json`.
+- **Environment Windows** documentato esplicitamente in `CLAUDE.md` sezione 0 (shell Git Bash, percorsi Unix-style in Bash tool, PowerShell per hook/script, no `&&` in PS, no flag non-POSIX).
+- **4 subagents creati** in `.claude/agents/`:
+  - `code-reviewer` (Read/Grep/Glob/Bash): punch list per severity su ASCII/security/BLoC/parser/i18n.
+  - `test-runner` (Bash/Read/Grep): gate `flutter analyze` + `flutter test` con report failure-only.
+  - `docs-updater` (Read/Edit/Write/Grep/Glob/Bash): mirror subagent di skill `session-wrap` per mantenere context main pulito.
+  - `i18n-auditor` (Read/Edit/Grep/Glob/Bash): diff chiavi tra i 6 locale, modalita' report-only / placeholder / remove-orphans.
+- Aggiunta sezione sezione 9 Subagents in `CLAUDE.md` con differenziazione skill vs agent.
+
+Prossima sessione: lavoro feature reale sull'app (non piu' setup); gli agent e skill sono pronti a essere invocati.
 
 ## Note operative
 

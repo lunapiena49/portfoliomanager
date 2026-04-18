@@ -5,7 +5,7 @@ description: Costruisce release web e/o apk dell'app Portfolio Manager dopo aver
 
 # Skill: flutter-release
 
-Pipeline release locale con gate di qualita'. Segue [QUICK_START.md §6-7-8](../../../QUICK_START.md).
+Pipeline release locale con gate di qualita'. Segue [QUICK_START.md sezione 6-7-8](../../../QUICK_START.md).
 
 ## Gate (fail-fast)
 

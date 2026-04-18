@@ -36,7 +36,7 @@ powershell -ExecutionPolicy Bypass -File scripts/eodhd/sync_market_snapshot_from
    ```bash
    rtk read dist/market-data/top_movers.json
    ```
-   Controlla `as_of_date` — deve essere entro gli ultimi 1-2 giorni di borsa (il workflow gira alle 22:35 UTC giorni lavorativi).
+   Controlla `as_of_date` -- deve essere entro gli ultimi 1-2 giorni di borsa (il workflow gira alle 22:35 UTC giorni lavorativi).
 
 3. Se `as_of_date` e' ancora vecchio dopo il sync: il workflow potrebbe aver fallito. Check:
    ```bash

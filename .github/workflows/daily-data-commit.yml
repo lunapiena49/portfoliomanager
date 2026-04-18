@@ -5,7 +5,7 @@ name: Daily Data Commit
 # e committa su main il delta del top_movers.json + una riga in docs/DATA_SNAPSHOT_LOG.md.
 #
 # I file pesanti (prices_index.json ~13MB, market_history.db.zip ~950MB) restano solo
-# su Pages — il .gitignore li esclude dal repo.
+# su Pages -- il .gitignore li esclude dal repo.
 
 on:
   workflow_dispatch:

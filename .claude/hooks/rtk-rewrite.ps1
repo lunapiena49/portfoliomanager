@@ -79,7 +79,7 @@ try {
         # Se e' un binario filtrato senza rtk -> blocca.
         if ($filtered -contains $first) {
             $suggestion = "rtk $trim"
-            $reason = "Comando '$first' va prefissato con 'rtk' per risparmio token (vedi CLAUDE.md §3). Sostituisci con: $suggestion"
+            $reason = "Comando '$first' va prefissato con 'rtk' per risparmio token (vedi CLAUDE.md sezione 3). Sostituisci con: $suggestion"
             $out = @{ decision = 'block'; reason = $reason } | ConvertTo-Json -Compress
             Write-Output $out
             exit 0
