@@ -123,6 +123,12 @@ Aggiorna `dist/market-data/top_movers.json`, `prices_index.json`, `market_histor
    - Traduzioni tutte popolate
    - `dist/market-data/top_movers.json` con `as_of_date` recente
 
+8. **End-of-session sync obbligatorio**: a fine di **ogni** sessione, repo locale e repo GitHub devono essere allineati.
+   Prima di chiudere sempre: `rtk git status`, poi se ci sono modifiche utili committarle e `rtk git push`.
+   Nessun commit locale deve restare non pushato. Se il push fallisce per non-fast-forward (tipico dopo
+   `daily-data-commit.yml`), `rtk git pull --rebase origin main` e ripushare. Non committare mai file ignorati
+   o untracked locali (`dist/`, `.claude/scheduled_tasks.lock`).
+
 ## 5. Convenzioni commit
 
 Coerente con git log esistente (prefissi lowercase, niente body se fix minimi):
