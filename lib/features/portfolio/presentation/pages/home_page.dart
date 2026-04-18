@@ -89,6 +89,7 @@ class PortfolioTab extends StatelessWidget {
           ),
           body: _buildBody(context, state),
           floatingActionButton: FloatingActionButton.extended(
+            heroTag: 'fab_portfolio_add_position',
             onPressed: () => context.push('/home/add-position'),
             icon: const Icon(Icons.add),
             label: Text(

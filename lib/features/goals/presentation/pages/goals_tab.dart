@@ -113,6 +113,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
       ),
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton.extended(
+              heroTag: 'fab_goals_add_goal',
               onPressed: () => _showAddGoalSheet(context),
               icon: const Icon(Icons.add),
               label: Text('goals.add.action'.tr()),
