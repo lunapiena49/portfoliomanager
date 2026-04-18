@@ -18,9 +18,7 @@ class LocalStorageService {
   static late Box _portfolioBox;
   static late Box _goalsBox;
 
-  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   static String? _cachedGeminiKey;
   static String? _cachedFmpKey;

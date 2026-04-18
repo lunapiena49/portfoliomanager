@@ -215,7 +215,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: alignment,
@@ -631,10 +631,10 @@ class _RebalancingTabState extends State<RebalancingTab> {
         vertical: isCompact ? 10.h : 12.h,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.06),
+        color: theme.colorScheme.primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.2),
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -673,9 +673,9 @@ class _RebalancingTabState extends State<RebalancingTab> {
     final triggerMinWidth = math.max(112.0, math.min(156.0, width * 0.22));
     final theme = Theme.of(context);
     final triggerDecoration = BoxDecoration(
-      color: theme.colorScheme.surface.withOpacity(0.75),
+      color: theme.colorScheme.surface.withValues(alpha: 0.75),
       borderRadius: BorderRadius.circular(10.r),
-      border: Border.all(color: theme.dividerColor.withOpacity(0.45)),
+      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.45)),
     );
 
     Widget buildMenuTrigger({
@@ -804,9 +804,9 @@ class _RebalancingTabState extends State<RebalancingTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.75),
+        color: theme.colorScheme.surface.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.35)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.35)),
       ),
       child: Align(
         alignment: Alignment.centerRight,
@@ -845,10 +845,10 @@ class _RebalancingTabState extends State<RebalancingTab> {
 
     return Card(
       margin: EdgeInsets.only(bottom: 12.h),
-      color: highlightColor.withOpacity(0.06),
+      color: highlightColor.withValues(alpha: 0.06),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.r),
-        side: BorderSide(color: highlightColor.withOpacity(0.3)),
+        side: BorderSide(color: highlightColor.withValues(alpha: 0.3)),
       ),
       child: Padding(
         padding: EdgeInsets.all(16.w),
@@ -941,7 +941,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -950,7 +950,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
             Container(
               padding: EdgeInsets.all(6.w),
               decoration: BoxDecoration(
-                color: (iconColor ?? resolvedColor).withOpacity(0.12),
+                color: (iconColor ?? resolvedColor).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Icon(
@@ -1055,11 +1055,11 @@ class _RebalancingTabState extends State<RebalancingTab> {
           decoration: InputDecoration(
             suffixText: '%',
             suffixStyle: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w600,
             ),
             filled: true,
-            fillColor: theme.colorScheme.surface.withOpacity(0.6),
+            fillColor: theme.colorScheme.surface.withValues(alpha: 0.6),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 10,
               vertical: math.max(10.0, 10.0 * textScale),
@@ -1161,7 +1161,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
                       padding:
                           EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Text(
@@ -1185,7 +1185,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
                       padding:
                           EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                       decoration: BoxDecoration(
-                        color: deltaColor.withOpacity(0.12),
+                        color: deltaColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Row(
@@ -1216,7 +1216,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
                       Container(
                         height: 6.h,
                         decoration: BoxDecoration(
-                          color: theme.dividerColor.withOpacity(0.3),
+                          color: theme.dividerColor.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                       ),
@@ -1226,7 +1226,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
                         child: Container(
                           height: 6.h,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.4),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(4.r),
                           ),
                         ),
@@ -1268,7 +1268,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.35)),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.35)),
         ),
         child: isCompact
             ? Row(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/portfolio_entities.dart';

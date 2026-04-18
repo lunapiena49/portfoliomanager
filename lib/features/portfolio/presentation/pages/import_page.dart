@@ -200,30 +200,29 @@ class _ImportPageState extends State<ImportPage> {
 
   // [UPDATED] Import target selection UI
   Widget _buildTargetSelector() {
-    return Column(
-      children: [
-        RadioListTile<ImportTarget>(
-          value: ImportTarget.createNew,
-          groupValue: _importTarget,
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() {
-              _importTarget = value;
-              _selectedPortfolioId = null;
-            });
-          },
-          title: Text('import.import_target_create'.tr()),
-        ),
-        RadioListTile<ImportTarget>(
-          value: ImportTarget.addToExisting,
-          groupValue: _importTarget,
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() => _importTarget = value);
-          },
-          title: Text('import.import_target_existing'.tr()),
-        ),
-      ],
+    return RadioGroup<ImportTarget>(
+      groupValue: _importTarget,
+      onChanged: (value) {
+        if (value == null) return;
+        setState(() {
+          _importTarget = value;
+          if (value == ImportTarget.createNew) {
+            _selectedPortfolioId = null;
+          }
+        });
+      },
+      child: Column(
+        children: [
+          RadioListTile<ImportTarget>(
+            value: ImportTarget.createNew,
+            title: Text('import.import_target_create'.tr()),
+          ),
+          RadioListTile<ImportTarget>(
+            value: ImportTarget.addToExisting,
+            title: Text('import.import_target_existing'.tr()),
+          ),
+        ],
+      ),
     );
   }
 
@@ -237,7 +236,7 @@ class _ImportPageState extends State<ImportPage> {
     }
 
     return DropdownButtonFormField<String>(
-      value: _selectedPortfolioId,
+      initialValue: _selectedPortfolioId,
       decoration: InputDecoration(
         hintText: 'import.select_existing_portfolio_hint'.tr(),
         prefixIcon: const Icon(Icons.folder_open),
@@ -271,7 +270,7 @@ class _ImportPageState extends State<ImportPage> {
 
   Widget _buildBrokerSelector() {
     return DropdownButtonFormField<String>(
-      value: _selectedBroker,
+      initialValue: _selectedBroker,
       decoration: InputDecoration(
         hintText: 'import.choose_broker'.tr(),
         prefixIcon: const Icon(Icons.account_balance),
@@ -489,6 +488,7 @@ class _ImportPageState extends State<ImportPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('errors.file_invalid'.tr()),
@@ -559,6 +559,7 @@ class _ImportPageState extends State<ImportPage> {
         mergeStrategy = selectedStrategy;
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('import.error'.tr()),
@@ -568,6 +569,7 @@ class _ImportPageState extends State<ImportPage> {
       return;
     }
 
+    if (!mounted) return;
     context.read<PortfolioBloc>().add(
           AddPositionsFromImportEvent(
             files: _selectedFiles,

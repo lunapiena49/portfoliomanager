@@ -316,7 +316,7 @@ abstract class BaseBrokerParser {
       'btc', 'eth', 'doge', 'ltc', 'bch', 'etc', 'bsv', 'shib', 
       'avax', 'sol', 'ada', 'xrp', 'dot', 'link', 'matic'
     ];
-    if (cryptoSymbols.any((c) => symLower == c || symLower.startsWith('$c'))) {
+    if (cryptoSymbols.any((c) => symLower == c || symLower.startsWith(c))) {
       return 'Crypto';
     }
 

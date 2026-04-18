@@ -469,22 +469,24 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('settings.general.language'.tr()),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: languages.map((lang) {
-              return RadioListTile<String>(
-                title: Text('${lang['flag']} ${lang['nativeName']}'),
-                value: lang['code']!,
-                groupValue: state.settings.languageCode,
-                onChanged: (value) {
-                  if (value != null) {
-                    context.read<SettingsBloc>().add(UpdateLanguageEvent(value));
-                    Navigator.pop(context);
-                  }
-                },
-              );
-            }).toList(),
+        content: RadioGroup<String>(
+          groupValue: state.settings.languageCode,
+          onChanged: (value) {
+            if (value != null) {
+              context.read<SettingsBloc>().add(UpdateLanguageEvent(value));
+              Navigator.pop(context);
+            }
+          },
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: languages.map((lang) {
+                return RadioListTile<String>(
+                  title: Text('${lang['flag']} ${lang['nativeName']}'),
+                  value: lang['code']!,
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
@@ -496,22 +498,24 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('settings.general.currency'.tr()),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: AppConstants.supportedCurrencies.map((currency) {
-              return RadioListTile<String>(
-                title: Text(currency),
-                value: currency,
-                groupValue: state.settings.baseCurrency,
-                onChanged: (value) {
-                  if (value != null) {
-                    context.read<SettingsBloc>().add(UpdateBaseCurrencyEvent(value));
-                    Navigator.pop(context);
-                  }
-                },
-              );
-            }).toList(),
+        content: RadioGroup<String>(
+          groupValue: state.settings.baseCurrency,
+          onChanged: (value) {
+            if (value != null) {
+              context.read<SettingsBloc>().add(UpdateBaseCurrencyEvent(value));
+              Navigator.pop(context);
+            }
+          },
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: AppConstants.supportedCurrencies.map((currency) {
+                return RadioListTile<String>(
+                  title: Text(currency),
+                  value: currency,
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
@@ -523,37 +527,30 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('settings.general.theme'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<String>(
-              title: Text('settings.general.theme_system'.tr()),
-              value: 'system',
-              groupValue: state.settings.themeMode,
-              onChanged: (value) {
-                context.read<SettingsBloc>().add(UpdateThemeModeEvent(value!));
-                Navigator.pop(context);
-              },
-            ),
-            RadioListTile<String>(
-              title: Text('settings.general.theme_light'.tr()),
-              value: 'light',
-              groupValue: state.settings.themeMode,
-              onChanged: (value) {
-                context.read<SettingsBloc>().add(UpdateThemeModeEvent(value!));
-                Navigator.pop(context);
-              },
-            ),
-            RadioListTile<String>(
-              title: Text('settings.general.theme_dark'.tr()),
-              value: 'dark',
-              groupValue: state.settings.themeMode,
-              onChanged: (value) {
-                context.read<SettingsBloc>().add(UpdateThemeModeEvent(value!));
-                Navigator.pop(context);
-              },
-            ),
-          ],
+        content: RadioGroup<String>(
+          groupValue: state.settings.themeMode,
+          onChanged: (value) {
+            if (value == null) return;
+            context.read<SettingsBloc>().add(UpdateThemeModeEvent(value));
+            Navigator.pop(context);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                title: Text('settings.general.theme_system'.tr()),
+                value: 'system',
+              ),
+              RadioListTile<String>(
+                title: Text('settings.general.theme_light'.tr()),
+                value: 'light',
+              ),
+              RadioListTile<String>(
+                title: Text('settings.general.theme_dark'.tr()),
+                value: 'dark',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -579,12 +576,12 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    if (confirmed == true && mounted) {
-      context.read<SettingsBloc>().add(ClearAllDataEvent());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('settings.data.clear_success'.tr())),
-      );
-    }
+    if (confirmed != true) return;
+    if (!context.mounted) return;
+    context.read<SettingsBloc>().add(ClearAllDataEvent());
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('settings.data.clear_success'.tr())),
+    );
   }
 
   Future<void> _testConnection(BuildContext context) async {
@@ -597,7 +594,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     setState(() => _isTestingConnection = false);
 
-    if (mounted) {
+    if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

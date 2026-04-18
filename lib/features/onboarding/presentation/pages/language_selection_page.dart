@@ -24,6 +24,7 @@ class _LanguageSelectionPageState extends State<LanguageSelectionPage> {
     if (_selectedLanguage == null || _selectedCurrency == null) return;
 
     await LocalStorageService.setBaseCurrency(_selectedCurrency!);
+    if (!context.mounted) return;
 
     final onboardingState = context.read<OnboardingBloc>().state;
     final isOnboardingComplete = onboardingState is OnboardingCompleted;

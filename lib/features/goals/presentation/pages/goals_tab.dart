@@ -130,8 +130,8 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Theme.of(context).primaryColor.withOpacity(0.1),
-            Theme.of(context).primaryColor.withOpacity(0.05),
+            Theme.of(context).primaryColor.withValues(alpha: 0.1),
+            Theme.of(context).primaryColor.withValues(alpha: 0.05),
           ],
         ),
       ),
@@ -366,7 +366,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                 Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: _getGoalTypeColor(goal.type).withOpacity(0.1),
+                      backgroundColor: _getGoalTypeColor(goal.type).withValues(alpha: 0.1),
                       child: Icon(
                         _getGoalTypeIcon(goal.type),
                         color: _getGoalTypeColor(goal.type),
@@ -640,7 +640,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                 spacing: 16.w,
                 runSpacing: 16.h,
                 children: chartData.map((data) {
-                  return Container(
+                  return SizedBox(
                     width: 100.w,
                     child: Column(
                       children: [
@@ -730,7 +730,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<GoalType>(
-                  value: _filterType,
+                  initialValue: _filterType,
                   decoration: InputDecoration(
                     labelText: 'goals.filter.type'.tr(),
                   ),
@@ -744,7 +744,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                 ),
                 SizedBox(height: 16.h),
                 DropdownButtonFormField<GoalStatus>(
-                  value: _filterStatus,
+                  initialValue: _filterStatus,
                   decoration: InputDecoration(
                     labelText: 'goals.filter.status'.tr(),
                   ),
@@ -758,7 +758,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                 ),
                 SizedBox(height: 16.h),
                 DropdownButtonFormField<SortOption>(
-                  value: _sortOption,
+                  initialValue: _sortOption,
                   decoration: InputDecoration(
                     labelText: 'goals.filter.sort'.tr(),
                   ),
@@ -895,7 +895,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: _getGoalTypeColor(goal.type).withOpacity(0.1),
+                    backgroundColor: _getGoalTypeColor(goal.type).withValues(alpha: 0.1),
                     child: Icon(
                       _getGoalTypeIcon(goal.type),
                       color: _getGoalTypeColor(goal.type),

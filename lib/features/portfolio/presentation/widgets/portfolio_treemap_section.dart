@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../domain/entities/portfolio_entities.dart';
@@ -180,7 +179,7 @@ class PortfolioTreemapSection extends StatelessWidget {
     double value,
     String baseCurrency,
   ) {
-    return '${label}\n'
+    return '$label\n'
         '${'portfolio.charts.tooltip.allocation'.tr()}: ${percent.toStringAsFixed(1)}%\n'
         '${'portfolio.charts.tooltip.value'.tr()}: ${_formatCurrency(value, baseCurrency)}';
   }
