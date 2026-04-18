@@ -13,6 +13,9 @@ Storico implementazioni recuperabile da git e documentazione interna.
 
 | Date (UTC) | Commit | Summary |
 |---|---|---|
+| 2026-04-18 | `90c8258` | Eliminati 59 warning deprecation flutter analyze (Color.withValues, RadioGroup, context.mounted, unused imports). |
+| 2026-04-18 | `e90c49d` | Fix Hero tag duplicato su FAB; abilitato Android predictive back gesture (API 33+). |
+| 2026-04-18 | `8f4c1a2` | Aggiunta regola CLAUDE.md sezione 4: end-of-session repo sync obbligatorio. |
 | 2026-02-23 | `9499e16` | Finalizzazione filtro top movers basato su dollar volume. |
 | 2026-02-22 | `52ee380` | Min mover volume portato a 1.5M, fix truncation timeframe tab, auto-download snapshot. |
 | 2026-02-20 | `c945b23` | Migrazione snapshot a rolling history DB e hardening prezzo in market tab. |
@@ -105,6 +108,20 @@ Follow-up post-commit #1, in risposta a feedback utente:
 - Aggiunta sezione sezione 9 Subagents in `CLAUDE.md` con differenziazione skill vs agent.
 
 Prossima sessione: lavoro feature reale sull'app (non piu' setup); gli agent e skill sono pronti a essere invocati.
+
+## Sessione 2026-04-18 -- Fix deprecation flutter analyze + Hero tag + Android back gesture
+
+- **Regola CLAUDE.md sezione 4 (end-of-session sync)**: aggiunta obbligatorieta' di push su origin prima di chiudere la sessione; motivazione: evitare commit locali non condivisi dopo sessioni lunghe.
+- **Fix Hero tag duplicato** (`home_page.dart`, `goals_tab.dart`): aggiunto `heroTag: 'fab_portfolio_add_position'` e `heroTag: 'fab_goals_add_goal'` ai due FloatingActionButton.extended; Flutter lancia un assert se due Hero con lo stesso tag convivono nella stessa route.
+- **Android predictive back gesture** (`AndroidManifest.xml`): abilitato `android:enableOnBackInvokedCallback="true"` per il supporto nativo all'animazione di back introdotta in Android 13 (API 33).
+- **Migrazione Color.withOpacity -> Color.withValues** (22 siti in `goals_tab.dart` e `rebalancing_tab.dart`): `withOpacity` e' deprecato dal Flutter 3.27; `withValues(alpha: x)` e' il rimpiazzo ufficiale.
+- **Migrazione DropdownButtonFormField.value -> initialValue** (7 siti in `goals_tab.dart`, `add_position_page.dart`, `edit_position_page.dart`, `import_page.dart`): parametro `value` rimosso dalla firma pubblica.
+- **Migrazione RadioListTile -> RadioGroup<T>** (`import_page.dart`, `settings_page.dart`): pattern `groupValue/onChanged` sul singolo tile e' ora gestito dall'ancestor `RadioGroup`; aggiornati selettori import target e 3 dialog impostazioni (lingua, valuta, tema).
+- **context.mounted / !mounted guards** (9 siti in `language_selection_page.dart`, `import_page.dart`, `settings_page.dart`): inseriti per soddisfare lint `use_build_context_synchronously` dopo ogni `await`.
+- **Rimossi unused imports intl** (3 siti: `position_detail_page.dart`, `portfolio_treemap_section.dart`, `position_list_item.dart`).
+- **Rimosso parametro deprecated encryptedSharedPreferences** da `FlutterSecureStorage.aOptions` in `local_storage_service.dart`.
+- **Fix lint minori**: `sized_box_for_whitespace` in `goals_tab.dart`, `unnecessary_brace_in_string_interps` in `portfolio_treemap_section.dart`, `unnecessary_string_interpolations` in `base_parser.dart`.
+- **Risultato**: `flutter analyze` passa con "No issues found!"; `flutter test` verde (34 test); app verificata su Chrome e Pixel 7 emulator.
 
 ## Note operative
 
