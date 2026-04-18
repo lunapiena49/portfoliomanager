@@ -350,3 +350,25 @@ I **problemi più critici** da gestire nell'implementazione:
 5. **Schwab** ha righe metadata prima degli header effettivi delle colonne
 
 Per parser robusti, consiglio di riferirsi ai repository GitHub **Export-To-Ghostfolio** (github.com/dickwolff/Export-To-Ghostfolio) e **Portfolio Performance importers** che gestiscono attivamente questi formati con aggiornamenti regolari.
+
+---
+
+## PDF Import Parser -- eccezione al contratto CSV
+
+`lib/services/parsers/pdf_import_parser.dart` NON estende `BaseBrokerParser` ed e' l'unico parser che NON e' registrato in `BrokerParserFactory`. La deviazione e' intenzionale per i seguenti motivi:
+
+1. **Input non CSV**: il contratto di `BaseBrokerParser.parse` accetta `String csvContent`, mentre un PDF richiede `Uint8List bytes` e una fase di estrazione del testo via `syncfusion_flutter_pdf` prima del parsing tabellare.
+2. **Riuso downstream**: dopo l'estrazione delle righe tabellari, il contenuto viene convertito in CSV e ridelegato a `BrokerParserFactory.parseWithBroker` (se e' noto un broker) o `autoParseCSV`, garantendo che la normalizzazione finale passi comunque dal contratto CSV condiviso.
+3. **Invocazione**: il solo caller e' `PortfolioBloc._parseImportFile`, che instrada i file `.pdf` al parser statico tramite:
+   ```dart
+   if (extension == 'pdf') {
+     return PdfImportParser.parse(file.bytes, brokerId: brokerId);
+   }
+   ```
+
+**Vincoli mantenuti**:
+- La normalizzazione posizioni passa da `BaseBrokerParser.normalizeAndDeduplicatePositions` come tutti gli altri parser.
+- Nessun duplicato di utility private (parsing numeri, date, uuid) -- tutto delegato alle static di `BaseBrokerParser`.
+- Limite: l'estrazione tabellare da PDF e' fragile su layout multi-colonna con right-aligned pricing (si rimanda al report di audit Fase 2 per lo specifico edge case).
+
+Se in futuro servissero parser nativi per PDF broker-specifici (es. statement IBKR in PDF), creare sottoclassi dedicate con signature `Portfolio parseBytes(Uint8List bytes)` e registrarle in una factory PDF separata, oppure estendere `BaseBrokerParser` con un metodo opzionale `Portfolio parseBytes(Uint8List)` con default che rilancia `UnsupportedError`.

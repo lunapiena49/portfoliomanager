@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
 
 import '../../core/constants/app_constants.dart';
+import 'retry_interceptor.dart';
 
 /// Service for interacting with the EODHD API using the user's personal key.
 ///
 /// Used for real-time portfolio position quotes (Hybrid Key logic).
-/// Market movers always come from the serverless snapshot — no key needed.
+/// Market movers always come from the serverless snapshot -- no key needed.
 class EodhdService {
   final Dio _dio;
   String? _apiKey;
@@ -14,6 +15,8 @@ class EodhdService {
     _dio.options.baseUrl = AppConstants.eodhdBaseUrl;
     _dio.options.connectTimeout = AppConstants.apiTimeout;
     _dio.options.receiveTimeout = AppConstants.apiTimeout;
+    _dio.options.sendTimeout = AppConstants.apiTimeout;
+    _dio.interceptors.add(RetryInterceptor(dio: _dio));
   }
 
   void setApiKey(String? apiKey) {
@@ -24,8 +27,8 @@ class EodhdService {
 
   /// Fetches real-time quote for a single ticker.
   ///
-  /// [ticker] — bare symbol (e.g. "AAPL")
-  /// [exchange] — EODHD exchange code (e.g. "US", "LSE", "XETRA")
+  /// [ticker] -- bare symbol (e.g. "AAPL")
+  /// [exchange] -- EODHD exchange code (e.g. "US", "LSE", "XETRA")
   ///
   /// EODHD endpoint: GET /real-time/{TICKER}.{EXCHANGE}?api_token={KEY}&fmt=json
   Future<Map<String, dynamic>?> fetchRealTimeQuote(

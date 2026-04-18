@@ -1,7 +1,13 @@
 {
   "app": {
-    "name": "Portfolio Manager",
-    "tagline": "Smart Investment Tracking"
+    "name": "Portfolio Manager"
+  },
+  "error": {
+    "title": "Error",
+    "page_not_found": "Page not found",
+    "go_home": "Go Home",
+    "no_portfolio_loaded": "No portfolio loaded",
+    "no_portfolio_loaded_cta": "Import a portfolio to continue"
   },
   "common": {
     "loading": "Loading...",
@@ -25,7 +31,13 @@
     "close": "Close",
     "yes": "Yes",
     "no": "No",
-    "ok": "OK"
+    "ok": "OK",
+    "clear": "Clear",
+    "delete_confirm": {
+      "title": "Confirm deletion",
+      "message": "Delete {item}? This cannot be undone.",
+      "confirm": "Delete"
+    }
   },
   "onboarding": {
     "welcome": {
@@ -80,11 +92,15 @@
     "title": "My Portfolio",
     "total_value": "Total Value",
     "total_pnl": "Total P&L",
-    "daily_change": "Daily Change",
     "positions": "Positions",
     "position_count_one": "{count} position",
     "position_count_other": "{count} positions",
     "no_positions": "No positions found",
+    "position_not_found": {
+      "title": "Position not found",
+      "description": "The requested position is no longer in your portfolio.",
+      "back_to_home": "Back to portfolio"
+    },
     "empty_portfolio": {
       "description": "Create or import a portfolio to get started"
     },
@@ -110,6 +126,10 @@
       "cost_basis": "Cost Basis",
       "pnl": "P&L",
       "pnl_percent": "P&L %",
+      "pnl_unrealized": "Unrealized P&L ({currency})",
+      "details": "Details",
+      "fx_rate": "FX Rate",
+      "exchange": "Exchange",
       "sector": "Sector",
       "currency": "Currency",
       "asset_type": "Asset Type",
@@ -160,13 +180,6 @@
       "broad": "Broad",
       "other": "Other"
     },
-    "sort_by": {
-      "name": "Name",
-      "value": "Value",
-      "pnl": "P&L",
-      "pnl_percent": "P&L %",
-      "sector": "Sector"
-    },
     "charts": {
       "title": "Portfolio Charts",
       "positions_title": "Positions Treemap",
@@ -192,7 +205,7 @@
   "import": {
     "title": "Import Portfolio",
     "select_broker": "Select Your Broker",
-	"choose_broker": "Choose your broker...",
+    "choose_broker": "Choose your broker...",
     "portfolio_name": "Portfolio Name",
     "portfolio_name_label": "Portfolio Name",
     "portfolio_name_hint": "e.g., Retirement 2026",
@@ -294,14 +307,6 @@
       "risk": "Risk Analysis",
       "performance": "Performance Analysis",
       "recommendations": "Recommendations"
-    },
-    "metrics": {
-      "sharpe_ratio": "Sharpe Ratio",
-      "volatility": "Volatility",
-      "beta": "Beta",
-      "alpha": "Alpha",
-      "max_drawdown": "Max Drawdown",
-      "sortino_ratio": "Sortino Ratio"
     }
   },
   "market": {
@@ -316,6 +321,8 @@
     "refresh": "Refresh",
     "updated": "Updated: {time}",
     "snapshot_source": "Snapshot data from distributed feed",
+    "stale_warning": "Market data is {days} days out of date",
+    "stale_hint": "Check your connection or try again later",
     "no_data": "No data available",
     "no_events": "No upcoming events",
     "portfolio_not_loaded": "Portfolio not loaded yet",
@@ -334,11 +341,6 @@
       "outlier_blocked": "Suspicious price blocked"
     },
     "price_unavailable": "Price unavailable",
-    "event_labels": {
-      "previous": "Previous",
-      "forecast": "Forecast",
-      "actual": "Actual"
-    },
     "time": {
       "just_now": "Just now",
       "minutes_ago": "{count}m ago",
@@ -394,8 +396,7 @@
       "save": "Save"
     },
     "messages": {
-      "saved": "Target allocation saved!",
-      "import_portfolio_first": "Please import a portfolio first"
+      "saved": "Target allocation saved!"
     },
     "empty": {
       "title": "No Portfolio",
@@ -428,17 +429,9 @@
       "theme_dark": "Dark",
       "theme_system": "System"
     },
-    "notifications": {
-      "title": "Notifications",
-      "price_alerts": "Price Alerts",
-      "daily_summary": "Daily Summary",
-      "market_news": "Market News"
-    },
     "data": {
       "title": "Data Management",
       "export": "Export Data",
-      "backup": "Backup",
-      "restore": "Restore",
       "clear": "Clear All Data",
       "clear_confirm_message": "This will delete portfolio data, goals, onboarding progress, and local settings from this device. This action cannot be undone.",
       "clear_success": "All local data was cleared successfully"
@@ -469,12 +462,7 @@
       "title": "About",
       "version": "Version",
       "review_onboarding": "Review onboarding",
-      "onboarding_reset_message": "Onboarding has been reset. The app will reopen the onboarding flow.",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "licenses": "Open Source Licenses",
-      "rate": "Rate This App",
-      "contact": "Contact Support"
+      "onboarding_reset_message": "Onboarding has been reset. The app will reopen the onboarding flow."
     }
   },
   "guide": {
@@ -553,26 +541,77 @@
     "api_error": "API error. Please try again later.",
     "storage_error": "Failed to save data. Please try again."
   },
-  "currencies": {
-    "EUR": "Euro",
-    "USD": "US Dollar",
-    "GBP": "British Pound",
-    "CHF": "Swiss Franc",
-    "JPY": "Japanese Yen",
-    "CAD": "Canadian Dollar",
-    "AUD": "Australian Dollar"
-  },
-  "sectors": {
-    "technology": "Technology",
-    "financials": "Financials",
-    "healthcare": "Healthcare",
-    "consumer_cyclicals": "Consumer Cyclicals",
-    "consumer_non_cyclicals": "Consumer Non-Cyclicals",
-    "industrials": "Industrials",
-    "basic_materials": "Basic Materials",
-    "energy": "Energy",
-    "utilities": "Utilities",
-    "real_estate": "Real Estate",
-    "broad": "Broad/Diversified"
+  "goals": {
+    "title": "Goals",
+    "subtitle": "Set and track your investment goals",
+    "search": "Search goals",
+    "add": {
+      "action": "Add",
+      "first": "Add your first goal",
+      "title": "New goal",
+      "coming_soon": "This feature is coming soon"
+    },
+    "tabs": {
+      "list": "List",
+      "analytics": "Analytics",
+      "settings": "Settings"
+    },
+    "error": {
+      "title": "Error loading goals"
+    },
+    "empty": {
+      "title": "No goals yet",
+      "description": "Create your first investment goal to start tracking progress"
+    },
+    "analytics": {
+      "total_goals": "Total goals",
+      "completed": "Completed",
+      "total_value": "Total value",
+      "progress_chart": "Progress chart",
+      "type_distribution": "Type distribution"
+    },
+    "settings": {
+      "show_completed": "Show completed goals",
+      "show_completed_desc": "Include already-completed goals in the list",
+      "default_currency": "Default currency",
+      "default_currency_desc": "Currency used for new goals"
+    },
+    "filter": {
+      "title": "Filter goals",
+      "type": "Type",
+      "status": "Status",
+      "sort": "Sort by"
+    },
+    "details": {
+      "description": "Description",
+      "no_description": "No description",
+      "target_amount": "Target amount",
+      "current_amount": "Current amount",
+      "progress": "Progress",
+      "target_date": "Target date",
+      "monthly_contribution": "Monthly contribution",
+      "asset_allocation": "Asset allocation"
+    },
+    "types": {
+      "retirement": "Retirement",
+      "emergency": "Emergency fund",
+      "house": "House",
+      "education": "Education",
+      "travel": "Travel",
+      "custom": "Custom"
+    },
+    "status": {
+      "active": "Active",
+      "completed": "Completed",
+      "paused": "Paused",
+      "cancelled": "Cancelled"
+    },
+    "sort": {
+      "name": "Name",
+      "target_amount": "Target amount",
+      "progress": "Progress",
+      "target_date": "Target date",
+      "created_date": "Created date"
+    }
   }
 }

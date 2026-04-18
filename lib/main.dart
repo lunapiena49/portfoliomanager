@@ -13,6 +13,9 @@ import 'features/portfolio/presentation/bloc/portfolio_bloc.dart';
 import 'features/settings/presentation/bloc/settings_bloc.dart';
 import 'features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'features/rebalancing/presentation/bloc/rebalancing_bloc.dart';
+import 'features/goals/presentation/bloc/goals_bloc.dart';
+import 'features/analysis/presentation/bloc/analysis_bloc.dart';
+import 'features/analysis/presentation/bloc/ai_chat_bloc.dart';
 import 'app_router.dart';
 
 void main() async {
@@ -73,6 +76,16 @@ class PortfolioManagerApp extends StatelessWidget {
             ),
             BlocProvider<RebalancingBloc>(
               create: (context) => RebalancingBloc(storageService: LocalStorageService()),
+            ),
+            BlocProvider<GoalsBloc>(
+              create: (context) => GoalsBloc(storageService: LocalStorageService())
+                ..add(LoadGoalsEvent()),
+            ),
+            BlocProvider<AnalysisBloc>(
+              create: (context) => AnalysisBloc(),
+            ),
+            BlocProvider<AIChatBloc>(
+              create: (context) => AIChatBloc(),
             ),
           ],
           child: BlocListener<SettingsBloc, SettingsState>(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -209,6 +210,7 @@ class _EditPositionPageState extends State<EditPositionPage> {
               required: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _validateNumber,
+              inputFormatters: _decimalInputFormatters,
             ),
             SizedBox(height: 12.h),
 
@@ -219,6 +221,7 @@ class _EditPositionPageState extends State<EditPositionPage> {
               required: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _validateNumber,
+              inputFormatters: _decimalInputFormatters,
             ),
             SizedBox(height: 24.h),
 
@@ -231,6 +234,7 @@ class _EditPositionPageState extends State<EditPositionPage> {
               hint: 'add_position.cost_basis_hint'.tr(),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: _validateOptionalNumber,
+              inputFormatters: _decimalInputFormatters,
             ),
             SizedBox(height: 12.h),
 
@@ -417,11 +421,13 @@ class _EditPositionPageState extends State<EditPositionPage> {
     TextInputType? keyboardType,
     TextCapitalization textCapitalization = TextCapitalization.none,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         hintText: hint,
@@ -439,6 +445,19 @@ class _EditPositionPageState extends State<EditPositionPage> {
           : validator,
     );
   }
+
+  // Accepts unsigned decimal input only: digits plus at most one dot or comma.
+  static final List<TextInputFormatter> _decimalInputFormatters =
+      <TextInputFormatter>[
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+    TextInputFormatter.withFunction((oldValue, newValue) {
+      final text = newValue.text;
+      if (text.isEmpty) return newValue;
+      final separators = RegExp(r'[.,]').allMatches(text).length;
+      if (separators > 1) return oldValue;
+      return newValue;
+    }),
+  ];
 
   Widget _buildDropdown({
     required String label,

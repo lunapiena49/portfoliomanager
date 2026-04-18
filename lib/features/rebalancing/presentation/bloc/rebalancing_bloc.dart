@@ -132,17 +132,21 @@ class RebalancingBloc extends Bloc<RebalancingEvent, RebalancingState> {
     LoadRebalancingEvent event,
     Emitter<RebalancingState> emit,
   ) async {
+    await _buildAndEmit(event.portfolio, emit);
+  }
+
+  Future<void> _buildAndEmit(
+    Portfolio portfolio,
+    Emitter<RebalancingState> emit,
+  ) async {
     emit(RebalancingLoading());
 
     try {
-      _currentPortfolio = event.portfolio;
-      final portfolio = event.portfolio;
+      _currentPortfolio = portfolio;
       final totalValue = portfolio.totalValue;
 
-      // Load saved targets
       final savedTargets = await _storageService.getRebalanceTargets();
 
-      // Build targets list from current positions
       final targets = <RebalanceTarget>[];
       for (final position in portfolio.positions) {
         final saved = savedTargets.firstWhere(
@@ -156,7 +160,6 @@ class RebalancingBloc extends Bloc<RebalancingEvent, RebalancingState> {
                 : 0.0,
           ),
         );
-        // Always update symbol/name from current portfolio
         targets.add(saved.copyWith(
           symbol: position.symbol,
           name: position.name,
@@ -210,7 +213,7 @@ class RebalancingBloc extends Bloc<RebalancingEvent, RebalancingState> {
     Emitter<RebalancingState> emit,
   ) async {
     if (_currentPortfolio == null) return;
-    add(LoadRebalancingEvent(portfolio: _currentPortfolio!));
+    await _buildAndEmit(_currentPortfolio!, emit);
   }
 
   Future<void> _onSetFromCurrent(

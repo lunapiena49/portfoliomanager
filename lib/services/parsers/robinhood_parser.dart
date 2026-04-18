@@ -188,9 +188,11 @@ class _PositionAccumulator {
 
   Position toPosition() {
     final value = quantity * currentPrice;
-    final double costBasis =
-        quantity > 0 ? (totalCost * quantity / (quantity + 0.001)) : 0.0;
-    
+    // totalCost is already the running cost basis for the `quantity` shares
+    // remaining after sells have been applied proportionally in addTransaction.
+    final double costBasis = quantity > 0 ? totalCost.abs() : 0.0;
+
+
     return Position(
       id: BaseBrokerParser.generateId(),
       symbol: symbol.toUpperCase(),

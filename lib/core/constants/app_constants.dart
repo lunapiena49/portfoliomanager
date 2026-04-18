@@ -16,12 +16,15 @@ class AppConstants {
   static const String settingsKey = 'settings';
   static const String geminiApiKeyKey = 'gemini_api_key';
   static const String fmpApiKeyKey = 'fmp_api_key';
+  static const String eodhdApiKeyKey = 'eodhd_api_key';
   static const String userGoalsKey = 'user_goals';
   static const String baseCurrencyKey = 'base_currency';
   static const String themeModeKey = 'theme_mode';
   static const String languageKey = 'language';
   static const String positionsFilterAssetTypeKey =
       'positions_filter_asset_type';
+  static const String currentPortfolioIdKey = 'current_portfolio_id';
+  static const String rebalanceTargetsKey = 'rebalance_targets';
 
   // Hive Box Names
   static const String settingsBox = 'settings_box';
@@ -36,7 +39,6 @@ class AppConstants {
   static const double geminiTemperature = 0.7;
   static const String fmpBaseUrl = 'https://financialmodelingprep.com/stable';
   static const String eodhdBaseUrl = 'https://eodhd.com/api';
-  static const String eodhdApiKeyKey = 'eodhd_api_key';
   static const String marketSnapshotBaseUrl = String.fromEnvironment(
     'MARKET_SNAPSHOT_BASE_URL',
     defaultValue: 'https://lunapiena49.github.io/portfoliomanager',

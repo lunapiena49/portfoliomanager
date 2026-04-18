@@ -8,7 +8,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../portfolio/presentation/bloc/portfolio_bloc.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
-import '../../../../services/api/gemini_service.dart';
+import '../bloc/analysis_bloc.dart';
 
 enum _AnalysisMenuAction {
   chat,
@@ -23,61 +23,42 @@ class AnalysisPage extends StatefulWidget {
 }
 
 class _AnalysisPageState extends State<AnalysisPage> {
-  final GeminiService _geminiService = GeminiService();
-  String? _analysisResult;
-  bool _isLoading = false;
-  String? _error;
-
   @override
   void initState() {
     super.initState();
-    _initializeService();
+    _syncApiKey();
   }
 
-  void _initializeService() {
+  void _syncApiKey() {
     final settingsState = context.read<SettingsBloc>().state;
-    if (settingsState is SettingsLoaded && settingsState.settings.hasGeminiApiKey) {
-      _geminiService.setApiKey(settingsState.settings.geminiApiKey!);
+    if (settingsState is SettingsLoaded) {
+      context
+          .read<AnalysisBloc>()
+          .add(UpdateAnalysisApiKeyEvent(settingsState.settings.geminiApiKey));
     }
   }
 
-  Future<void> _generateAnalysis() async {
+  void _generateAnalysis() {
     final portfolioState = context.read<PortfolioBloc>().state;
     final settingsState = context.read<SettingsBloc>().state;
 
-    if (portfolioState is! PortfolioLoaded) {
-      setState(() => _error = 'analysis.no_portfolio_loaded'.tr());
-      return;
+    if (portfolioState is! PortfolioLoaded) return;
+    if (settingsState is! SettingsLoaded) return;
+
+    context
+        .read<AnalysisBloc>()
+        .add(UpdateAnalysisApiKeyEvent(settingsState.settings.geminiApiKey));
+    context.read<AnalysisBloc>().add(GenerateAnalysisEvent(
+          portfolio: portfolioState.portfolio,
+          language: settingsState.settings.languageCode,
+        ));
+  }
+
+  String _resolveErrorMessage(String raw) {
+    if (raw.startsWith('analysis.')) {
+      return raw.tr();
     }
-
-    if (settingsState is! SettingsLoaded || !settingsState.settings.hasGeminiApiKey) {
-      setState(() => _error = 'analysis.api_key_required'.tr());
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      _geminiService.setApiKey(settingsState.settings.geminiApiKey!);
-      
-      final result = await _geminiService.analyzePortfolio(
-        portfolio: portfolioState.portfolio,
-        language: settingsState.settings.languageCode,
-      );
-
-      setState(() {
-        _analysisResult = result;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+    return raw;
   }
 
   @override
@@ -95,103 +76,109 @@ class _AnalysisPageState extends State<AnalysisPage> {
             );
           }
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Quick suggestions
-                Text(
-                  'analysis.suggestions.title'.tr(),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                SizedBox(height: 12.h),
-                _buildSuggestionChips(),
-                SizedBox(height: 24.h),
+          return BlocBuilder<AnalysisBloc, AnalysisState>(
+            builder: (context, analysisState) {
+              final isLoading = analysisState is AnalysisInProgress;
+              final result =
+                  analysisState is AnalysisSuccess ? analysisState.result : null;
+              final errorMessage = analysisState is AnalysisFailure
+                  ? _resolveErrorMessage(analysisState.message)
+                  : null;
 
-                // Generate button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _generateAnalysis,
-                    icon: _isLoading
-                        ? SizedBox(
-                            width: 20.w,
-                            height: 20.w,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Icon(Icons.auto_awesome),
-                    label: Text(
-                      _isLoading
-                          ? 'analysis.generating'.tr()
-                          : 'analysis.generate_full'.tr(),
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'analysis.suggestions.title'.tr(),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-
-                // Error message
-                if (_error != null)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: AppTheme.errorColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: AppTheme.errorColor),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: AppTheme.errorColor),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: TextStyle(color: AppTheme.errorColor),
-                          ),
+                    SizedBox(height: 12.h),
+                    _buildSuggestionChips(),
+                    SizedBox(height: 24.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: isLoading ? null : _generateAnalysis,
+                        icon: isLoading
+                            ? SizedBox(
+                                width: 20.w,
+                                height: 20.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.auto_awesome),
+                        label: Text(
+                          isLoading
+                              ? 'analysis.generating'.tr()
+                              : 'analysis.generate_full'.tr(),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-
-                // Analysis result
-                if (_analysisResult != null) ...[
-                  Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.auto_awesome,
-                                color: Theme.of(context).primaryColor,
+                    SizedBox(height: 24.h),
+                    if (errorMessage != null)
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(color: AppTheme.errorColor),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline, color: AppTheme.errorColor),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Text(
+                                errorMessage,
+                                style: TextStyle(color: AppTheme.errorColor),
                               ),
-                              SizedBox(width: 8.w),
-                              Text(
-                                'analysis.ai_result_title'.tr(),
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (result != null) ...[
+                      Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.w),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    'analysis.ai_result_title'.tr(),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16.h),
+                              SelectableText(
+                                result,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ],
                           ),
-                          SizedBox(height: 16.h),
-                          SelectableText(
-                            _analysisResult!,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+                    ],
+                  ],
+                ),
+              );
+            },
           );
         },
       ),

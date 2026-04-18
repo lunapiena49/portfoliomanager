@@ -1,5 +1,9 @@
 import 'package:equatable/equatable.dart';
 
+/// Sentinel value used by [InvestmentGoal.copyWith] so nullable fields can be
+/// cleared (e.g. `copyWith(completedAt: null)` to un-complete a goal).
+const Object _copyWithUnset = Object();
+
 /// Investment goal types
 enum GoalType {
   retirement,
@@ -89,34 +93,46 @@ class InvestmentGoal extends Equatable {
   InvestmentGoal copyWith({
     String? id,
     String? name,
-    String? description,
+    Object? description = _copyWithUnset,
     GoalType? type,
     GoalStatus? status,
     double? targetAmount,
     double? currentAmount,
     String? currency,
-    DateTime? targetDate,
+    Object? targetDate = _copyWithUnset,
     DateTime? createdAt,
-    DateTime? completedAt,
-    double? monthlyContribution,
-    List<GoalMilestone>? milestones,
-    TargetAllocation? targetAllocation,
+    Object? completedAt = _copyWithUnset,
+    Object? monthlyContribution = _copyWithUnset,
+    Object? milestones = _copyWithUnset,
+    Object? targetAllocation = _copyWithUnset,
   }) {
     return InvestmentGoal(
       id: id ?? this.id,
       name: name ?? this.name,
-      description: description ?? this.description,
+      description: identical(description, _copyWithUnset)
+          ? this.description
+          : description as String?,
       type: type ?? this.type,
       status: status ?? this.status,
       targetAmount: targetAmount ?? this.targetAmount,
       currentAmount: currentAmount ?? this.currentAmount,
       currency: currency ?? this.currency,
-      targetDate: targetDate ?? this.targetDate,
+      targetDate: identical(targetDate, _copyWithUnset)
+          ? this.targetDate
+          : targetDate as DateTime?,
       createdAt: createdAt ?? this.createdAt,
-      completedAt: completedAt ?? this.completedAt,
-      monthlyContribution: monthlyContribution ?? this.monthlyContribution,
-      milestones: milestones ?? this.milestones,
-      targetAllocation: targetAllocation ?? this.targetAllocation,
+      completedAt: identical(completedAt, _copyWithUnset)
+          ? this.completedAt
+          : completedAt as DateTime?,
+      monthlyContribution: identical(monthlyContribution, _copyWithUnset)
+          ? this.monthlyContribution
+          : monthlyContribution as double?,
+      milestones: identical(milestones, _copyWithUnset)
+          ? this.milestones
+          : milestones as List<GoalMilestone>?,
+      targetAllocation: identical(targetAllocation, _copyWithUnset)
+          ? this.targetAllocation
+          : targetAllocation as TargetAllocation?,
     );
   }
 

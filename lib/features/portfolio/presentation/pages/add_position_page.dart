@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -95,7 +96,13 @@ class _AddPositionPageState extends State<AddPositionPage> {
   Widget build(BuildContext context) {
     return BlocListener<PortfolioBloc, PortfolioState>(
       listener: (context, state) {
+        // Only react to a state transition that we triggered via
+        // AddPositionEvent. Any background PortfolioLoaded (price refresh,
+        // portfolio switch, etc.) while the form is open must not pop the
+        // route and discard the user's input.
+        if (!_isLoading) return;
         if (state is PortfolioLoaded) {
+          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('add_position.success'.tr()),
@@ -159,6 +166,7 @@ class _AddPositionPageState extends State<AddPositionPage> {
                   required: true,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: _validateNumber,
+                  inputFormatters: _decimalInputFormatters,
                 ),
                 SizedBox(height: 12.h),
 
@@ -170,6 +178,7 @@ class _AddPositionPageState extends State<AddPositionPage> {
                   required: true,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: _validateNumber,
+                  inputFormatters: _decimalInputFormatters,
                 ),
                 SizedBox(height: 24.h),
 
@@ -184,6 +193,7 @@ class _AddPositionPageState extends State<AddPositionPage> {
                   hint: 'add_position.cost_basis_hint'.tr(),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: _validateOptionalNumber,
+                  inputFormatters: _decimalInputFormatters,
                 ),
                 SizedBox(height: 12.h),
 
@@ -306,11 +316,13 @@ class _AddPositionPageState extends State<AddPositionPage> {
     TextInputType? keyboardType,
     TextCapitalization textCapitalization = TextCapitalization.none,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
         hintText: hint,
@@ -328,6 +340,20 @@ class _AddPositionPageState extends State<AddPositionPage> {
           : validator,
     );
   }
+
+  // Accepts unsigned decimal input only: digits plus at most one dot or comma.
+  // Prevents pastes/taps that would produce "-5", "12.34.56", or "1,2,3".
+  static final List<TextInputFormatter> _decimalInputFormatters =
+      <TextInputFormatter>[
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+    TextInputFormatter.withFunction((oldValue, newValue) {
+      final text = newValue.text;
+      if (text.isEmpty) return newValue;
+      final separators = RegExp(r'[.,]').allMatches(text).length;
+      if (separators > 1) return oldValue;
+      return newValue;
+    }),
+  ];
 
   Widget _buildDropdown({
     required String label,

@@ -14,6 +14,7 @@ import '../widgets/portfolio_treemap_section.dart';
 import '../../domain/entities/portfolio_entities.dart';
 import '../../../market/presentation/pages/market_tab.dart' as market;
 import '../../../rebalancing/presentation/pages/rebalancing_tab.dart' as rebalancing;
+import '../../../goals/presentation/pages/goals_tab.dart' as goals;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -34,9 +35,11 @@ class _HomePageState extends State<HomePage> {
           PortfolioTab(),
           market.MarketTab(),
           rebalancing.RebalancingTab(),
+          goals.GoalsTab(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: [
@@ -51,6 +54,10 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: const Icon(Icons.balance),
             label: 'navigation.rebalancing_short'.tr(),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.flag),
+            label: 'navigation.goals_short'.tr(),
           ),
         ],
       ),
@@ -442,10 +449,25 @@ class PortfolioTab extends StatelessWidget {
                           isCurrent ? Icons.check_circle : Icons.account_balance_wallet,
                           color: isCurrent ? Theme.of(context).primaryColor : null,
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          tooltip: 'portfolio.rename_portfolio'.tr(),
-                          onPressed: () => _showRenameDialog(context, portfolio),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              tooltip: 'portfolio.rename_portfolio'.tr(),
+                              onPressed: () =>
+                                  _showRenameDialog(context, portfolio),
+                            ),
+                            if (portfolios.length > 1)
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: 'common.delete'.tr(),
+                                onPressed: () {
+                                  Navigator.of(sheetContext).pop();
+                                  _confirmDeletePortfolio(context, portfolio);
+                                },
+                              ),
+                          ],
                         ),
                         onTap: () {
                           context.read<PortfolioBloc>().add(
@@ -475,6 +497,47 @@ class PortfolioTab extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _confirmDeletePortfolio(
+    BuildContext context,
+    Portfolio portfolio,
+  ) async {
+    final displayName = portfolio.accountName.isNotEmpty
+        ? portfolio.accountName
+        : portfolio.accountId;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('common.delete_confirm.title'.tr()),
+          content: Text(
+            'common.delete_confirm.message'.tr(
+              namedArgs: {'item': displayName},
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text('common.cancel'.tr()),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.errorColor,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text('common.delete_confirm.confirm'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+    if (!context.mounted) return;
+    if (confirmed == true) {
+      context
+          .read<PortfolioBloc>()
+          .add(DeletePortfolioEvent(portfolio.id));
+    }
   }
 
   void _showRenameDialog(BuildContext context, Portfolio portfolio) {

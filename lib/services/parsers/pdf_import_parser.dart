@@ -9,6 +9,17 @@ import 'generic_parser.dart';
 import 'parser_factory.dart';
 
 /// Generic PDF parser that extracts tabular text and reuses CSV parsing logic.
+///
+/// NOTE: this parser intentionally does NOT extend [BaseBrokerParser] and is
+/// NOT registered in [BrokerParserFactory]. The contract of [BaseBrokerParser]
+/// accepts only `String csvContent`; PDFs need `Uint8List` plus a PDF text
+/// extraction pass before delegating to CSV logic. Rationale and constraints
+/// for this exception are documented in `formati_brokers.md` (section
+/// "PDF Import Parser -- eccezione al contratto CSV").
+///
+/// The parser keeps alignment with the rest of the pipeline by routing the
+/// extracted rows through [BrokerParserFactory] and by relying on
+/// [BaseBrokerParser.normalizeAndDeduplicatePositions] for final cleanup.
 class PdfImportParser {
   static Portfolio parse(Uint8List bytes, {String? brokerId}) {
     final document = PdfDocument(inputBytes: bytes);

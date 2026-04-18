@@ -290,7 +290,7 @@ class _ImportPageState extends State<ImportPage> {
               SizedBox(width: 12.w),
               Expanded(
                 child: Text(
-                  '${broker.name} • ${broker.region}',
+                  '${broker.name} - ${broker.region}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

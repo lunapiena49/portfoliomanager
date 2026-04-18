@@ -49,7 +49,6 @@ class Trading212Parser extends BaseBrokerParser {
       if (line.isEmpty) continue;
 
       final firstCell = line[0].toString().trim();
-      final firstCellLower = firstCell.toLowerCase();
 
       // Detect header row - Trading 212 always starts with "Action"
       if (_isHeaderRow(line)) {

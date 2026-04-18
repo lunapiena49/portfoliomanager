@@ -111,6 +111,11 @@ abstract class GoalsState extends Equatable {
   List<Object?> get props => [];
 }
 
+/// Sentinel value used by [GoalsLoaded.copyWith] so nullable fields can be
+/// cleared (passed as explicit null) without colliding with the default
+/// "argument omitted" semantics.
+const Object _copyWithUnset = Object();
+
 class GoalsInitial extends GoalsState {}
 
 class GoalsLoading extends GoalsState {}
@@ -131,13 +136,17 @@ class GoalsLoaded extends GoalsState {
 
   GoalsLoaded copyWith({
     List<InvestmentGoal>? goals,
-    List<RebalanceSuggestion>? rebalanceSuggestions,
-    String? selectedGoalId,
+    Object? rebalanceSuggestions = _copyWithUnset,
+    Object? selectedGoalId = _copyWithUnset,
   }) {
     return GoalsLoaded(
       goals: goals ?? this.goals,
-      rebalanceSuggestions: rebalanceSuggestions ?? this.rebalanceSuggestions,
-      selectedGoalId: selectedGoalId ?? this.selectedGoalId,
+      rebalanceSuggestions: identical(rebalanceSuggestions, _copyWithUnset)
+          ? this.rebalanceSuggestions
+          : rebalanceSuggestions as List<RebalanceSuggestion>?,
+      selectedGoalId: identical(selectedGoalId, _copyWithUnset)
+          ? this.selectedGoalId
+          : selectedGoalId as String?,
     );
   }
 }
@@ -293,22 +302,30 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
 
     try {
       final portfolioValue = event.portfolio.totalValue;
+      final baseCurrency = event.portfolio.baseCurrency.toUpperCase();
 
-      // Update all active goals with current portfolio value
       final updatedGoals = currentState.goals.map((g) {
-        if (g.status == GoalStatus.active) {
-          var updatedGoal = g.copyWith(currentAmount: portfolioValue);
+        if (g.status != GoalStatus.active) return g;
 
-          if (portfolioValue >= g.targetAmount) {
-            updatedGoal = updatedGoal.copyWith(
-              status: GoalStatus.completed,
-              completedAt: DateTime.now(),
-            );
-          }
-
-          return updatedGoal;
+        // Only long-term wealth-tracking goal types mirror the whole portfolio.
+        // Emergency/house/education/travel are savings buckets with their own
+        // balance and should not be overridden by portfolio totalValue.
+        if (g.type != GoalType.retirement && g.type != GoalType.custom) {
+          return g;
         }
-        return g;
+
+        // No FX engine yet: skip goals denominated in a different currency
+        // rather than display an unconverted (and misleading) total.
+        if (g.currency.toUpperCase() != baseCurrency) return g;
+
+        var updatedGoal = g.copyWith(currentAmount: portfolioValue);
+        if (portfolioValue >= g.targetAmount) {
+          updatedGoal = updatedGoal.copyWith(
+            status: GoalStatus.completed,
+            completedAt: DateTime.now(),
+          );
+        }
+        return updatedGoal;
       }).toList();
 
       await _storageService.saveGoals(updatedGoals);

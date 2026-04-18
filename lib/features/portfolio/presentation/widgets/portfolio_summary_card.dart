@@ -205,11 +205,11 @@ class PortfolioSummaryCard extends StatelessWidget {
       case 'USD':
         return '\$';
       case 'GBP':
-        return '£';
+        return '\u00A3';
       case 'CHF':
         return 'CHF ';
       case 'JPY':
-        return '¥';
+        return '\u00A5';
       default:
         return '$currency ';
     }

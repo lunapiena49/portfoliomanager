@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../core/constants/app_constants.dart';
+import 'retry_interceptor.dart';
 
 /// Service for interacting with Financial Modeling Prep market endpoints.
 class FmpMarketService {
@@ -11,6 +12,8 @@ class FmpMarketService {
     _dio.options.baseUrl = AppConstants.fmpBaseUrl;
     _dio.options.connectTimeout = AppConstants.apiTimeout;
     _dio.options.receiveTimeout = AppConstants.apiTimeout;
+    _dio.options.sendTimeout = AppConstants.apiTimeout;
+    _dio.interceptors.add(RetryInterceptor(dio: _dio));
   }
 
   void setApiKey(String? apiKey) {

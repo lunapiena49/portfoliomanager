@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pages: write
   id-token: write
 
@@ -81,3 +82,54 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: ${{ always() && (needs.build.result == 'failure' || needs.deploy.result == 'failure') }}
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Open or update failure issue
+        uses: actions/github-script@v7
+        env:
+          FAILED_JOBS: "build=${{ needs.build.result }} deploy=${{ needs.deploy.result }}"
+        with:
+          script: |
+            const title = 'Market Data Snapshot workflow failure';
+            const failedJobs = process.env.FAILED_JOBS;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `Workflow **${context.workflow}** failed on ${new Date().toISOString()}.`,
+              '',
+              `- Run: ${runUrl}`,
+              `- Jobs: ${failedJobs}`,
+              `- Trigger: ${context.eventName}`,
+              '',
+              'Market snapshot may be stale until this is fixed.',
+            ].join('\n');
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'workflow-failure',
+              per_page: 50,
+            });
+            const match = existing.data.find((i) => i.title === title);
+            if (match) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: match.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['workflow-failure'],
+              });
+            }

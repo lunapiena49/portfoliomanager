@@ -1,7 +1,13 @@
 {
   "app": {
-    "name": "Portfolio Manager",
-    "tagline": "Gestao Inteligente de Investimentos"
+    "name": "Portfolio Manager"
+  },
+  "error": {
+    "title": "Erro",
+    "page_not_found": "Pagina nao encontrada",
+    "go_home": "Ir para o inicio",
+    "no_portfolio_loaded": "Nenhum portfolio carregado",
+    "no_portfolio_loaded_cta": "Importe um portfolio para continuar"
   },
   "common": {
     "loading": "Carregando...",
@@ -25,7 +31,13 @@
     "close": "Fechar",
     "yes": "Sim",
     "no": "Nao",
-    "ok": "OK"
+    "ok": "OK",
+    "clear": "Limpar",
+    "delete_confirm": {
+      "title": "Confirmar exclusao",
+      "message": "Excluir {item}? Esta acao nao pode ser desfeita.",
+      "confirm": "Excluir"
+    }
   },
   "onboarding": {
     "welcome": {
@@ -80,11 +92,15 @@
     "title": "Minha Carteira",
     "total_value": "Valor Total",
     "total_pnl": "L&P Total",
-    "daily_change": "Variacao Diaria",
     "positions": "Posicoes",
     "position_count_one": "{count} posicao",
     "position_count_other": "{count} posicoes",
     "no_positions": "Nenhuma posicao encontrada",
+    "position_not_found": {
+      "title": "Posicao nao encontrada",
+      "description": "A posicao solicitada nao existe mais na sua carteira.",
+      "back_to_home": "Voltar para a carteira"
+    },
     "empty_portfolio": {
       "description": "Crie ou importe uma carteira para comecar"
     },
@@ -110,6 +126,10 @@
       "cost_basis": "Custo Base",
       "pnl": "L&P",
       "pnl_percent": "L&P %",
+      "pnl_unrealized": "L&P nao realizado ({currency})",
+      "details": "Detalhes",
+      "fx_rate": "Taxa de cambio",
+      "exchange": "Bolsa",
       "sector": "Setor",
       "currency": "Moeda",
       "asset_type": "Tipo de Ativo",
@@ -160,13 +180,6 @@
       "broad": "Diversificado",
       "other": "Outro"
     },
-    "sort_by": {
-      "name": "Nome",
-      "value": "Valor",
-      "pnl": "L&P",
-      "pnl_percent": "L&P %",
-      "sector": "Setor"
-    },
     "charts": {
       "title": "Graficos da Carteira",
       "positions_title": "Treemap de Posicoes",
@@ -192,7 +205,7 @@
   "import": {
     "title": "Importar Carteira",
     "select_broker": "Selecione Sua Corretora",
-	"choose_broker": "Escolha seu corretor...",
+    "choose_broker": "Escolha seu corretor...",
     "portfolio_name": "Nome da Carteira",
     "portfolio_name_label": "Nome da Carteira",
     "portfolio_name_hint": "ex. Aposentadoria 2026",
@@ -294,14 +307,6 @@
       "risk": "Analise de Risco",
       "performance": "Analise de Desempenho",
       "recommendations": "Recomendacoes"
-    },
-    "metrics": {
-      "sharpe_ratio": "Indice de Sharpe",
-      "volatility": "Volatilidade",
-      "beta": "Beta",
-      "alpha": "Alpha",
-      "max_drawdown": "Queda Maxima",
-      "sortino_ratio": "Indice de Sortino"
     }
   },
   "market": {
@@ -316,6 +321,8 @@
     "refresh": "Atualizar",
     "updated": "Atualizado: {time}",
     "snapshot_source": "Dados snapshot do feed distribuido",
+    "stale_warning": "Dados de mercado com {days} dias de atraso",
+    "stale_hint": "Verifique a conexao ou tente novamente mais tarde",
     "no_data": "Nenhum dado disponivel",
     "no_events": "Nenhum evento futuro",
     "portfolio_not_loaded": "Carteira ainda nao carregada",
@@ -334,11 +341,6 @@
       "outlier_blocked": "Preco suspeito bloqueado"
     },
     "price_unavailable": "Preco nao disponivel",
-    "event_labels": {
-      "previous": "Anterior",
-      "forecast": "Previsao",
-      "actual": "Real"
-    },
     "time": {
       "just_now": "Agora mesmo",
       "minutes_ago": "ha {count}m",
@@ -394,8 +396,7 @@
       "save": "Salvar"
     },
     "messages": {
-      "saved": "Alocacao alvo salva!",
-      "import_portfolio_first": "Por favor importe uma carteira primeiro"
+      "saved": "Alocacao alvo salva!"
     },
     "empty": {
       "title": "Sem Carteira",
@@ -428,17 +429,9 @@
       "theme_dark": "Escuro",
       "theme_system": "Sistema"
     },
-    "notifications": {
-      "title": "Notificacoes",
-      "price_alerts": "Alertas de Preco",
-      "daily_summary": "Resumo Diario",
-      "market_news": "Noticias do Mercado"
-    },
     "data": {
       "title": "Gestao de Dados",
       "export": "Exportar Dados",
-      "backup": "Backup",
-      "restore": "Restaurar",
       "clear": "Limpar Todos os Dados",
       "clear_confirm_message": "Isto ira excluir dados da carteira, objetivos, progresso de onboarding e configuracoes locais deste dispositivo. Esta acao nao pode ser desfeita.",
       "clear_success": "Todos os dados locais foram limpos com sucesso"
@@ -469,12 +462,7 @@
       "title": "Sobre",
       "version": "Versao",
       "review_onboarding": "Rever onboarding",
-      "onboarding_reset_message": "Onboarding redefinido. O app vai reabrir o fluxo de onboarding.",
-      "privacy": "Politica de Privacidade",
-      "terms": "Termos de Servico",
-      "licenses": "Licencas de Codigo Aberto",
-      "rate": "Avaliar App",
-      "contact": "Contatar Suporte"
+      "onboarding_reset_message": "Onboarding redefinido. O app vai reabrir o fluxo de onboarding."
     }
   },
   "guide": {
@@ -553,26 +541,77 @@
     "api_error": "Erro de API. Tente mais tarde.",
     "storage_error": "Falha ao salvar dados. Tente novamente."
   },
-  "currencies": {
-    "EUR": "Euro",
-    "USD": "Dolar Americano",
-    "GBP": "Libra Esterlina",
-    "CHF": "Franco Suico",
-    "JPY": "Iene Japones",
-    "CAD": "Dolar Canadense",
-    "AUD": "Dolar Australiano"
-  },
-  "sectors": {
-    "technology": "Tecnologia",
-    "financials": "Financeiro",
-    "healthcare": "Saude",
-    "consumer_cyclicals": "Consumo Ciclico",
-    "consumer_non_cyclicals": "Consumo Nao Ciclico",
-    "industrials": "Industriais",
-    "basic_materials": "Materiais Basicos",
-    "energy": "Energia",
-    "utilities": "Utilidades",
-    "real_estate": "Imobiliario",
-    "broad": "Amplo/Diversificado"
+  "goals": {
+    "title": "Objetivos",
+    "subtitle": "Defina e acompanhe seus objetivos de investimento",
+    "search": "Pesquisar objetivos",
+    "add": {
+      "action": "Adicionar",
+      "first": "Adicione seu primeiro objetivo",
+      "title": "Novo objetivo",
+      "coming_soon": "Este recurso estara disponivel em breve"
+    },
+    "tabs": {
+      "list": "Lista",
+      "analytics": "Analises",
+      "settings": "Configuracoes"
+    },
+    "error": {
+      "title": "Erro ao carregar objetivos"
+    },
+    "empty": {
+      "title": "Nenhum objetivo ainda",
+      "description": "Crie seu primeiro objetivo de investimento para comecar a acompanhar o progresso"
+    },
+    "analytics": {
+      "total_goals": "Objetivos totais",
+      "completed": "Concluidos",
+      "total_value": "Valor total",
+      "progress_chart": "Grafico de progresso",
+      "type_distribution": "Distribuicao por tipo"
+    },
+    "settings": {
+      "show_completed": "Mostrar objetivos concluidos",
+      "show_completed_desc": "Incluir objetivos ja concluidos na lista",
+      "default_currency": "Moeda padrao",
+      "default_currency_desc": "Moeda usada para novos objetivos"
+    },
+    "filter": {
+      "title": "Filtrar objetivos",
+      "type": "Tipo",
+      "status": "Status",
+      "sort": "Ordenar por"
+    },
+    "details": {
+      "description": "Descricao",
+      "no_description": "Sem descricao",
+      "target_amount": "Valor alvo",
+      "current_amount": "Valor atual",
+      "progress": "Progresso",
+      "target_date": "Data alvo",
+      "monthly_contribution": "Contribuicao mensal",
+      "asset_allocation": "Alocacao de ativos"
+    },
+    "types": {
+      "retirement": "Aposentadoria",
+      "emergency": "Fundo de emergencia",
+      "house": "Casa",
+      "education": "Educacao",
+      "travel": "Viagem",
+      "custom": "Personalizado"
+    },
+    "status": {
+      "active": "Ativo",
+      "completed": "Concluido",
+      "paused": "Pausado",
+      "cancelled": "Cancelado"
+    },
+    "sort": {
+      "name": "Nome",
+      "target_amount": "Valor alvo",
+      "progress": "Progresso",
+      "target_date": "Data alvo",
+      "created_date": "Data de criacao"
+    }
   }
 }

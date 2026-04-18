@@ -7,8 +7,6 @@ import 'package:shimmer/shimmer.dart';
 
 import '../bloc/goals_bloc.dart';
 import '../../domain/entities/goals_entities.dart';
-import '../../../portfolio/presentation/bloc/portfolio_bloc.dart';
-import '../../../portfolio/domain/entities/portfolio_entities.dart';
 
 class GoalsTab extends StatefulWidget {
   const GoalsTab({super.key});
@@ -117,7 +115,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
           ? FloatingActionButton.extended(
               onPressed: () => _showAddGoalSheet(context),
               icon: const Icon(Icons.add),
-              label: Text('goals.add'.tr()),
+              label: Text('goals.add.action'.tr()),
             )
           : null,
     );
@@ -161,7 +159,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                     Text(
                       'goals.subtitle'.tr(),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -189,7 +187,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(12.r),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
           ),
         ],
@@ -198,10 +196,11 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
   }
 
   Widget _buildTabBar() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: TabBar(
@@ -210,8 +209,8 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
           color: Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(10.r),
         ),
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        labelColor: colorScheme.onPrimary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
         tabs: [
           Tab(text: 'goals.tabs.list'.tr()),
           Tab(text: 'goals.tabs.analytics'.tr()),
@@ -280,6 +279,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
   }
 
   Widget _buildErrorState(String message) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -287,7 +287,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
           Icon(
             Icons.error_outline,
             size: 64.w,
-            color: Colors.red[400],
+            color: colorScheme.error,
           ),
           SizedBox(height: 16.h),
           Text(
@@ -311,6 +311,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
   }
 
   Widget _buildEmptyState() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -318,7 +319,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
           Icon(
             Icons.trending_up,
             size: 64.w,
-            color: Colors.grey[400],
+            color: colorScheme.onSurfaceVariant,
           ),
           SizedBox(height: 16.h),
           Text(
@@ -329,7 +330,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
           Text(
             'goals.empty.description'.tr(),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[600],
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           SizedBox(height: 24.h),
@@ -387,7 +388,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                             Text(
                               goal.description!,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey[600],
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -415,7 +416,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                         Text(
                           'of ${goal.targetAmount.toStringAsFixed(2)} ${goal.currency}',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -433,7 +434,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                         Text(
                           _getGoalTypeLabel(context, goal.type),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -443,7 +444,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                 SizedBox(height: 12.h),
                 LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: Colors.grey[300],
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     progress >= 1.0 ? Colors.green : Theme.of(context).primaryColor,
                   ),
@@ -452,14 +453,14 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                   SizedBox(height: 8.h),
                   Row(
                     children: [
-                      Icon(Icons.schedule, size: 16.w, color: Colors.grey[600]),
+                      Icon(Icons.schedule, size: 16.w, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       SizedBox(width: 4.w),
                       Text(
                         'goals.target_date'.tr(args: [
                           goal.targetDate.toString().split(' ')[0]
                         ]),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -499,7 +500,6 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
   Widget _buildSummaryCards(List<InvestmentGoal> goals) {
     final totalGoals = goals.length;
     final completedGoals = goals.where((g) => g.status == GoalStatus.completed).length;
-    final totalTarget = goals.fold<double>(0, (sum, goal) => sum + goal.targetAmount);
     final totalCurrent = goals.fold<double>(0, (sum, goal) => sum + goal.currentAmount);
 
     return Row(
@@ -650,7 +650,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                             children: [
                               CircularProgressIndicator(
                                 value: data.percentage / 100,
-                                backgroundColor: Colors.grey[300],
+                                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 valueColor: AlwaysStoppedAnimation<Color>(data.color),
                                 strokeWidth: 8.w,
                               ),
@@ -676,7 +676,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                         Text(
                           '${data.value} goals',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -840,6 +840,40 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
     );
   }
 
+  Future<void> _confirmDeleteGoal(
+    BuildContext context,
+    InvestmentGoal goal,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('common.delete_confirm.title'.tr()),
+          content: Text(
+            'common.delete_confirm.message'.tr(
+              namedArgs: {'item': goal.name},
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text('common.cancel'.tr()),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text('common.delete_confirm.confirm'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+    if (!context.mounted) return;
+    if (confirmed == true) {
+      context.read<GoalsBloc>().add(DeleteGoalEvent(goalId: goal.id));
+    }
+  }
+
   void _showGoalDetailSheet(BuildContext context, InvestmentGoal goal) {
     showModalBottomSheet<void>(
       context: context,
@@ -880,13 +914,21 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                         Text(
                           _getGoalTypeLabel(context, goal.type),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                   ),
                   _StatusChip(status: goal.status),
+                  IconButton(
+                    tooltip: 'common.delete'.tr(),
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _confirmDeleteGoal(context, goal);
+                    },
+                  ),
                 ],
               ),
               SizedBox(height: 24.h),
@@ -964,7 +1006,7 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -1155,7 +1197,7 @@ class _SummaryCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],

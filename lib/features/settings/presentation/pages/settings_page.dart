@@ -111,7 +111,7 @@ class _SettingsPageState extends State<SettingsPage> {
               _buildCurrencyTile(context, state),
               _buildThemeTile(context, state),
 
-              // Market Data Section (EODHD — primary optional key)
+              // Market Data Section (EODHD -- primary optional key)
               _buildSectionHeader('settings.eodhd.title'.tr()),
               _buildEodhdApiKeyTile(context),
 

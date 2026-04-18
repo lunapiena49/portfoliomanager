@@ -1,16 +1,24 @@
 import 'package:dio/dio.dart';
 import '../../core/constants/app_constants.dart';
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
+import 'retry_interceptor.dart';
 
 /// Service for interacting with Google Gemini API
 class GeminiService {
   final Dio _dio;
   String? _apiKey;
 
+  // Hard cap on positions included in analysis/chat prompts to bound token
+  // usage. Portfolios with more positions get a "top 50 by value" slice and
+  // a summary note instead of the full list.
+  static const int _maxPositionsInPrompt = 50;
+
   GeminiService({Dio? dio}) : _dio = dio ?? Dio() {
     _dio.options.baseUrl = AppConstants.geminiBaseUrl;
     _dio.options.connectTimeout = AppConstants.apiTimeout;
     _dio.options.receiveTimeout = const Duration(seconds: 60);
+    _dio.options.sendTimeout = const Duration(seconds: 30);
+    _dio.interceptors.add(RetryInterceptor(dio: _dio));
   }
 
   /// Set API key
@@ -124,15 +132,31 @@ class GeminiService {
 
       throw Exception('Failed to get response from Gemini');
     } on DioException catch (e) {
-      if (e.response?.statusCode == 400) {
-        throw Exception('Invalid request: ${e.response?.data}');
-      } else if (e.response?.statusCode == 401) {
-        throw Exception('Invalid API key');
-      } else if (e.response?.statusCode == 429) {
-        throw Exception('Rate limit exceeded. Please try again later.');
-      }
-      throw Exception('API error: ${e.message}');
+      throw _mapDioException(e);
     }
+  }
+
+  /// Map a DioException to a domain exception without leaking response body.
+  Exception _mapDioException(DioException e) {
+    final status = e.response?.statusCode;
+    if (status == 400) {
+      return Exception('Invalid request');
+    } else if (status == 401 || status == 403) {
+      return Exception('Invalid API key');
+    } else if (status == 429) {
+      return Exception('Rate limit exceeded. Please try again later.');
+    } else if (status != null && status >= 500) {
+      return Exception('Gemini service unavailable. Please retry.');
+    }
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return Exception('Request timed out. Please retry.');
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      return Exception('Network error. Check your connection.');
+    }
+    return Exception('API error: ${e.message ?? 'unknown'}');
   }
 
   Future<Response<dynamic>> _postGenerateContent(
@@ -244,7 +268,7 @@ class GeminiService {
 
       throw Exception('Failed to get response from Gemini');
     } on DioException catch (e) {
-      throw Exception('API error: ${e.message}');
+      throw _mapDioException(e);
     }
   }
 
@@ -305,9 +329,18 @@ class GeminiService {
       buffer.writeln();
     }
 
-    // Positions
-    buffer.writeln('=== POSITIONS (${portfolio.positions.length} total) ===');
-    for (final position in portfolio.positions) {
+    // Positions (capped at _maxPositionsInPrompt to bound token usage)
+    final totalPositions = portfolio.positions.length;
+    final sortedPositions = List<Position>.from(portfolio.positions)
+      ..sort((a, b) => b.valueInBaseCurrency.compareTo(a.valueInBaseCurrency));
+    final positionsToInclude = sortedPositions.take(_maxPositionsInPrompt).toList();
+    if (totalPositions > _maxPositionsInPrompt) {
+      buffer.writeln(
+          '=== POSITIONS (top $_maxPositionsInPrompt of $totalPositions, sorted by value) ===');
+    } else {
+      buffer.writeln('=== POSITIONS ($totalPositions total) ===');
+    }
+    for (final position in positionsToInclude) {
       buffer.writeln('- ${position.symbol} (${position.name})');
       buffer
           .writeln('  Type: ${position.assetType}, Sector: ${position.sector}');

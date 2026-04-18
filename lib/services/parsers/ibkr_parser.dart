@@ -1,15 +1,9 @@
-import 'package:csv/csv.dart';
-import 'package:uuid/uuid.dart';
-
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
 import 'base_parser.dart';
 
 /// Parser for Interactive Brokers (IBKR) CSV files
 /// Handles the complex multi-section format of IBKR PortfolioAnalyst exports
 class IBKRParser extends BaseBrokerParser {
-  static const _uuid = Uuid();
-
-  // [UPDATED] Normalize IBKR parser to BaseBrokerParser interface
   @override
   String get brokerId => 'ibkr';
 
@@ -22,10 +16,10 @@ class IBKRParser extends BaseBrokerParser {
   /// Parse IBKR CSV content and return a Portfolio object
   @override
   Portfolio parse(String csvContent) {
-    final lines = const CsvToListConverter(
-      eol: '\n',
-      shouldParseNumbers: false,
-    ).convert(csvContent);
+    // Use the shared CSV loader to normalize CRLF -> LF and strip any BOM;
+    // previously CsvToListConverter was instantiated inline which left
+    // Windows IBKR exports with trailing empty cells.
+    final lines = BaseBrokerParser.parseCSV(csvContent);
 
     if (lines.isEmpty) {
       throw const FormatException('Empty CSV file');
@@ -39,7 +33,7 @@ class IBKRParser extends BaseBrokerParser {
     final positions = _parseOpenPositions(lines);
 
     return Portfolio(
-      id: _uuid.v4(),
+      id: BaseBrokerParser.generateId(),
       accountId: introData['account'] ?? '',
       accountName: introData['name'] ?? '',
       baseCurrency: introData['baseCurrency'] ?? 'EUR',
@@ -48,7 +42,7 @@ class IBKRParser extends BaseBrokerParser {
       profile: PortfolioProfile(
         name: profileData['name'] ?? '',
         accountType: profileData['accountType'] ?? 'Individual',
-        age: _parseIntSafe(profileData['age']),
+        age: BaseBrokerParser.parseIntSafe(profileData['age']),
         investmentObjectives: profileData['investmentObjectives'],
         estimatedNetWorth: profileData['estimatedNetWorth'],
         estimatedLiquidNetWorth: profileData['estimatedLiquidNetWorth'],
@@ -129,38 +123,127 @@ class IBKRParser extends BaseBrokerParser {
     return data;
   }
 
-  /// Parse Key Statistics section
+  /// Parse Key Statistics section using header-name lookup so IBKR column
+  /// re-orderings don't silently shift values.
   static PortfolioStatistics? _parseKeyStatistics(List<List<dynamic>> lines) {
+    var indices = <String, int>{};
+
     for (final line in lines) {
       if (line.isEmpty || line[0].toString() != 'Key Statistics') continue;
-      
-      if (line.length > 1 && line[1].toString() == 'Data') {
-        // Key Statistics,Data,BeginningNAV,EndingNAV,CumulativeReturn,...
-        try {
-          return PortfolioStatistics(
-            beginningNAV: _parseDoubleSafe(line.length > 2 ? line[2] : '0'),
-            endingNAV: _parseDoubleSafe(line.length > 3 ? line[3] : '0'),
-            cumulativeReturn: _parseDoubleSafe(line.length > 4 ? line[4] : '0'),
-            oneMonthReturn: _parseDoubleSafe(line.length > 5 ? line[5] : '0'),
-            threeMonthReturn: _parseDoubleSafe(line.length > 7 ? line[7] : '0'),
-            bestReturn: line.length > 9 ? _parseDoubleSafe(line[9]) : null,
-            bestReturnDate: line.length > 10 ? line[10].toString() : null,
-            worstReturn: line.length > 11 ? _parseDoubleSafe(line[11]) : null,
-            worstReturnDate: line.length > 12 ? line[12].toString() : null,
-            mtm: _parseDoubleSafe(line.length > 13 ? line[13] : '0'),
-            depositsWithdrawals: _parseDoubleSafe(line.length > 14 ? line[14] : '0'),
-            dividends: _parseDoubleSafe(line.length > 15 ? line[15] : '0'),
-            interest: _parseDoubleSafe(line.length > 16 ? line[16] : '0'),
-            feesCommissions: _parseDoubleSafe(line.length > 17 ? line[17] : '0'),
-            changeInNAV: _parseDoubleSafe(line.length > 19 ? line[19] : '0'),
-          );
-        } catch (e) {
-          // Return null if parsing fails
-          return null;
+      if (line.length < 2) continue;
+
+      final rowType = line[1].toString();
+      if (rowType == 'Header') {
+        indices = _parseKeyStatsHeader(line);
+        continue;
+      }
+      if (rowType != 'Data') continue;
+
+      try {
+        double v(String key, {double fallback = 0.0}) =>
+            BaseBrokerParser.parseDoubleSafe(
+              BaseBrokerParser.getValueSafe(line, indices[key]),
+              defaultValue: fallback,
+            );
+        String? s(String key) {
+          final raw = BaseBrokerParser.getValueSafe(line, indices[key]);
+          return raw.isEmpty ? null : raw;
         }
+        double? vOpt(String key) {
+          final raw = BaseBrokerParser.getValueSafe(line, indices[key]);
+          return raw.isEmpty ? null : BaseBrokerParser.parseDoubleSafe(raw);
+        }
+
+        return PortfolioStatistics(
+          beginningNAV: v('beginningNAV'),
+          endingNAV: v('endingNAV'),
+          cumulativeReturn: v('cumulativeReturn'),
+          oneMonthReturn: v('oneMonthReturn'),
+          threeMonthReturn: v('threeMonthReturn'),
+          bestReturn: vOpt('bestReturn'),
+          bestReturnDate: s('bestReturnDate'),
+          worstReturn: vOpt('worstReturn'),
+          worstReturnDate: s('worstReturnDate'),
+          mtm: v('mtm'),
+          depositsWithdrawals: v('depositsWithdrawals'),
+          dividends: v('dividends'),
+          interest: v('interest'),
+          feesCommissions: v('feesCommissions'),
+          changeInNAV: v('changeInNAV'),
+        );
+      } catch (e) {
+        return null;
       }
     }
     return null;
+  }
+
+  /// Map Key Statistics header tokens to canonical field names
+  static Map<String, int> _parseKeyStatsHeader(List<dynamic> line) {
+    final indices = <String, int>{};
+    for (var i = 2; i < line.length; i++) {
+      final token = line[i]
+          .toString()
+          .toLowerCase()
+          .replaceAll(' ', '')
+          .replaceAll('&', '')
+          .replaceAll('-', '');
+      switch (token) {
+        case 'beginningnav':
+          indices['beginningNAV'] = i;
+          break;
+        case 'endingnav':
+          indices['endingNAV'] = i;
+          break;
+        case 'cumulativereturn':
+          indices['cumulativeReturn'] = i;
+          break;
+        case 'onemonthreturn':
+        case 'mtdreturn':
+        case 'monthtodatereturn':
+          indices['oneMonthReturn'] = i;
+          break;
+        case 'threemonthreturn':
+        case 'qtdreturn':
+        case 'quartertodatereturn':
+          indices['threeMonthReturn'] = i;
+          break;
+        case 'bestreturn':
+          indices['bestReturn'] = i;
+          break;
+        case 'bestreturndate':
+          indices['bestReturnDate'] = i;
+          break;
+        case 'worstreturn':
+          indices['worstReturn'] = i;
+          break;
+        case 'worstreturndate':
+          indices['worstReturnDate'] = i;
+          break;
+        case 'mtm':
+          indices['mtm'] = i;
+          break;
+        case 'depositswithdrawals':
+        case 'depositswithdrawal':
+          indices['depositsWithdrawals'] = i;
+          break;
+        case 'dividends':
+          indices['dividends'] = i;
+          break;
+        case 'interest':
+          indices['interest'] = i;
+          break;
+        case 'feescommissions':
+        case 'feesandcommissions':
+          indices['feesCommissions'] = i;
+          break;
+        case 'changeinnav':
+        case 'changeinnetassetvalue':
+          indices['changeInNAV'] = i;
+          break;
+      }
+    }
+    return indices;
   }
 
   /// Parse Historical Performance section
@@ -195,13 +278,13 @@ class IBKRParser extends BaseBrokerParser {
           } else if (rowType == 'Data' && line.length > 3) {
             final period = line[2].toString();
             final returnValue = line.length > 4 ? line[4].toString() : '-';
-            
+
             // Skip empty or invalid returns
             if (returnValue != '-' && returnValue.isNotEmpty) {
               records.add(PerformanceRecord(
                 period: period,
                 periodType: currentType,
-                accountReturn: _parseDoubleSafe(returnValue),
+                accountReturn: BaseBrokerParser.parseDoubleSafe(returnValue),
               ));
             }
           }
@@ -314,31 +397,50 @@ class IBKRParser extends BaseBrokerParser {
   static Position? _parsePositionLine(List<dynamic> line, Map<String, int> indices) {
     try {
       // Get values with safe access
-      final symbol = _getValueSafe(line, indices['symbol']);
-      final description = _getValueSafe(line, indices['description']);
-      
+      final symbol = BaseBrokerParser.getValueSafe(line, indices['symbol']);
+      final description =
+          BaseBrokerParser.getValueSafe(line, indices['description']);
+
       // Skip if no symbol or description
       if (symbol.isEmpty && description.isEmpty) return null;
-      
+
       // Skip "Total" rows
       if (symbol.toLowerCase().startsWith('total')) return null;
-      
-      final assetType = _normalizeAssetType(_getValueSafe(line, indices['assetType']));
-      final currency = _getValueSafe(line, indices['currency']).toUpperCase();
-      final sector = _normalizeSector(_getValueSafe(line, indices['sector']));
-      
-      final quantity = _parseDoubleSafe(_getValueSafe(line, indices['quantity']));
-      final closePrice = _parseDoubleSafe(_getValueSafe(line, indices['closePrice']));
-      final value = _parseDoubleSafe(_getValueSafe(line, indices['value']));
-      final costBasis = _parseDoubleSafe(_getValueSafe(line, indices['costBasis']));
-      final unrealizedPnL = _parseDoubleSafe(_getValueSafe(line, indices['unrealizedPnL']));
-      final fxRateToBase = _parseDoubleSafe(_getValueSafe(line, indices['fxRateToBase']), defaultValue: 1.0);
-      
+
+      final assetType = BaseBrokerParser.normalizeAssetType(
+        BaseBrokerParser.getValueSafe(line, indices['assetType']),
+      );
+      final currency = BaseBrokerParser.getValueSafe(line, indices['currency'])
+          .toUpperCase();
+      final sector = BaseBrokerParser.normalizeSector(
+        BaseBrokerParser.getValueSafe(line, indices['sector']),
+      );
+
+      final quantity = BaseBrokerParser.parseDoubleSafe(
+        BaseBrokerParser.getValueSafe(line, indices['quantity']),
+      );
+      final closePrice = BaseBrokerParser.parseDoubleSafe(
+        BaseBrokerParser.getValueSafe(line, indices['closePrice']),
+      );
+      final value = BaseBrokerParser.parseDoubleSafe(
+        BaseBrokerParser.getValueSafe(line, indices['value']),
+      );
+      final costBasis = BaseBrokerParser.parseDoubleSafe(
+        BaseBrokerParser.getValueSafe(line, indices['costBasis']),
+      );
+      final unrealizedPnL = BaseBrokerParser.parseDoubleSafe(
+        BaseBrokerParser.getValueSafe(line, indices['unrealizedPnL']),
+      );
+      final fxRateToBase = BaseBrokerParser.parseDoubleSafe(
+        BaseBrokerParser.getValueSafe(line, indices['fxRateToBase']),
+        defaultValue: 1.0,
+      );
+
       // Skip zero quantity positions
       if (quantity == 0 && value == 0) return null;
-      
+
       return Position(
-        id: _uuid.v4(),
+        id: BaseBrokerParser.generateId(),
         symbol: symbol,
         name: description,
         assetType: assetType,
@@ -356,83 +458,5 @@ class IBKRParser extends BaseBrokerParser {
       // Return null if parsing fails for this position
       return null;
     }
-  }
-
-  /// Safely get value from list
-  static String _getValueSafe(List<dynamic> line, int? index) {
-    if (index == null || index < 0 || index >= line.length) {
-      return '';
-    }
-    return line[index].toString().trim();
-  }
-
-  /// Safely parse double
-  static double _parseDoubleSafe(dynamic value, {double defaultValue = 0.0}) {
-    if (value == null) return defaultValue;
-    
-    final str = value.toString().trim();
-    if (str.isEmpty || str == '-' || str == 'N/A') {
-      return defaultValue;
-    }
-    
-    // Remove currency symbols and formatting
-    final cleaned = str
-        .replaceAll(',', '')
-        .replaceAll('\$', '')
-        .replaceAll('EUR', '')
-        .replaceAll('USD', '')
-        .replaceAll(' ', '')
-        .trim();
-    
-    return double.tryParse(cleaned) ?? defaultValue;
-  }
-
-  /// Safely parse int
-  static int? _parseIntSafe(String? value) {
-    if (value == null || value.isEmpty || value == '-') {
-      return null;
-    }
-    return int.tryParse(value.replaceAll(',', '').trim());
-  }
-
-  /// Normalize asset type to standard format
-  static String _normalizeAssetType(String assetType) {
-    final lower = assetType.toLowerCase().trim();
-    
-    if (lower.contains('etf')) return 'ETFs';
-    if (lower.contains('stock')) return 'Stocks';
-    if (lower.contains('bond')) return 'Bonds';
-    if (lower.contains('option')) return 'Options';
-    if (lower.contains('future')) return 'Futures';
-    if (lower.contains('forex') || lower.contains('fx')) return 'Forex';
-    if (lower.contains('crypto')) return 'Crypto';
-    if (lower.contains('commodity')) return 'Commodities';
-    
-    // Default based on common patterns
-    if (assetType.isEmpty) return 'Other';
-    
-    // Return original with first letter capitalized
-    return assetType[0].toUpperCase() + assetType.substring(1);
-  }
-
-  /// Normalize sector to standard format
-  static String _normalizeSector(String sector) {
-    final lower = sector.toLowerCase().trim();
-    
-    if (lower.isEmpty) return 'Other';
-    if (lower.contains('tech')) return 'Technology';
-    if (lower.contains('financ')) return 'Financials';
-    if (lower.contains('health') || lower.contains('pharma')) return 'Healthcare';
-    if (lower.contains('consumer') && lower.contains('cycl')) return 'Consumer Cyclicals';
-    if (lower.contains('consumer') && lower.contains('non')) return 'Consumer Non-Cyclicals';
-    if (lower.contains('industrial')) return 'Industrials';
-    if (lower.contains('material') || lower.contains('basic')) return 'Basic Materials';
-    if (lower.contains('energy')) return 'Energy';
-    if (lower.contains('utilit')) return 'Utilities';
-    if (lower.contains('real') || lower.contains('estate')) return 'Real Estate';
-    if (lower.contains('broad') || lower.contains('diversif')) return 'Broad';
-    
-    // Return original with first letter capitalized
-    return sector[0].toUpperCase() + sector.substring(1);
   }
 }

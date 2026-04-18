@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_constants.dart';
@@ -6,19 +7,82 @@ import '../../features/portfolio/domain/entities/portfolio_entities.dart';
 import '../../features/goals/domain/entities/goals_entities.dart';
 import '../../features/rebalancing/domain/entities/rebalancing_entities.dart';
 
-/// Service for local data persistence
+/// Service for local data persistence.
+///
+/// API keys (Gemini/FMP/EODHD) live in [FlutterSecureStorage] (platform-backed
+/// keystore: Keychain, DPAPI, libsecret, EncryptedSharedPreferences). A cache
+/// is populated at [init] so the sync getters keep their existing contract.
 class LocalStorageService {
   static late SharedPreferences _prefs;
   static late Box _settingsBox;
   static late Box _portfolioBox;
   static late Box _goalsBox;
 
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+
+  static String? _cachedGeminiKey;
+  static String? _cachedFmpKey;
+  static String? _cachedEodhdKey;
+
   /// Initialize storage
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    _settingsBox = await Hive.openBox(AppConstants.settingsBox);
-    _portfolioBox = await Hive.openBox(AppConstants.portfolioBox);
-    _goalsBox = await Hive.openBox(AppConstants.goalsBox);
+    _settingsBox = await _openBoxWithRecovery(AppConstants.settingsBox);
+    _portfolioBox = await _openBoxWithRecovery(AppConstants.portfolioBox);
+    _goalsBox = await _openBoxWithRecovery(AppConstants.goalsBox);
+    await _migrateApiKeysToSecureStorage();
+    await _loadApiKeysCache();
+  }
+
+  /// Open a Hive box, recovering from corruption by deleting and reopening.
+  ///
+  /// A corrupted box (e.g. after a force-kill mid-write) would otherwise
+  /// crash the app at launch with no path to recovery. We accept the data
+  /// loss for the affected box instead of refusing to start -- user data
+  /// integrity beyond this box is preserved because each domain sits in a
+  /// dedicated box.
+  static Future<Box> _openBoxWithRecovery(String name) async {
+    try {
+      return await Hive.openBox(name);
+    } catch (_) {
+      try {
+        await Hive.deleteBoxFromDisk(name);
+      } catch (_) {
+        // If deletion also fails, surface the original error on retry below.
+      }
+      return await Hive.openBox(name);
+    }
+  }
+
+  /// One-shot migration: move any API key found in the (unencrypted) Hive
+  /// settings box into secure storage, then purge it from Hive.
+  static Future<void> _migrateApiKeysToSecureStorage() async {
+    const legacyKeys = [
+      AppConstants.geminiApiKeyKey,
+      AppConstants.fmpApiKeyKey,
+      AppConstants.eodhdApiKeyKey,
+    ];
+    for (final key in legacyKeys) {
+      final legacy = _settingsBox.get(key);
+      if (legacy is String && legacy.trim().isNotEmpty) {
+        await _secureStorage.write(key: key, value: legacy);
+        await _settingsBox.delete(key);
+      }
+    }
+  }
+
+  static Future<void> _loadApiKeysCache() async {
+    _cachedGeminiKey = await _secureStorage.read(
+      key: AppConstants.geminiApiKeyKey,
+    );
+    _cachedFmpKey = await _secureStorage.read(
+      key: AppConstants.fmpApiKeyKey,
+    );
+    _cachedEodhdKey = await _secureStorage.read(
+      key: AppConstants.eodhdApiKeyKey,
+    );
   }
 
   // ==================== SETTINGS ====================
@@ -84,45 +148,54 @@ class LocalStorageService {
     await _settingsBox.put(AppConstants.baseCurrencyKey, currency);
   }
 
-  /// Get Gemini API key
-  static String? getGeminiApiKey() {
-    return _settingsBox.get(AppConstants.geminiApiKeyKey);
-  }
+  /// Get Gemini API key (from secure storage cache)
+  static String? getGeminiApiKey() => _cachedGeminiKey;
 
   /// Set Gemini API key
   static Future<void> setGeminiApiKey(String? apiKey) async {
     if (apiKey == null || apiKey.isEmpty) {
-      await _settingsBox.delete(AppConstants.geminiApiKeyKey);
+      await _secureStorage.delete(key: AppConstants.geminiApiKeyKey);
+      _cachedGeminiKey = null;
     } else {
-      await _settingsBox.put(AppConstants.geminiApiKeyKey, apiKey);
+      await _secureStorage.write(
+        key: AppConstants.geminiApiKeyKey,
+        value: apiKey,
+      );
+      _cachedGeminiKey = apiKey;
     }
   }
 
-  /// Get FMP API key
-  static String? getFmpApiKey() {
-    return _settingsBox.get(AppConstants.fmpApiKeyKey);
-  }
+  /// Get FMP API key (from secure storage cache)
+  static String? getFmpApiKey() => _cachedFmpKey;
 
   /// Set FMP API key
   static Future<void> setFmpApiKey(String? apiKey) async {
     if (apiKey == null || apiKey.isEmpty) {
-      await _settingsBox.delete(AppConstants.fmpApiKeyKey);
+      await _secureStorage.delete(key: AppConstants.fmpApiKeyKey);
+      _cachedFmpKey = null;
     } else {
-      await _settingsBox.put(AppConstants.fmpApiKeyKey, apiKey);
+      await _secureStorage.write(
+        key: AppConstants.fmpApiKeyKey,
+        value: apiKey,
+      );
+      _cachedFmpKey = apiKey;
     }
   }
 
-  /// Get EODHD API key
-  static String? getEodhdApiKey() {
-    return _settingsBox.get(AppConstants.eodhdApiKeyKey);
-  }
+  /// Get EODHD API key (from secure storage cache)
+  static String? getEodhdApiKey() => _cachedEodhdKey;
 
   /// Set EODHD API key
   static Future<void> setEodhdApiKey(String? apiKey) async {
     if (apiKey == null || apiKey.isEmpty) {
-      await _settingsBox.delete(AppConstants.eodhdApiKeyKey);
+      await _secureStorage.delete(key: AppConstants.eodhdApiKeyKey);
+      _cachedEodhdKey = null;
     } else {
-      await _settingsBox.put(AppConstants.eodhdApiKeyKey, apiKey);
+      await _secureStorage.write(
+        key: AppConstants.eodhdApiKeyKey,
+        value: apiKey,
+      );
+      _cachedEodhdKey = apiKey;
     }
   }
 
@@ -133,18 +206,18 @@ class LocalStorageService {
     final json = jsonEncode(portfolio.toJson());
     await _portfolioBox.put(portfolio.id, json);
     if (setCurrent) {
-      await _portfolioBox.put('current_portfolio_id', portfolio.id);
+      await _portfolioBox.put(AppConstants.currentPortfolioIdKey, portfolio.id);
     }
   }
 
   /// Get current portfolio
   static Portfolio? getCurrentPortfolio() {
-    final currentId = _portfolioBox.get('current_portfolio_id');
+    final currentId = _portfolioBox.get(AppConstants.currentPortfolioIdKey);
     if (currentId == null) return null;
-    
+
     final json = _portfolioBox.get(currentId);
     if (json == null) return null;
-    
+
     try {
       final map = jsonDecode(json) as Map<String, dynamic>;
       return Portfolio.fromJson(map);
@@ -156,10 +229,10 @@ class LocalStorageService {
   /// Get all portfolios
   static List<Portfolio> getAllPortfolios() {
     final portfolios = <Portfolio>[];
-    
+
     for (final key in _portfolioBox.keys) {
-      if (key == 'current_portfolio_id') continue;
-      
+      if (key == AppConstants.currentPortfolioIdKey) continue;
+
       final json = _portfolioBox.get(key);
       if (json != null) {
         try {
@@ -170,17 +243,17 @@ class LocalStorageService {
         }
       }
     }
-    
+
     return portfolios;
   }
 
   /// Delete portfolio
   static Future<void> deletePortfolio(String portfolioId) async {
     await _portfolioBox.delete(portfolioId);
-    
-    final currentId = _portfolioBox.get('current_portfolio_id');
+
+    final currentId = _portfolioBox.get(AppConstants.currentPortfolioIdKey);
     if (currentId == portfolioId) {
-      await _portfolioBox.delete('current_portfolio_id');
+      await _portfolioBox.delete(AppConstants.currentPortfolioIdKey);
     }
   }
 
@@ -237,7 +310,7 @@ class LocalStorageService {
 
   /// Get rebalance targets
   Future<List<RebalanceTarget>> getRebalanceTargets() async {
-    final json = _settingsBox.get('rebalance_targets');
+    final json = _settingsBox.get(AppConstants.rebalanceTargetsKey);
     if (json == null) return [];
     try {
       final list = jsonDecode(json) as List;
@@ -252,17 +325,23 @@ class LocalStorageService {
   /// Save rebalance targets
   Future<void> saveRebalanceTargets(List<RebalanceTarget> targets) async {
     final json = jsonEncode(targets.map((t) => t.toJson()).toList());
-    await _settingsBox.put('rebalance_targets', json);
+    await _settingsBox.put(AppConstants.rebalanceTargetsKey, json);
   }
 
   // ==================== GENERAL ====================
 
-  /// Clear all data
+  /// Clear all data (including secure-storage-backed API keys)
   static Future<void> clearAllData() async {
     await _prefs.clear();
     await _settingsBox.clear();
     await _portfolioBox.clear();
     await _goalsBox.clear();
+    await _secureStorage.delete(key: AppConstants.geminiApiKeyKey);
+    await _secureStorage.delete(key: AppConstants.fmpApiKeyKey);
+    await _secureStorage.delete(key: AppConstants.eodhdApiKeyKey);
+    _cachedGeminiKey = null;
+    _cachedFmpKey = null;
+    _cachedEodhdKey = null;
   }
 
   /// Export all data as JSON

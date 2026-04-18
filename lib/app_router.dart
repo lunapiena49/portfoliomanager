@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -60,8 +61,11 @@ class AppRouter {
     initialLocation: RouteNames.splash,
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      final onboardingState = context.read<OnboardingBloc>().state;
-      final isOnboardingComplete = onboardingState is OnboardingCompleted;
+      // Gate on the synchronous SharedPreferences flag, not on the (async)
+      // OnboardingBloc state. Otherwise deep links resolve before the bloc
+      // finishes CheckOnboardingStatusEvent and a returning user is bounced
+      // back to /onboarding on cold start.
+      final isOnboardingComplete = LocalStorageService.isOnboardingComplete();
       final isOnboardingRoute = state.matchedLocation == RouteNames.onboarding;
       final isSplashRoute = state.matchedLocation == RouteNames.splash;
       final isLanguageRoute =
@@ -396,20 +400,20 @@ class ErrorPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Error'),
+        title: Text('error.title'.tr()),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.red,
+              color: Theme.of(context).colorScheme.error,
             ),
             const SizedBox(height: 16),
             Text(
-              'Page not found',
+              'error.page_not_found'.tr(),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
@@ -421,7 +425,7 @@ class ErrorPage extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.go(RouteNames.home),
-              child: const Text('Go Home'),
+              child: Text('error.go_home'.tr()),
             ),
           ],
         ),

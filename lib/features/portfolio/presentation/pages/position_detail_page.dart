@@ -29,10 +29,13 @@ class PositionDetailPage extends StatelessWidget {
           );
         }
 
-        final position = state.portfolio.positions.firstWhere(
+        final matches = state.portfolio.positions.where(
           (p) => p.id == positionId,
-          orElse: () => state.portfolio.positions.first,
         );
+        if (matches.isEmpty) {
+          return _buildNotFound(context);
+        }
+        final position = matches.first;
 
         return Scaffold(
           appBar: AppBar(
@@ -44,6 +47,12 @@ class PositionDetailPage extends StatelessWidget {
                 onPressed: () => context.push(
                   '${RouteNames.home}/position/${position.id}/edit',
                 ),
+              ),
+              IconButton(
+                tooltip: 'common.delete'.tr(),
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () =>
+                    _confirmDeletePosition(context, position),
               ),
             ],
           ),
@@ -67,6 +76,84 @@ class PositionDetailPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _confirmDeletePosition(
+    BuildContext context,
+    Position position,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('common.delete_confirm.title'.tr()),
+          content: Text(
+            'common.delete_confirm.message'.tr(
+              namedArgs: {'item': position.symbol},
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text('common.cancel'.tr()),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.errorColor,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text('common.delete_confirm.confirm'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+    if (!context.mounted) return;
+    if (confirmed == true) {
+      context
+          .read<PortfolioBloc>()
+          .add(DeletePositionEvent(position.id));
+      context.go(RouteNames.home);
+    }
+  }
+
+  Widget _buildNotFound(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 64.w,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'portfolio.position_not_found.title'.tr(),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'portfolio.position_not_found.description'.tr(),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              SizedBox(height: 24.h),
+              ElevatedButton(
+                onPressed: () => context.go(RouteNames.home),
+                child: Text(
+                  'portfolio.position_not_found.back_to_home'.tr(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -175,13 +262,13 @@ class PositionDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Details',
+              'portfolio.position.details'.tr(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             SizedBox(height: 16.h),
-            _buildDetailRow(context, 'portfolio.position.quantity'.tr(), 
+            _buildDetailRow(context, 'portfolio.position.quantity'.tr(),
                 position.quantity.toStringAsFixed(4)),
             _buildDetailRow(context, 'portfolio.position.price'.tr(),
                 '${position.currency} ${position.closePrice.toStringAsFixed(2)}'),
@@ -190,10 +277,10 @@ class PositionDetailPage extends StatelessWidget {
             _buildDetailRow(context, 'portfolio.position.cost_basis'.tr(),
                 '${position.currency} ${position.costBasis.toStringAsFixed(2)}'),
             if (position.fxRateToBase != 1.0)
-              _buildDetailRow(context, 'FX Rate',
+              _buildDetailRow(context, 'portfolio.position.fx_rate'.tr(),
                   position.fxRateToBase.toStringAsFixed(4)),
             if (position.exchange != null)
-              _buildDetailRow(context, 'Exchange', position.exchange!),
+              _buildDetailRow(context, 'portfolio.position.exchange'.tr(), position.exchange!),
             _buildRegionRow(context, position),
           ],
         ),
@@ -220,19 +307,19 @@ class PositionDetailPage extends StatelessWidget {
             SizedBox(height: 16.h),
             _buildDetailRow(
               context,
-              'Unrealized P&L (${position.currency})',
+              'portfolio.position.pnl_unrealized'.tr(namedArgs: {'currency': position.currency}),
               '${isProfit ? '+' : ''}${position.unrealizedPnL.toStringAsFixed(2)}',
               valueColor: pnlColor,
             ),
             _buildDetailRow(
               context,
-              'Unrealized P&L ($baseCurrency)',
+              'portfolio.position.pnl_unrealized'.tr(namedArgs: {'currency': baseCurrency}),
               '${isProfit ? '+' : ''}${position.unrealizedPnLInBaseCurrency.toStringAsFixed(2)}',
               valueColor: pnlColor,
             ),
             _buildDetailRow(
               context,
-              'P&L %',
+              'portfolio.position.pnl_percent'.tr(),
               '${isProfit ? '+' : ''}${position.pnlPercent.toStringAsFixed(2)}%',
               valueColor: pnlColor,
             ),
@@ -370,7 +457,7 @@ class PositionDetailPage extends StatelessWidget {
       case 'USD':
         return '\$';
       case 'GBP':
-        return '£';
+        return '\u00A3';
       default:
         return '$currency ';
     }

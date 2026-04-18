@@ -488,9 +488,63 @@ class PortfolioBloc extends Bloc<PortfolioEvent, PortfolioState> {
   ) async {
     try {
       await LocalStorageService.deletePortfolio(event.portfolioId);
-      add(LoadPortfolioEvent());
+      await _reloadPortfolioState(emit);
     } catch (e) {
       emit(PortfolioError(e.toString()));
+    }
+  }
+
+  Future<void> _reloadPortfolioState(Emitter<PortfolioState> emit) async {
+    emit(PortfolioLoading());
+    final portfolio = LocalStorageService.getCurrentPortfolio();
+    final allPortfolios = LocalStorageService.getAllPortfolios();
+
+    if (portfolio == null) {
+      emit(PortfolioEmpty());
+      return;
+    }
+
+    final consolidatedPortfolio = _consolidatePortfolio(portfolio);
+    final storedFilter = _normalizeMacroFilter(
+      LocalStorageService.getPositionsFilterAssetType(),
+    );
+    emit(PortfolioLoaded(
+      portfolio: consolidatedPortfolio,
+      allPortfolios: allPortfolios,
+      filterAssetType: storedFilter,
+      filteredPositions: _applyFiltersAndSort(
+        consolidatedPortfolio.positions,
+        storedFilter,
+        null,
+        null,
+        'value',
+        false,
+      ),
+    ));
+  }
+
+  Future<void> _saveAndEmit(
+    Portfolio portfolio,
+    Emitter<PortfolioState> emit,
+  ) async {
+    final consolidatedPortfolio = _consolidatePortfolio(portfolio);
+    await LocalStorageService.savePortfolio(consolidatedPortfolio);
+    final allPortfolios = LocalStorageService.getAllPortfolios();
+
+    if (state is PortfolioLoaded) {
+      final currentState = state as PortfolioLoaded;
+      emit(currentState.copyWith(
+        portfolio: consolidatedPortfolio,
+        allPortfolios: allPortfolios,
+        filteredPositions: _applyFiltersAndSort(
+          consolidatedPortfolio.positions,
+          currentState.filterAssetType,
+          currentState.filterSector,
+          currentState.filterCurrency,
+          currentState.sortBy,
+          currentState.sortAscending,
+        ),
+      ));
     }
   }
 
@@ -643,7 +697,6 @@ class PortfolioBloc extends Bloc<PortfolioEvent, PortfolioState> {
   ) async {
     try {
       if (state is PortfolioLoaded) {
-        // Add position to existing portfolio
         final currentState = state as PortfolioLoaded;
         final updatedPositions = _consolidatePositions(
           [...currentState.portfolio.positions, event.position],
@@ -653,7 +706,7 @@ class PortfolioBloc extends Bloc<PortfolioEvent, PortfolioState> {
           lastUpdated: DateTime.now(),
         );
 
-        add(UpdatePortfolioEvent(updatedPortfolio));
+        await _saveAndEmit(updatedPortfolio, emit);
       }
     } catch (e) {
       emit(PortfolioError('Failed to add position: ${e.toString()}'));
@@ -664,19 +717,23 @@ class PortfolioBloc extends Bloc<PortfolioEvent, PortfolioState> {
     UpdatePositionEvent event,
     Emitter<PortfolioState> emit,
   ) async {
-    if (state is PortfolioLoaded) {
-      final currentState = state as PortfolioLoaded;
-      final updatedPositions = _consolidatePositions(
-        currentState.portfolio.positions.map((p) {
-          return p.id == event.position.id ? event.position : p;
-        }).toList(),
-      );
-      final updatedPortfolio = currentState.portfolio.copyWith(
-        positions: updatedPositions,
-        lastUpdated: DateTime.now(),
-      );
+    try {
+      if (state is PortfolioLoaded) {
+        final currentState = state as PortfolioLoaded;
+        final updatedPositions = _consolidatePositions(
+          currentState.portfolio.positions.map((p) {
+            return p.id == event.position.id ? event.position : p;
+          }).toList(),
+        );
+        final updatedPortfolio = currentState.portfolio.copyWith(
+          positions: updatedPositions,
+          lastUpdated: DateTime.now(),
+        );
 
-      add(UpdatePortfolioEvent(updatedPortfolio));
+        await _saveAndEmit(updatedPortfolio, emit);
+      }
+    } catch (e) {
+      emit(PortfolioError(e.toString()));
     }
   }
 
@@ -684,17 +741,21 @@ class PortfolioBloc extends Bloc<PortfolioEvent, PortfolioState> {
     DeletePositionEvent event,
     Emitter<PortfolioState> emit,
   ) async {
-    if (state is PortfolioLoaded) {
-      final currentState = state as PortfolioLoaded;
-      final updatedPositions = currentState.portfolio.positions
-          .where((p) => p.id != event.positionId)
-          .toList();
-      final updatedPortfolio = currentState.portfolio.copyWith(
-        positions: updatedPositions,
-        lastUpdated: DateTime.now(),
-      );
+    try {
+      if (state is PortfolioLoaded) {
+        final currentState = state as PortfolioLoaded;
+        final updatedPositions = currentState.portfolio.positions
+            .where((p) => p.id != event.positionId)
+            .toList();
+        final updatedPortfolio = currentState.portfolio.copyWith(
+          positions: updatedPositions,
+          lastUpdated: DateTime.now(),
+        );
 
-      add(UpdatePortfolioEvent(updatedPortfolio));
+        await _saveAndEmit(updatedPortfolio, emit);
+      }
+    } catch (e) {
+      emit(PortfolioError(e.toString()));
     }
   }
 

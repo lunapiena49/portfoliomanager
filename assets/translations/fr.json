@@ -1,7 +1,13 @@
 {
   "app": {
-    "name": "Portfolio Manager",
-    "tagline": "Gestion Intelligente des Investissements"
+    "name": "Portfolio Manager"
+  },
+  "error": {
+    "title": "Erreur",
+    "page_not_found": "Page introuvable",
+    "go_home": "Aller a l'accueil",
+    "no_portfolio_loaded": "Aucun portefeuille charge",
+    "no_portfolio_loaded_cta": "Importez un portefeuille pour continuer"
   },
   "common": {
     "loading": "Chargement...",
@@ -25,7 +31,13 @@
     "close": "Fermer",
     "yes": "Oui",
     "no": "Non",
-    "ok": "OK"
+    "ok": "OK",
+    "clear": "Effacer",
+    "delete_confirm": {
+      "title": "Confirmer la suppression",
+      "message": "Supprimer {item}? Cette action est irreversible.",
+      "confirm": "Supprimer"
+    }
   },
   "onboarding": {
     "welcome": {
@@ -80,11 +92,15 @@
     "title": "Mon Portefeuille",
     "total_value": "Valeur Totale",
     "total_pnl": "P&L Total",
-    "daily_change": "Variation Journaliere",
     "positions": "Positions",
     "position_count_one": "{count} position",
     "position_count_other": "{count} positions",
     "no_positions": "Aucune position trouvee",
+    "position_not_found": {
+      "title": "Position introuvable",
+      "description": "La position demandee n'existe plus dans votre portefeuille.",
+      "back_to_home": "Retour au portefeuille"
+    },
     "empty_portfolio": {
       "description": "Creez ou importez un portefeuille pour commencer"
     },
@@ -110,6 +126,10 @@
       "cost_basis": "Prix de Revient",
       "pnl": "P&L",
       "pnl_percent": "P&L %",
+      "pnl_unrealized": "P&L non realise ({currency})",
+      "details": "Details",
+      "fx_rate": "Taux de change",
+      "exchange": "Bourse",
       "sector": "Secteur",
       "currency": "Devise",
       "asset_type": "Type d'Actif",
@@ -160,13 +180,6 @@
       "broad": "Diversifie",
       "other": "Autre"
     },
-    "sort_by": {
-      "name": "Nom",
-      "value": "Valeur",
-      "pnl": "P&L",
-      "pnl_percent": "P&L %",
-      "sector": "Secteur"
-    },
     "charts": {
       "title": "Graphiques du Portefeuille",
       "positions_title": "Treemap des Positions",
@@ -192,7 +205,7 @@
   "import": {
     "title": "Importer Portefeuille",
     "select_broker": "Selectionnez Votre Courtier",
-	"choose_broker": "Choisissez votre courtier...",
+    "choose_broker": "Choisissez votre courtier...",
     "portfolio_name": "Nom du Portefeuille",
     "portfolio_name_label": "Nom du Portefeuille",
     "portfolio_name_hint": "ex. Retraite 2026",
@@ -294,14 +307,6 @@
       "risk": "Analyse des Risques",
       "performance": "Analyse des Performances",
       "recommendations": "Recommandations"
-    },
-    "metrics": {
-      "sharpe_ratio": "Ratio de Sharpe",
-      "volatility": "Volatilite",
-      "beta": "Beta",
-      "alpha": "Alpha",
-      "max_drawdown": "Perte Maximale",
-      "sortino_ratio": "Ratio de Sortino"
     }
   },
   "market": {
@@ -316,6 +321,8 @@
     "refresh": "Actualiser",
     "updated": "Mis a jour : {time}",
     "snapshot_source": "Donnees snapshot depuis le flux distribue",
+    "stale_warning": "Les donnees de marche datent de {days} jours",
+    "stale_hint": "Verifiez la connexion ou reessayez plus tard",
     "no_data": "Aucune donnee disponible",
     "no_events": "Aucun evenement a venir",
     "portfolio_not_loaded": "Portefeuille pas encore charge",
@@ -334,11 +341,6 @@
       "outlier_blocked": "Prix suspect bloque"
     },
     "price_unavailable": "Prix non disponible",
-    "event_labels": {
-      "previous": "Precedent",
-      "forecast": "Prevision",
-      "actual": "Reel"
-    },
     "time": {
       "just_now": "A l'instant",
       "minutes_ago": "il y a {count} min",
@@ -394,8 +396,7 @@
       "save": "Enregistrer"
     },
     "messages": {
-      "saved": "Allocation cible enregistree!",
-      "import_portfolio_first": "Veuillez d'abord importer un portefeuille"
+      "saved": "Allocation cible enregistree!"
     },
     "empty": {
       "title": "Aucun Portefeuille",
@@ -428,17 +429,9 @@
       "theme_dark": "Sombre",
       "theme_system": "Systeme"
     },
-    "notifications": {
-      "title": "Notifications",
-      "price_alerts": "Alertes de Prix",
-      "daily_summary": "Resume Quotidien",
-      "market_news": "Actualites du Marche"
-    },
     "data": {
       "title": "Gestion des Donnees",
       "export": "Exporter les Donnees",
-      "backup": "Sauvegarde",
-      "restore": "Restaurer",
       "clear": "Effacer Toutes les Donnees",
       "clear_confirm_message": "Cette action supprimera les donnees du portefeuille, les objectifs, la progression d'onboarding et les reglages locaux de cet appareil. Cette action est irreversible.",
       "clear_success": "Toutes les donnees locales ont ete supprimees avec succes"
@@ -469,12 +462,7 @@
       "title": "A Propos",
       "version": "Version",
       "review_onboarding": "Revoir l'onboarding",
-      "onboarding_reset_message": "L'onboarding a ete reinitialise. L'application reouvrira le flux d'onboarding.",
-      "privacy": "Politique de Confidentialite",
-      "terms": "Conditions d'Utilisation",
-      "licenses": "Licences Open Source",
-      "rate": "Evaluer l'Application",
-      "contact": "Contacter le Support"
+      "onboarding_reset_message": "L'onboarding a ete reinitialise. L'application reouvrira le flux d'onboarding."
     }
   },
   "guide": {
@@ -553,26 +541,77 @@
     "api_error": "Erreur API. Reessayez plus tard.",
     "storage_error": "Echec de la sauvegarde. Reessayez."
   },
-  "currencies": {
-    "EUR": "Euro",
-    "USD": "Dollar US",
-    "GBP": "Livre Sterling",
-    "CHF": "Franc Suisse",
-    "JPY": "Yen Japonais",
-    "CAD": "Dollar Canadien",
-    "AUD": "Dollar Australien"
-  },
-  "sectors": {
-    "technology": "Technologie",
-    "financials": "Services Financiers",
-    "healthcare": "Sante",
-    "consumer_cyclicals": "Biens de Consommation Cycliques",
-    "consumer_non_cyclicals": "Biens de Consommation Non Cycliques",
-    "industrials": "Industriels",
-    "basic_materials": "Materiaux de Base",
-    "energy": "Energie",
-    "utilities": "Services Publics",
-    "real_estate": "Immobilier",
-    "broad": "Large/Diversifie"
+  "goals": {
+    "title": "Objectifs",
+    "subtitle": "Definissez et suivez vos objectifs d'investissement",
+    "search": "Rechercher des objectifs",
+    "add": {
+      "action": "Ajouter",
+      "first": "Ajoutez votre premier objectif",
+      "title": "Nouvel objectif",
+      "coming_soon": "Cette fonctionnalite sera bientot disponible"
+    },
+    "tabs": {
+      "list": "Liste",
+      "analytics": "Analytique",
+      "settings": "Parametres"
+    },
+    "error": {
+      "title": "Erreur lors du chargement des objectifs"
+    },
+    "empty": {
+      "title": "Aucun objectif pour le moment",
+      "description": "Creez votre premier objectif d'investissement pour commencer a suivre les progres"
+    },
+    "analytics": {
+      "total_goals": "Objectifs totaux",
+      "completed": "Termines",
+      "total_value": "Valeur totale",
+      "progress_chart": "Graphique de progression",
+      "type_distribution": "Repartition par type"
+    },
+    "settings": {
+      "show_completed": "Afficher les objectifs termines",
+      "show_completed_desc": "Inclure les objectifs deja termines dans la liste",
+      "default_currency": "Devise par defaut",
+      "default_currency_desc": "Devise utilisee pour les nouveaux objectifs"
+    },
+    "filter": {
+      "title": "Filtrer les objectifs",
+      "type": "Type",
+      "status": "Statut",
+      "sort": "Trier par"
+    },
+    "details": {
+      "description": "Description",
+      "no_description": "Aucune description",
+      "target_amount": "Montant cible",
+      "current_amount": "Montant actuel",
+      "progress": "Progression",
+      "target_date": "Date cible",
+      "monthly_contribution": "Contribution mensuelle",
+      "asset_allocation": "Repartition des actifs"
+    },
+    "types": {
+      "retirement": "Retraite",
+      "emergency": "Fonds d'urgence",
+      "house": "Maison",
+      "education": "Education",
+      "travel": "Voyage",
+      "custom": "Personnalise"
+    },
+    "status": {
+      "active": "Actif",
+      "completed": "Termine",
+      "paused": "En pause",
+      "cancelled": "Annule"
+    },
+    "sort": {
+      "name": "Nom",
+      "target_amount": "Montant cible",
+      "progress": "Progression",
+      "target_date": "Date cible",
+      "created_date": "Date de creation"
+    }
   }
 }

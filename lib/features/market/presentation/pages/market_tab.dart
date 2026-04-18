@@ -294,6 +294,8 @@ class _MarketTabState extends State<MarketTab>
   List<MarketMover> _yearlyLosers = [];
 
   DateTime? _lastUpdated;
+  DateTime? _snapshotAsOfUtc;
+  static const int _staleThresholdDays = 3;
   DateTime? _portfolioPricesUpdatedAt;
   int _updatedPortfolioPositionsCount = 0;
   Set<String> _unreliablePortfolioSymbols = <String>{};
@@ -822,6 +824,12 @@ class _MarketTabState extends State<MarketTab>
       final payload = await _snapshotService.fetchTopMoversSnapshot();
       if (payload == null) {
         return false;
+      }
+
+      final rawGeneratedAt =
+          (payload['generated_at_utc'] ?? payload['as_of_date'])?.toString();
+      if (rawGeneratedAt != null && rawGeneratedAt.isNotEmpty) {
+        _snapshotAsOfUtc = DateTime.tryParse(rawGeneratedAt);
       }
 
       final rawFilters = payload['filters'];
@@ -2105,6 +2113,51 @@ class _MarketTabState extends State<MarketTab>
     );
   }
 
+  Widget _buildStaleBanner(ThemeData theme) {
+    final asOf = _snapshotAsOfUtc;
+    if (asOf == null) return const SizedBox.shrink();
+    final days = DateTime.now().toUtc().difference(asOf).inDays;
+    if (days < _staleThresholdDays) return const SizedBox.shrink();
+    return Material(
+      color: theme.colorScheme.errorContainer,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        child: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: theme.colorScheme.onErrorContainer,
+              size: 20.w,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'market.stale_warning'.tr(
+                      namedArgs: {'days': days.toString()},
+                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'market.stale_hint'.tr(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBody({
     required PortfolioState portfolioState,
   }) {
@@ -2132,6 +2185,7 @@ class _MarketTabState extends State<MarketTab>
     final theme = Theme.of(context);
     return Column(
       children: [
+        _buildStaleBanner(theme),
         Material(
           color: theme.colorScheme.surface,
           elevation: 1,

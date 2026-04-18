@@ -8,7 +8,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../portfolio/presentation/bloc/portfolio_bloc.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
-import '../../../../services/api/gemini_service.dart';
+import '../bloc/ai_chat_bloc.dart';
 
 class AIChatPage extends StatefulWidget {
   const AIChatPage({super.key});
@@ -18,35 +18,30 @@ class AIChatPage extends StatefulWidget {
 }
 
 class _AIChatPageState extends State<AIChatPage> {
-  final GeminiService _geminiService = GeminiService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = [];
-  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeService();
-    _addWelcomeMessage();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final chatBloc = context.read<AIChatBloc>();
+      chatBloc.add(InitializeChatEvent('analysis.ask_ai'.tr()));
+      _syncApiKey();
+    });
   }
 
-  void _initializeService() {
+  void _syncApiKey() {
     final settingsState = context.read<SettingsBloc>().state;
-    if (settingsState is SettingsLoaded && settingsState.settings.hasGeminiApiKey) {
-      _geminiService.setApiKey(settingsState.settings.geminiApiKey!);
+    if (settingsState is SettingsLoaded) {
+      context
+          .read<AIChatBloc>()
+          .add(UpdateChatApiKeyEvent(settingsState.settings.geminiApiKey));
     }
   }
 
-  void _addWelcomeMessage() {
-    _messages.add(ChatMessage(
-      content: 'analysis.ask_ai'.tr(),
-      isUser: false,
-      timestamp: DateTime.now(),
-    ));
-  }
-
-  Future<void> _sendMessage() async {
+  void _sendMessage() {
     final message = _messageController.text.trim();
     if (message.isEmpty) return;
 
@@ -58,60 +53,22 @@ class _AIChatPageState extends State<AIChatPage> {
       return;
     }
 
-    if (settingsState is! SettingsLoaded || !settingsState.settings.hasGeminiApiKey) {
+    if (settingsState is! SettingsLoaded) {
       _showError('analysis.api_key_required'.tr());
       return;
     }
 
-    setState(() {
-      _messages.add(ChatMessage(
-        content: message,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
-      _isLoading = true;
-    });
+    context
+        .read<AIChatBloc>()
+        .add(UpdateChatApiKeyEvent(settingsState.settings.geminiApiKey));
+    context.read<AIChatBloc>().add(SendChatMessageEvent(
+          message: message,
+          portfolio: portfolioState.portfolio,
+          language: settingsState.settings.languageCode,
+        ));
 
     _messageController.clear();
     _scrollToBottom();
-
-    try {
-      _geminiService.setApiKey(settingsState.settings.geminiApiKey!);
-
-      final conversationHistory = _messages
-          .where((m) => m.content != 'analysis.ask_ai'.tr())
-          .map((m) => {
-                'role': m.isUser ? 'user' : 'assistant',
-                'content': m.content,
-              })
-          .toList();
-
-      // Remove the last message (current user message) from history
-      if (conversationHistory.isNotEmpty) {
-        conversationHistory.removeLast();
-      }
-
-      final response = await _geminiService.chat(
-        portfolio: portfolioState.portfolio,
-        userMessage: message,
-        conversationHistory: conversationHistory.isEmpty ? null : conversationHistory,
-        language: settingsState.settings.languageCode,
-      );
-
-      setState(() {
-        _messages.add(ChatMessage(
-          content: response,
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
-        _isLoading = false;
-      });
-
-      _scrollToBottom();
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showError(e.toString());
-    }
   }
 
   void _showError(String message) {
@@ -135,6 +92,13 @@ class _AIChatPageState extends State<AIChatPage> {
     });
   }
 
+  String _resolveErrorMessage(String raw) {
+    if (raw.startsWith('analysis.')) {
+      return raw.tr();
+    }
+    return raw;
+  }
+
   @override
   void dispose() {
     _messageController.dispose();
@@ -144,91 +108,115 @@ class _AIChatPageState extends State<AIChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('analysis.chat_title'.tr()),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              setState(() {
-                _messages.clear();
-                _addWelcomeMessage();
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'common.help'.tr(),
-            onPressed: () => context.push(RouteNames.guide),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Messages list
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: EdgeInsets.all(16.w),
-              itemCount: _messages.length + (_isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _messages.length && _isLoading) {
-                  return _buildLoadingIndicator();
-                }
-                return _buildMessageBubble(_messages[index]);
+    return BlocListener<AIChatBloc, AIChatState>(
+      listenWhen: (previous, current) {
+        if (current is! AIChatReady) return false;
+        if (previous is! AIChatReady) return current.errorMessage != null;
+        return previous.errorMessage != current.errorMessage &&
+            current.errorMessage != null;
+      },
+      listener: (context, state) {
+        if (state is AIChatReady && state.errorMessage != null) {
+          _showError(_resolveErrorMessage(state.errorMessage!));
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('analysis.chat_title'.tr()),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {
+                context
+                    .read<AIChatBloc>()
+                    .add(ClearChatEvent('analysis.ask_ai'.tr()));
               },
             ),
-          ),
-
-          // Input area
-          Container(
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'common.help'.tr(),
+              onPressed: () => context.push(RouteNames.guide),
+            ),
+          ],
+        ),
+        body: BlocConsumer<AIChatBloc, AIChatState>(
+          listenWhen: (previous, current) =>
+              current is AIChatReady &&
+              previous is AIChatReady &&
+              previous.messages.length != current.messages.length,
+          listener: (context, state) => _scrollToBottom(),
+          builder: (context, state) {
+            final messages =
+                state is AIChatReady ? state.messages : const <ChatMessage>[];
+            final isLoading = state is AIChatReady && state.isSending;
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: EdgeInsets.all(16.w),
+                    itemCount: messages.length + (isLoading ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == messages.length && isLoading) {
+                        return _buildLoadingIndicator();
+                      }
+                      return _buildMessageBubble(messages[index]);
+                    },
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            Theme.of(context).shadowColor.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _messageController,
+                            decoration: InputDecoration(
+                              hintText: 'analysis.ask_ai'.tr(),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24.r),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
+                            ),
+                            maxLines: null,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => _sendMessage(),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        CircleAvatar(
+                          radius: 24.r,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          child: IconButton(
+                            icon: Icon(Icons.send,
+                                color:
+                                    Theme.of(context).colorScheme.onPrimary),
+                            onPressed: isLoading ? null : _sendMessage,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'analysis.ask_ai'.tr(),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24.r),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 12.h,
-                        ),
-                      ),
-                      maxLines: null,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  CircleAvatar(
-                    radius: 24.r,
-                    backgroundColor: Theme.of(context).primaryColor,
-                    child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: _isLoading ? null : _sendMessage,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -245,7 +233,8 @@ class _AIChatPageState extends State<AIChatPage> {
             CircleAvatar(
               radius: 16.r,
               backgroundColor: Theme.of(context).primaryColor,
-              child: Icon(Icons.auto_awesome, size: 16.w, color: Colors.white),
+              child: Icon(Icons.auto_awesome,
+                  size: 16.w, color: Theme.of(context).colorScheme.onPrimary),
             ),
             SizedBox(width: 8.w),
           ],
@@ -257,12 +246,14 @@ class _AIChatPageState extends State<AIChatPage> {
                     ? Theme.of(context).primaryColor
                     : Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16.r).copyWith(
-                  bottomRight: message.isUser ? Radius.zero : Radius.circular(16.r),
-                  bottomLeft: message.isUser ? Radius.circular(16.r) : Radius.zero,
+                  bottomRight:
+                      message.isUser ? Radius.zero : Radius.circular(16.r),
+                  bottomLeft:
+                      message.isUser ? Radius.circular(16.r) : Radius.zero,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.08),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -271,7 +262,9 @@ class _AIChatPageState extends State<AIChatPage> {
               child: SelectableText(
                 message.content,
                 style: TextStyle(
-                  color: message.isUser ? Colors.white : null,
+                  color: message.isUser
+                      ? Theme.of(context).colorScheme.onPrimary
+                      : null,
                 ),
               ),
             ),
@@ -298,7 +291,8 @@ class _AIChatPageState extends State<AIChatPage> {
           CircleAvatar(
             radius: 16.r,
             backgroundColor: Theme.of(context).primaryColor,
-            child: Icon(Icons.auto_awesome, size: 16.w, color: Colors.white),
+            child: Icon(Icons.auto_awesome,
+                size: 16.w, color: Theme.of(context).colorScheme.onPrimary),
           ),
           SizedBox(width: 8.w),
           Container(
@@ -332,16 +326,4 @@ class _AIChatPageState extends State<AIChatPage> {
       ),
     );
   }
-}
-
-class ChatMessage {
-  final String content;
-  final bool isUser;
-  final DateTime timestamp;
-
-  ChatMessage({
-    required this.content,
-    required this.isUser,
-    required this.timestamp,
-  });
 }

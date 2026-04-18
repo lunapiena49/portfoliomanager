@@ -2,6 +2,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../services/storage/local_storage_service.dart';
 
+/// Sentinel so [AppSettings.copyWith] can clear nullable API keys via
+/// `copyWith(geminiApiKey: null)` (omitted args keep the existing value).
+const Object _copyWithUnset = Object();
+
 const String _geminiApiKeyFromEnvironment = String.fromEnvironment(
   'GEMINI_API_KEY',
   defaultValue: '',
@@ -144,9 +148,9 @@ class AppSettings extends Equatable {
     String? themeMode,
     String? languageCode,
     String? baseCurrency,
-    String? geminiApiKey,
-    String? fmpApiKey,
-    String? eodhdApiKey,
+    Object? geminiApiKey = _copyWithUnset,
+    Object? fmpApiKey = _copyWithUnset,
+    Object? eodhdApiKey = _copyWithUnset,
     bool? notificationsEnabled,
     bool? priceAlertsEnabled,
     bool? dailySummaryEnabled,
@@ -155,9 +159,15 @@ class AppSettings extends Equatable {
       themeMode: themeMode ?? this.themeMode,
       languageCode: languageCode ?? this.languageCode,
       baseCurrency: baseCurrency ?? this.baseCurrency,
-      geminiApiKey: geminiApiKey ?? this.geminiApiKey,
-      fmpApiKey: fmpApiKey ?? this.fmpApiKey,
-      eodhdApiKey: eodhdApiKey ?? this.eodhdApiKey,
+      geminiApiKey: identical(geminiApiKey, _copyWithUnset)
+          ? this.geminiApiKey
+          : geminiApiKey as String?,
+      fmpApiKey: identical(fmpApiKey, _copyWithUnset)
+          ? this.fmpApiKey
+          : fmpApiKey as String?,
+      eodhdApiKey: identical(eodhdApiKey, _copyWithUnset)
+          ? this.eodhdApiKey
+          : eodhdApiKey as String?,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
       dailySummaryEnabled: dailySummaryEnabled ?? this.dailySummaryEnabled,

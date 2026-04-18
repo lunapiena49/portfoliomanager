@@ -223,7 +223,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           SizedBox(height: 6.h),
@@ -240,7 +240,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: captionColor ?? Colors.grey[600],
+                  color: captionColor ?? theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -299,7 +299,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
               return _buildContent(state);
             }
 
-            // Initial state – check if portfolio is available
+            // Initial state -- check if portfolio is available
             return _buildNoPortfolioState();
           },
         ),
@@ -333,11 +333,11 @@ class _RebalancingTabState extends State<RebalancingTab> {
       case 'USD':
         return '\$';
       case 'GBP':
-        return '£';
+        return '\u00A3';
       case 'CHF':
         return 'CHF ';
       case 'JPY':
-        return '¥';
+        return '\u00A5';
       default:
         return '$currency ';
     }
@@ -651,7 +651,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
               maxLines: isCompact ? 3 : 2,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[700],
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
               ),
             ),
           ),
@@ -968,7 +968,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               SizedBox(height: 2.h),
@@ -1373,7 +1373,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64.w, color: Colors.red[400]),
+          Icon(Icons.error_outline, size: 64.w, color: Theme.of(context).colorScheme.error),
           SizedBox(height: 16.h),
           Text(
             'rebalancing.error.title'.tr(),
@@ -1413,7 +1413,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
                 Icon(
                   Icons.balance,
                   size: iconSize,
-                  color: Colors.grey[400],
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 SizedBox(height: titleSpacing),
                 Text(
@@ -1425,7 +1425,7 @@ class _RebalancingTabState extends State<RebalancingTab> {
                 Text(
                   'rebalancing.empty.description'.tr(),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                   textAlign: TextAlign.center,
                 ),

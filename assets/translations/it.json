@@ -1,7 +1,13 @@
 {
   "app": {
-    "name": "Portfolio Manager",
-    "tagline": "Gestione Intelligente degli Investimenti"
+    "name": "Portfolio Manager"
+  },
+  "error": {
+    "title": "Errore",
+    "page_not_found": "Pagina non trovata",
+    "go_home": "Vai alla home",
+    "no_portfolio_loaded": "Nessun portfolio caricato",
+    "no_portfolio_loaded_cta": "Importa un portfolio per continuare"
   },
   "common": {
     "loading": "Caricamento...",
@@ -25,7 +31,13 @@
     "close": "Chiudi",
     "yes": "Si",
     "no": "No",
-    "ok": "OK"
+    "ok": "OK",
+    "clear": "Cancella",
+    "delete_confirm": {
+      "title": "Conferma eliminazione",
+      "message": "Vuoi eliminare {item}? L'operazione non puo essere annullata.",
+      "confirm": "Elimina"
+    }
   },
   "onboarding": {
     "welcome": {
@@ -80,11 +92,15 @@
     "title": "Il Mio Portafoglio",
     "total_value": "Valore Totale",
     "total_pnl": "P&L Totale",
-    "daily_change": "Variazione Giornaliera",
     "positions": "Posizioni",
     "position_count_one": "{count} posizione",
     "position_count_other": "{count} posizioni",
     "no_positions": "Nessuna posizione trovata",
+    "position_not_found": {
+      "title": "Posizione non trovata",
+      "description": "La posizione richiesta non esiste piu nel portafoglio.",
+      "back_to_home": "Torna al portafoglio"
+    },
     "empty_portfolio": {
       "description": "Crea o importa un portafoglio per iniziare"
     },
@@ -110,6 +126,10 @@
       "cost_basis": "Costo Base",
       "pnl": "P&L",
       "pnl_percent": "P&L %",
+      "pnl_unrealized": "P&L non realizzato ({currency})",
+      "details": "Dettagli",
+      "fx_rate": "Tasso FX",
+      "exchange": "Borsa",
       "sector": "Settore",
       "currency": "Valuta",
       "asset_type": "Tipo Asset",
@@ -160,13 +180,6 @@
       "broad": "Diversificato",
       "other": "Altro"
     },
-    "sort_by": {
-      "name": "Nome",
-      "value": "Valore",
-      "pnl": "P&L",
-      "pnl_percent": "P&L %",
-      "sector": "Settore"
-    },
     "charts": {
       "title": "Grafici Portafoglio",
       "positions_title": "Treemap Posizioni",
@@ -192,7 +205,7 @@
   "import": {
     "title": "Importa Portafoglio",
     "select_broker": "Seleziona il Tuo Broker",
-	"choose_broker": "Scegli il tuo broker...",
+    "choose_broker": "Scegli il tuo broker...",
     "portfolio_name": "Nome Portafoglio",
     "portfolio_name_label": "Nome Portafoglio",
     "portfolio_name_hint": "es. Pensione 2026",
@@ -245,8 +258,8 @@
       "degiro": "In DEGIRO: Activity > Account Statement > Export CSV",
       "trading212": "In Trading 212: History > Export CSV",
       "xtb": "In XTB: History > Cash Operations > Export",
-      "revolut": "In Revolut: Stocks > Statements > Export CSV",      
-	  "generic": "Esporta le tue posizioni come file CSV o PDF dalla piattaforma del tuo broker"
+      "revolut": "In Revolut: Stocks > Statements > Export CSV",
+      "generic": "Esporta le tue posizioni come file CSV o PDF dalla piattaforma del tuo broker"
     }
   },
   "add_position": {
@@ -294,14 +307,6 @@
       "risk": "Analisi del Rischio",
       "performance": "Analisi delle Performance",
       "recommendations": "Raccomandazioni"
-    },
-    "metrics": {
-      "sharpe_ratio": "Indice di Sharpe",
-      "volatility": "Volatilita",
-      "beta": "Beta",
-      "alpha": "Alpha",
-      "max_drawdown": "Max Drawdown",
-      "sortino_ratio": "Indice di Sortino"
     }
   },
   "market": {
@@ -316,6 +321,8 @@
     "refresh": "Aggiorna",
     "updated": "Aggiornato: {time}",
     "snapshot_source": "Dati snapshot dal feed distribuito",
+    "stale_warning": "Dati mercato non aggiornati da {days} giorni",
+    "stale_hint": "Verifica la connessione o riprova piu tardi",
     "no_data": "Nessun dato disponibile",
     "no_events": "Nessun evento in arrivo",
     "portfolio_not_loaded": "Portafoglio non ancora caricato",
@@ -334,11 +341,6 @@
       "outlier_blocked": "Prezzo sospetto bloccato"
     },
     "price_unavailable": "Prezzo non disponibile",
-    "event_labels": {
-      "previous": "Precedente",
-      "forecast": "Previsione",
-      "actual": "Effettivo"
-    },
     "time": {
       "just_now": "Proprio ora",
       "minutes_ago": "{count}m fa",
@@ -394,8 +396,7 @@
       "save": "Salva"
     },
     "messages": {
-      "saved": "Allocazione target salvata!",
-      "import_portfolio_first": "Importa prima un portafoglio"
+      "saved": "Allocazione target salvata!"
     },
     "empty": {
       "title": "Nessun Portafoglio",
@@ -428,17 +429,9 @@
       "theme_dark": "Scuro",
       "theme_system": "Sistema"
     },
-    "notifications": {
-      "title": "Notifiche",
-      "price_alerts": "Avvisi di Prezzo",
-      "daily_summary": "Riepilogo Giornaliero",
-      "market_news": "Notizie di Mercato"
-    },
     "data": {
       "title": "Gestione Dati",
       "export": "Esporta Dati",
-      "backup": "Backup",
-      "restore": "Ripristina",
       "clear": "Cancella Tutti i Dati",
       "clear_confirm_message": "Questa azione elimina dati portafoglio, obiettivi, stato onboarding e impostazioni locali da questo dispositivo. Operazione irreversibile.",
       "clear_success": "Tutti i dati locali sono stati eliminati correttamente"
@@ -469,12 +462,7 @@
       "title": "Informazioni",
       "version": "Versione",
       "review_onboarding": "Rivedi onboarding",
-      "onboarding_reset_message": "Onboarding ripristinato. L'app riaprira il flusso di onboarding.",
-      "privacy": "Informativa sulla Privacy",
-      "terms": "Termini di Servizio",
-      "licenses": "Licenze Open Source",
-      "rate": "Valuta l'App",
-      "contact": "Contatta il Supporto"
+      "onboarding_reset_message": "Onboarding ripristinato. L'app riaprira il flusso di onboarding."
     }
   },
   "guide": {
@@ -553,26 +541,77 @@
     "api_error": "Errore API. Riprova piu tardi.",
     "storage_error": "Impossibile salvare i dati. Riprova."
   },
-  "currencies": {
-    "EUR": "Euro",
-    "USD": "Dollaro USA",
-    "GBP": "Sterlina Britannica",
-    "CHF": "Franco Svizzero",
-    "JPY": "Yen Giapponese",
-    "CAD": "Dollaro Canadese",
-    "AUD": "Dollaro Australiano"
-  },
-  "sectors": {
-    "technology": "Tecnologia",
-    "financials": "Finanziari",
-    "healthcare": "Sanita",
-    "consumer_cyclicals": "Beni di Consumo Ciclici",
-    "consumer_non_cyclicals": "Beni di Consumo Non Ciclici",
-    "industrials": "Industriali",
-    "basic_materials": "Materiali di Base",
-    "energy": "Energia",
-    "utilities": "Servizi Pubblici",
-    "real_estate": "Immobiliare",
-    "broad": "Ampio/Diversificato"
+  "goals": {
+    "title": "Obiettivi",
+    "subtitle": "Imposta e monitora i tuoi obiettivi di investimento",
+    "search": "Cerca obiettivi",
+    "add": {
+      "action": "Aggiungi",
+      "first": "Aggiungi il primo obiettivo",
+      "title": "Nuovo obiettivo",
+      "coming_soon": "Questa funzionalita sara disponibile presto"
+    },
+    "tabs": {
+      "list": "Elenco",
+      "analytics": "Analytics",
+      "settings": "Impostazioni"
+    },
+    "error": {
+      "title": "Errore nel caricamento degli obiettivi"
+    },
+    "empty": {
+      "title": "Nessun obiettivo",
+      "description": "Crea il tuo primo obiettivo di investimento per iniziare a monitorare i progressi"
+    },
+    "analytics": {
+      "total_goals": "Obiettivi totali",
+      "completed": "Completati",
+      "total_value": "Valore totale",
+      "progress_chart": "Grafico progressi",
+      "type_distribution": "Distribuzione per tipo"
+    },
+    "settings": {
+      "show_completed": "Mostra obiettivi completati",
+      "show_completed_desc": "Includi gli obiettivi gia completati nell'elenco",
+      "default_currency": "Valuta predefinita",
+      "default_currency_desc": "Valuta usata per i nuovi obiettivi"
+    },
+    "filter": {
+      "title": "Filtra obiettivi",
+      "type": "Tipo",
+      "status": "Stato",
+      "sort": "Ordina per"
+    },
+    "details": {
+      "description": "Descrizione",
+      "no_description": "Nessuna descrizione",
+      "target_amount": "Importo target",
+      "current_amount": "Importo attuale",
+      "progress": "Progresso",
+      "target_date": "Data obiettivo",
+      "monthly_contribution": "Contributo mensile",
+      "asset_allocation": "Allocazione asset"
+    },
+    "types": {
+      "retirement": "Pensione",
+      "emergency": "Fondo di emergenza",
+      "house": "Casa",
+      "education": "Istruzione",
+      "travel": "Viaggi",
+      "custom": "Personalizzato"
+    },
+    "status": {
+      "active": "Attivo",
+      "completed": "Completato",
+      "paused": "In pausa",
+      "cancelled": "Annullato"
+    },
+    "sort": {
+      "name": "Nome",
+      "target_amount": "Importo target",
+      "progress": "Progresso",
+      "target_date": "Data obiettivo",
+      "created_date": "Data creazione"
+    }
   }
 }
