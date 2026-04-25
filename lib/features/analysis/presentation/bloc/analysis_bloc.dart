@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../portfolio/domain/entities/portfolio_entities.dart';
 import '../../../../services/api/gemini_service.dart';
+import '../../domain/analysis_preset.dart';
 
 // ==================== EVENTS ====================
 
@@ -26,15 +27,23 @@ class GenerateAnalysisEvent extends AnalysisEvent {
   final Portfolio portfolio;
   final String language;
   final String? customPrompt;
+  final AnalysisPreset preset;
+
+  /// When non-null, overrides the slice set required by [preset]. The UI uses
+  /// this to honor the user's per-slice opt-out toggles in the transparency
+  /// panel.
+  final Set<AnalysisDataSlice>? slices;
 
   const GenerateAnalysisEvent({
     required this.portfolio,
     required this.language,
     this.customPrompt,
+    this.preset = AnalysisPreset.fullReview,
+    this.slices,
   });
 
   @override
-  List<Object?> get props => [portfolio, language, customPrompt];
+  List<Object?> get props => [portfolio, language, customPrompt, preset, slices];
 }
 
 class ClearAnalysisEvent extends AnalysisEvent {}
@@ -108,6 +117,8 @@ class AnalysisBloc extends Bloc<AnalysisEvent, AnalysisState> {
         portfolio: event.portfolio,
         customPrompt: event.customPrompt,
         language: event.language,
+        preset: event.preset,
+        slices: event.slices,
       );
       emit(AnalysisSuccess(result));
     } catch (e) {

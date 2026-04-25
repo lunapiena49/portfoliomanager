@@ -6,9 +6,14 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../portfolio/domain/portfolio_metrics.dart';
 import '../../../portfolio/presentation/bloc/portfolio_bloc.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
+import '../../domain/analysis_preset.dart';
 import '../bloc/analysis_bloc.dart';
+import '../widgets/analysis_preset_selector.dart';
+import '../widgets/analysis_transparency_panel.dart';
+import '../widgets/portfolio_metrics_card.dart';
 
 enum _AnalysisMenuAction {
   chat,
@@ -23,9 +28,13 @@ class AnalysisPage extends StatefulWidget {
 }
 
 class _AnalysisPageState extends State<AnalysisPage> {
+  AnalysisPreset _selectedPreset = AnalysisPreset.fullReview;
+  late Set<AnalysisDataSlice> _activeSlices;
+
   @override
   void initState() {
     super.initState();
+    _activeSlices = Set.of(AnalysisPresets.fullReview.requiredSlices);
     _syncApiKey();
   }
 
@@ -36,6 +45,24 @@ class _AnalysisPageState extends State<AnalysisPage> {
           .read<AnalysisBloc>()
           .add(UpdateAnalysisApiKeyEvent(settingsState.settings.geminiApiKey));
     }
+  }
+
+  void _selectPreset(AnalysisPreset preset) {
+    setState(() {
+      _selectedPreset = preset;
+      _activeSlices =
+          Set.of(AnalysisPresets.byPreset(preset).requiredSlices);
+    });
+  }
+
+  void _toggleSlice(AnalysisDataSlice slice) {
+    setState(() {
+      if (_activeSlices.contains(slice)) {
+        _activeSlices.remove(slice);
+      } else {
+        _activeSlices.add(slice);
+      }
+    });
   }
 
   void _generateAnalysis() {
@@ -51,6 +78,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
     context.read<AnalysisBloc>().add(GenerateAnalysisEvent(
           portfolio: portfolioState.portfolio,
           language: settingsState.settings.languageCode,
+          preset: _selectedPreset,
+          slices: Set.of(_activeSlices),
         ));
   }
 
@@ -76,11 +105,20 @@ class _AnalysisPageState extends State<AnalysisPage> {
             );
           }
 
+          final settingsState = context.watch<SettingsBloc>().state;
+          final language = settingsState is SettingsLoaded
+              ? settingsState.settings.languageCode
+              : 'en';
+          final portfolio = portfolioState.portfolio;
+          final metrics = PortfolioMetrics.compute(portfolio);
+          final presetDefinition = AnalysisPresets.byPreset(_selectedPreset);
+
           return BlocBuilder<AnalysisBloc, AnalysisState>(
             builder: (context, analysisState) {
               final isLoading = analysisState is AnalysisInProgress;
-              final result =
-                  analysisState is AnalysisSuccess ? analysisState.result : null;
+              final result = analysisState is AnalysisSuccess
+                  ? analysisState.result
+                  : null;
               final errorMessage = analysisState is AnalysisFailure
                   ? _resolveErrorMessage(analysisState.message)
                   : null;
@@ -91,12 +129,49 @@ class _AnalysisPageState extends State<AnalysisPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'analysis.suggestions.title'.tr(),
+                      'analysis.presets.title'.tr(),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'analysis.presets.subtitle'.tr(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).hintColor,
+                          ),
+                    ),
                     SizedBox(height: 12.h),
-                    _buildSuggestionChips(),
-                    SizedBox(height: 24.h),
+                    AnalysisPresetSelector(
+                      selected: _selectedPreset,
+                      onSelect: _selectPreset,
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .primaryColor
+                            .withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        presetDefinition.descriptionKey.tr(),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    PortfolioMetricsCard(
+                      metrics: metrics,
+                      baseCurrency: portfolio.baseCurrency,
+                    ),
+                    SizedBox(height: 16.h),
+                    AnalysisTransparencyPanel(
+                      portfolio: portfolio,
+                      language: language,
+                      presetDefinition: presetDefinition,
+                      activeSlices: _activeSlices,
+                      onToggleSlice: _toggleSlice,
+                    ),
+                    SizedBox(height: 16.h),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -107,15 +182,15 @@ class _AnalysisPageState extends State<AnalysisPage> {
                                 height: 20.w,
                                 child: const CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               )
-                            : const Icon(Icons.auto_awesome),
+                            : const Icon(Icons.send),
                         label: Text(
                           isLoading
                               ? 'analysis.generating'.tr()
-                              : 'analysis.generate_full'.tr(),
+                              : 'analysis.send_to_ai'.tr(),
                         ),
                       ),
                     ),
@@ -131,7 +206,8 @@ class _AnalysisPageState extends State<AnalysisPage> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline, color: AppTheme.errorColor),
+                            Icon(Icons.error_outline,
+                                color: AppTheme.errorColor),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Text(
@@ -244,29 +320,6 @@ class _AnalysisPageState extends State<AnalysisPage> {
         SizedBox(width: 12.w),
         Text(label),
       ],
-    );
-  }
-
-  Widget _buildSuggestionChips() {
-    final suggestions = [
-      ('analysis.suggestions.risk'.tr(), Icons.warning_amber),
-      ('analysis.suggestions.diversification'.tr(), Icons.pie_chart),
-      ('analysis.suggestions.performance'.tr(), Icons.trending_up),
-      ('analysis.suggestions.recommendations'.tr(), Icons.lightbulb),
-    ];
-
-    return Wrap(
-      spacing: 8.w,
-      runSpacing: 8.h,
-      children: suggestions.map((s) {
-        return ActionChip(
-          avatar: Icon(s.$2, size: 18.w),
-          label: Text(s.$1),
-          onPressed: () {
-            // TODO: Generate specific analysis
-          },
-        );
-      }).toList(),
     );
   }
 }

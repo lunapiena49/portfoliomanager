@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../core/constants/app_constants.dart';
+import '../../features/analysis/domain/analysis_preset.dart';
+import '../../features/analysis/domain/analysis_prompt_builder.dart';
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
 import 'retry_interceptor.dart';
 
@@ -7,11 +9,6 @@ import 'retry_interceptor.dart';
 class GeminiService {
   final Dio _dio;
   String? _apiKey;
-
-  // Hard cap on positions included in analysis/chat prompts to bound token
-  // usage. Portfolios with more positions get a "top 50 by value" slice and
-  // a summary note instead of the full list.
-  static const int _maxPositionsInPrompt = 50;
 
   GeminiService({Dio? dio}) : _dio = dio ?? Dio() {
     _dio.options.baseUrl = AppConstants.geminiBaseUrl;
@@ -58,7 +55,12 @@ class GeminiService {
     }
   }
 
-  /// Generate portfolio analysis
+  /// Generate portfolio analysis.
+  ///
+  /// When [slices] is null, the slice set is derived from [preset] (defaulting
+  /// to [AnalysisPresets.fullReview]). The user-facing transparency UI is
+  /// expected to provide the same [slices] it shows, so the prompt and the
+  /// preview match exactly.
   Future<String> analyzePortfolio({
     required Portfolio portfolio,
     String? customPrompt,
@@ -69,15 +71,23 @@ class GeminiService {
     int? maxOutputTokens,
     String? model,
     bool allowToolsFallback = true,
+    AnalysisPreset preset = AnalysisPreset.fullReview,
+    Set<AnalysisDataSlice>? slices,
   }) async {
     if (!hasApiKey) {
       throw Exception('API key not configured');
     }
 
-    final prompt = _buildAnalysisPrompt(
+    final definition = AnalysisPresets.byPreset(preset);
+    final effectiveSlices = slices ?? definition.requiredSlices;
+
+    final prompt = AnalysisPromptBuilder.build(
       portfolio: portfolio,
       customPrompt: customPrompt,
       language: language,
+      slices: effectiveSlices,
+      presetInstruction:
+          definition.instruction.isEmpty ? null : definition.instruction,
     );
 
     try {
@@ -270,141 +280,6 @@ class GeminiService {
     } on DioException catch (e) {
       throw _mapDioException(e);
     }
-  }
-
-  /// Build the analysis prompt
-  String _buildAnalysisPrompt({
-    required Portfolio portfolio,
-    String? customPrompt,
-    required String language,
-  }) {
-    final buffer = StringBuffer();
-
-    // Language instruction
-    buffer.writeln(_getLanguageInstruction(language));
-    buffer.writeln();
-
-    // Role and context
-    buffer.writeln(
-        'You are a professional financial analyst and portfolio advisor.');
-    buffer.writeln(
-        'Analyze the following investment portfolio and provide detailed insights.');
-    buffer.writeln();
-
-    // Portfolio data
-    buffer.writeln('=== PORTFOLIO DATA ===');
-    buffer
-        .writeln('Account: ${portfolio.accountName} (${portfolio.accountId})');
-    buffer.writeln('Base Currency: ${portfolio.baseCurrency}');
-    buffer.writeln(
-        'Total Value: ${portfolio.baseCurrency} ${portfolio.totalValue.toStringAsFixed(2)}');
-    buffer.writeln(
-        'Total Cost Basis: ${portfolio.baseCurrency} ${portfolio.totalCostBasis.toStringAsFixed(2)}');
-    buffer.writeln(
-        'Unrealized P&L: ${portfolio.baseCurrency} ${portfolio.totalUnrealizedPnL.toStringAsFixed(2)} (${portfolio.totalPnLPercent.toStringAsFixed(2)}%)');
-    buffer.writeln();
-
-    // Statistics if available
-    if (portfolio.statistics != null) {
-      final stats = portfolio.statistics!;
-      buffer.writeln('=== KEY STATISTICS ===');
-      buffer.writeln(
-          'Cumulative Return: ${stats.cumulativeReturn.toStringAsFixed(2)}%');
-      buffer.writeln(
-          '1 Month Return: ${stats.oneMonthReturn.toStringAsFixed(2)}%');
-      buffer.writeln(
-          '3 Month Return: ${stats.threeMonthReturn.toStringAsFixed(2)}%');
-      if (stats.bestReturn != null) {
-        buffer.writeln(
-            'Best Return: ${stats.bestReturn!.toStringAsFixed(2)}% (${stats.bestReturnDate})');
-      }
-      if (stats.worstReturn != null) {
-        buffer.writeln(
-            'Worst Return: ${stats.worstReturn!.toStringAsFixed(2)}% (${stats.worstReturnDate})');
-      }
-      buffer.writeln(
-          'Dividends Received: ${portfolio.baseCurrency} ${stats.dividends.toStringAsFixed(2)}');
-      buffer.writeln(
-          'Fees & Commissions: ${portfolio.baseCurrency} ${stats.feesCommissions.toStringAsFixed(2)}');
-      buffer.writeln();
-    }
-
-    // Positions (capped at _maxPositionsInPrompt to bound token usage)
-    final totalPositions = portfolio.positions.length;
-    final sortedPositions = List<Position>.from(portfolio.positions)
-      ..sort((a, b) => b.valueInBaseCurrency.compareTo(a.valueInBaseCurrency));
-    final positionsToInclude = sortedPositions.take(_maxPositionsInPrompt).toList();
-    if (totalPositions > _maxPositionsInPrompt) {
-      buffer.writeln(
-          '=== POSITIONS (top $_maxPositionsInPrompt of $totalPositions, sorted by value) ===');
-    } else {
-      buffer.writeln('=== POSITIONS ($totalPositions total) ===');
-    }
-    for (final position in positionsToInclude) {
-      buffer.writeln('- ${position.symbol} (${position.name})');
-      buffer
-          .writeln('  Type: ${position.assetType}, Sector: ${position.sector}');
-      buffer.writeln(
-          '  Qty: ${position.quantity.toStringAsFixed(4)}, Price: ${position.currency} ${position.closePrice.toStringAsFixed(2)}');
-      buffer.writeln(
-          '  Value: ${position.currency} ${position.value.toStringAsFixed(2)}');
-      buffer.writeln(
-          '  Cost: ${position.currency} ${position.costBasis.toStringAsFixed(2)}');
-      buffer.writeln(
-          '  P&L: ${position.currency} ${position.unrealizedPnL.toStringAsFixed(2)} (${position.pnlPercent.toStringAsFixed(2)}%)');
-    }
-    buffer.writeln();
-
-    // Allocations
-    buffer.writeln('=== SECTOR ALLOCATION ===');
-    final sectorAlloc = portfolio.sectorAllocation;
-    for (final entry in sectorAlloc.entries) {
-      final percent =
-          (entry.value / portfolio.totalValue * 100).toStringAsFixed(1);
-      buffer.writeln(
-          '- ${entry.key}: ${portfolio.baseCurrency} ${entry.value.toStringAsFixed(2)} ($percent%)');
-    }
-    buffer.writeln();
-
-    buffer.writeln('=== ASSET TYPE ALLOCATION ===');
-    final assetAlloc = portfolio.assetTypeAllocation;
-    for (final entry in assetAlloc.entries) {
-      final percent =
-          (entry.value / portfolio.totalValue * 100).toStringAsFixed(1);
-      buffer.writeln(
-          '- ${entry.key}: ${portfolio.baseCurrency} ${entry.value.toStringAsFixed(2)} ($percent%)');
-    }
-    buffer.writeln();
-
-    buffer.writeln('=== CURRENCY ALLOCATION ===');
-    final currencyAlloc = portfolio.currencyAllocation;
-    for (final entry in currencyAlloc.entries) {
-      final percent =
-          (entry.value / portfolio.totalValue * 100).toStringAsFixed(1);
-      buffer.writeln(
-          '- ${entry.key}: ${portfolio.baseCurrency} ${entry.value.toStringAsFixed(2)} ($percent%)');
-    }
-    buffer.writeln();
-
-    // Custom prompt or default analysis request
-    if (customPrompt != null && customPrompt.isNotEmpty) {
-      buffer.writeln('=== USER REQUEST ===');
-      buffer.writeln(customPrompt);
-    } else {
-      buffer.writeln('=== ANALYSIS REQUEST ===');
-      buffer.writeln('Please provide a comprehensive analysis including:');
-      buffer.writeln('1. Portfolio Summary - Overall health and key metrics');
-      buffer.writeln(
-          '2. Risk Assessment - Concentration risk, sector exposure, currency risk');
-      buffer.writeln(
-          '3. Diversification Analysis - How well diversified is the portfolio');
-      buffer.writeln('4. Performance Analysis - Review of gains/losses');
-      buffer.writeln(
-          '5. Recommendations - Actionable suggestions for improvement');
-      buffer.writeln('6. Key Concerns - Any red flags or areas of concern');
-    }
-
-    return buffer.toString();
   }
 
   /// Build system prompt for chat
