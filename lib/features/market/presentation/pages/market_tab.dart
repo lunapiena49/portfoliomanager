@@ -276,8 +276,6 @@ class _MarketTabState extends State<MarketTab>
   List<String> _availableMarkets = <String>['US'];
   String _selectedMarket = 'US';
   bool _isUsingDistributedSnapshot = false;
-  int _activeMoverMinDollarVolume = _minimumMoverDollarVolume;
-  double _activeMoverMinPrice = _minimumMoverPrice;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -306,8 +304,61 @@ class _MarketTabState extends State<MarketTab>
   static const double _maxOutlierJumpRatio = 5.0;
   static const double _splitRatioTolerance = 0.12;
   static const int _moverUniverseSideLimit = 25;
+  // Legacy raw floor (still used by FMP fallback path that lacks timeframe info).
   static const int _minimumMoverDollarVolume = 1000000;
   static const double _minimumMoverPrice = 1.0;
+
+  // ----------------------------------------------------------------------
+  // Investor-grade quality filters applied client-side. They mirror the
+  // backend defaults in build_daily_market_snapshot.py and act as a safety
+  // net on snapshots that pre-date the backend rollout (the snapshot may
+  // still ship raw $1M / $1 floors until the next workflow run).
+  //
+  // Why these values:
+  // - $5 price floor + scaled USD volume removes pump-and-dump micro-caps.
+  // - max abs change cap rejects the multi-thousand-percent moves that are
+  //   almost always stock splits / spin-offs (NFLX showing -91% YoY because
+  //   the reference predates a reverse split is misleading, not informative).
+  // - excluded ticker suffix list keeps warrants/rights/units/preferred
+  //   share series out of the leaderboard since they trade erratically and
+  //   are rarely held by buy-and-hold investors.
+  // ----------------------------------------------------------------------
+  static const double _investorMoverMinPrice = 5.0;
+  static const Map<String, int> _investorTimeframeMinDollarVolume = <String, int>{
+    '1D': 20000000,
+    '5D': 50000000,
+    '1M': 50000000,
+    '1Y': 100000000,
+  };
+  static const Map<String, double> _investorTimeframeMaxAbsChangePercent =
+      <String, double>{
+    '1D': 25.0,
+    '5D': 30.0,
+    '1M': 50.0,
+    '1Y': 80.0,
+  };
+  static final List<RegExp> _investorExcludedTickerPatterns = <RegExp>[
+    RegExp(r'-WS$'),
+    RegExp(r'-W$'),
+    RegExp(r'\.WS$'),
+    RegExp(r'WW$'),
+    RegExp(r'-RT$'),
+    RegExp(r'-R$'),
+    RegExp(r'-U$'),
+    RegExp(r'\.U$'),
+    RegExp(r'-UN$'),
+    RegExp(r'-P-'),
+    RegExp(r'-PR[A-Z]?$'),
+  ];
+
+  static bool _isInvestorExcludedTicker(String ticker) {
+    final normalized = ticker.trim().toUpperCase();
+    if (normalized.isEmpty) return true;
+    for (final pattern in _investorExcludedTickerPatterns) {
+      if (pattern.hasMatch(normalized)) return true;
+    }
+    return false;
+  }
   static const List<String> _preferredMarketOrder = <String>[
     'US',
     'LSE',
@@ -500,6 +551,27 @@ class _MarketTabState extends State<MarketTab>
     return price >= minPrice && dollarVolume >= minDollarVolume;
   }
 
+  /// Investor-grade filter applied per-timeframe on top of the raw filters.
+  ///
+  /// Returns true if the candidate is investor-grade for [timeframeKey].
+  /// Used both when parsing the distributed snapshot and when building from
+  /// the FMP fallback so the leaderboard stays consistent across data sources.
+  bool _passesInvestorMoverFilters({
+    required String timeframeKey,
+    required String ticker,
+    required double price,
+    required double dollarVolume,
+    required double changePercent,
+  }) {
+    if (price < _investorMoverMinPrice) return false;
+    final minDv = _investorTimeframeMinDollarVolume[timeframeKey] ?? 0;
+    if (dollarVolume < minDv) return false;
+    final maxAbs = _investorTimeframeMaxAbsChangePercent[timeframeKey];
+    if (maxAbs != null && changePercent.abs() > maxAbs) return false;
+    if (_isInvestorExcludedTicker(ticker)) return false;
+    return true;
+  }
+
   String _fmpTimePeriodFor(String period) {
     switch (period) {
       case 'weekly':
@@ -518,6 +590,7 @@ class _MarketTabState extends State<MarketTab>
     List<Map<String, dynamic>> payload, {
     required String asOf,
     required bool isGainer,
+    String timeframeKey = '1D',
   }) {
     final movers = <MarketMover>[];
 
@@ -549,6 +622,16 @@ class _MarketTabState extends State<MarketTab>
         item['changesPercentage'] ?? item['changePercent'],
       );
       final normalizedPercent = isGainer ? rawPercent.abs() : -rawPercent.abs();
+      // Investor-grade safety net mirrored from the snapshot path.
+      if (!_passesInvestorMoverFilters(
+        timeframeKey: timeframeKey,
+        ticker: symbol,
+        price: price,
+        dollarVolume: dollarVolume,
+        changePercent: normalizedPercent,
+      )) {
+        continue;
+      }
       final source = _parseNullableText(item['exchange']);
       final rawName = (item['name']?.toString() ?? '').trim();
 
@@ -660,8 +743,6 @@ class _MarketTabState extends State<MarketTab>
     _yearlyGainers = const <MarketMover>[];
     _yearlyLosers = const <MarketMover>[];
     _isUsingDistributedSnapshot = false;
-    _activeMoverMinDollarVolume = _minimumMoverDollarVolume;
-    _activeMoverMinPrice = _minimumMoverPrice;
   }
 
   String _marketLabelFor(String marketCode) {
@@ -707,6 +788,7 @@ class _MarketTabState extends State<MarketTab>
     required double minPrice,
     required String fallbackAsOf,
     required String fallbackCurrency,
+    String? timeframeKey,
   }) {
     if (payload is! List) {
       return const <MarketMover>[];
@@ -742,6 +824,19 @@ class _MarketTabState extends State<MarketTab>
         minDollarVolume: minDollarVolume,
         minPrice: minPrice,
       )) {
+        continue;
+      }
+      // Client-side investor-grade filter. Acts as a safety net on snapshots
+      // that still ship the raw $1M / $1 floor and protects against split /
+      // corporate-action outliers that distort longer timeframes.
+      if (timeframeKey != null &&
+          !_passesInvestorMoverFilters(
+            timeframeKey: timeframeKey,
+            ticker: symbol,
+            price: rawPrice,
+            dollarVolume: dollarVolume,
+            changePercent: normalizedChange,
+          )) {
         continue;
       }
       final marketCap = _extractMarketCap(item);
@@ -782,6 +877,7 @@ class _MarketTabState extends State<MarketTab>
     required double minPrice,
     required String fallbackAsOf,
     required String fallbackCurrency,
+    required String timeframeKey,
   }) {
     if (payload is! Map) {
       return const _TimeframeMovers(
@@ -800,6 +896,7 @@ class _MarketTabState extends State<MarketTab>
         minPrice: minPrice,
         fallbackAsOf: fallbackAsOf,
         fallbackCurrency: fallbackCurrency,
+        timeframeKey: timeframeKey,
       ),
       losers: _mapSnapshotMovers(
         timeframePayload['losers'],
@@ -809,6 +906,7 @@ class _MarketTabState extends State<MarketTab>
         minPrice: minPrice,
         fallbackAsOf: fallbackAsOf,
         fallbackCurrency: fallbackCurrency,
+        timeframeKey: timeframeKey,
       ),
     );
   }
@@ -901,6 +999,7 @@ class _MarketTabState extends State<MarketTab>
           minPrice: snapshotMinPrice,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
+          timeframeKey: _dailyTimeframeKey,
         );
         final weeklyMovers = _parseSnapshotTimeframe(
           timeframes[_weeklyTimeframeKey],
@@ -909,6 +1008,7 @@ class _MarketTabState extends State<MarketTab>
           minPrice: snapshotMinPrice,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
+          timeframeKey: _weeklyTimeframeKey,
         );
         final monthlyMovers = _parseSnapshotTimeframe(
           timeframes[_monthlyTimeframeKey],
@@ -917,6 +1017,7 @@ class _MarketTabState extends State<MarketTab>
           minPrice: snapshotMinPrice,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
+          timeframeKey: _monthlyTimeframeKey,
         );
         final yearlyMovers = _parseSnapshotTimeframe(
           timeframes[_yearlyTimeframeKey],
@@ -925,6 +1026,7 @@ class _MarketTabState extends State<MarketTab>
           minPrice: snapshotMinPrice,
           fallbackAsOf: asOf,
           fallbackCurrency: fallbackCurrency,
+          timeframeKey: _yearlyTimeframeKey,
         );
 
         final hasAnyMovers = dailyMovers.gainers.isNotEmpty ||
@@ -969,8 +1071,6 @@ class _MarketTabState extends State<MarketTab>
 
       setState(() {
         _isUsingDistributedSnapshot = true;
-        _activeMoverMinDollarVolume = snapshotMinDollarVolume;
-        _activeMoverMinPrice = snapshotMinPrice;
         _marketDisplayNames
           ..clear()
           ..addAll(marketDisplayNames);
@@ -1262,11 +1362,13 @@ class _MarketTabState extends State<MarketTab>
         dailyGainersPayload,
         asOf: asOf,
         isGainer: true,
+        timeframeKey: _dailyTimeframeKey,
       );
       final dailyLosers = _mapFmpMovers(
         dailyLosersPayload,
         asOf: asOf,
         isGainer: false,
+        timeframeKey: _dailyTimeframeKey,
       );
 
       final moverUniverse = _buildMoverUniverse(
@@ -1302,8 +1404,6 @@ class _MarketTabState extends State<MarketTab>
       if (!mounted) return;
       setState(() {
         _isUsingDistributedSnapshot = false;
-        _activeMoverMinDollarVolume = _minimumMoverDollarVolume;
-        _activeMoverMinPrice = _minimumMoverPrice;
         _marketDisplayNames
           ..clear()
           ..['US'] = _marketLabelFor('US');
@@ -1532,6 +1632,17 @@ class _MarketTabState extends State<MarketTab>
       }
 
       final changePercent = symbolChanges[timeframeKey] ?? 0;
+      // Investor-grade filter on the FMP fallback path so daily/weekly/etc.
+      // mirror the snapshot-derived leaderboards.
+      if (!_passesInvestorMoverFilters(
+        timeframeKey: timeframeKey,
+        ticker: symbol,
+        price: snapshot.price,
+        dollarVolume: snapshot.dollarVolume,
+        changePercent: changePercent,
+      )) {
+        continue;
+      }
       final mover = MarketMover(
         symbol: symbol,
         name: snapshot.name,
@@ -1585,11 +1696,13 @@ class _MarketTabState extends State<MarketTab>
           gainersPayload,
           asOf: asOf,
           isGainer: true,
+          timeframeKey: timePeriod,
         ),
         losers: _mapFmpMovers(
           losersPayload,
           asOf: asOf,
           isGainer: false,
+          timeframeKey: timePeriod,
         ),
       );
     } catch (e) {
@@ -2275,9 +2388,12 @@ class _MarketTabState extends State<MarketTab>
             controller: _tabController,
             children: [
               _buildTodayTab(portfolioState),
-              _buildMoversTab(_weeklyGainers, _weeklyLosers),
-              _buildMoversTab(_monthlyGainers, _monthlyLosers),
-              _buildMoversTab(_yearlyGainers, _yearlyLosers),
+              _buildMoversTab(_weeklyGainers, _weeklyLosers,
+                  timeframeKey: _weeklyTimeframeKey),
+              _buildMoversTab(_monthlyGainers, _monthlyLosers,
+                  timeframeKey: _monthlyTimeframeKey),
+              _buildMoversTab(_yearlyGainers, _yearlyLosers,
+                  timeframeKey: _yearlyTimeframeKey),
             ],
           ),
         ),
@@ -2298,16 +2414,7 @@ class _MarketTabState extends State<MarketTab>
             _buildPortfolioLiveSection(portfolioState),
             SizedBox(height: 24.h),
             if (hasMovers) ...[
-              Text(
-                'market.mover_filters'.tr(
-                  namedArgs: {
-                    'dollarVolume':
-                        _formatVolume(_activeMoverMinDollarVolume),
-                    'minPrice': _activeMoverMinPrice.toStringAsFixed(2),
-                  },
-                ),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              _buildMoverFiltersBanner(_dailyTimeframeKey),
               SizedBox(height: 12.h),
               _buildMoverSection(
                 title: 'market.top_gainers'.tr(),
@@ -2653,28 +2760,48 @@ class _MarketTabState extends State<MarketTab>
     );
   }
 
-  Widget _buildMoversTab(List<MarketMover> gainers, List<MarketMover> losers) {
+  Widget _buildMoversTab(
+    List<MarketMover> gainers,
+    List<MarketMover> losers, {
+    required String timeframeKey,
+  }) {
     if (gainers.isEmpty && losers.isEmpty) {
       return _buildCenteredScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.show_chart,
-              size: 48.w,
-              color: Theme.of(context).disabledColor,
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'market.no_data'.tr(),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            SizedBox(height: 16.h),
-            ElevatedButton(
-              onPressed: _fetchMarketData,
-              child: Text('common.retry'.tr()),
-            ),
-          ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.shield_outlined,
+                size: 48.w,
+                color: Theme.of(context).disabledColor,
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'market.mover_filters_empty_state'.tr(),
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16.h),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12.w,
+                runSpacing: 8.h,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _showMoverFiltersDialog,
+                    icon: const Icon(Icons.info_outline, size: 16),
+                    label: Text('market.mover_filters_view_criteria'.tr()),
+                  ),
+                  ElevatedButton(
+                    onPressed: _fetchMarketData,
+                    child: Text('common.retry'.tr()),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -2687,16 +2814,7 @@ class _MarketTabState extends State<MarketTab>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'market.mover_filters'.tr(
-                namedArgs: {
-                  'dollarVolume':
-                      _formatVolume(_activeMoverMinDollarVolume),
-                  'minPrice': _activeMoverMinPrice.toStringAsFixed(2),
-                },
-              ),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            _buildMoverFiltersBanner(timeframeKey),
             SizedBox(height: 12.h),
             _buildMoverSection(
               title: 'market.top_gainers'.tr(),
@@ -2712,6 +2830,121 @@ class _MarketTabState extends State<MarketTab>
           ],
         ),
       ),
+    );
+  }
+
+  /// Compact filter banner shown above each top-mover list. Tapping the
+  /// info icon opens a dialog with the full per-timeframe criteria so the
+  /// user understands why niche pump-and-dump tickers do not appear.
+  Widget _buildMoverFiltersBanner(String timeframeKey) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    return Material(
+      color: theme.colorScheme.primary.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(8.r),
+      child: InkWell(
+        onTap: _showMoverFiltersDialog,
+        borderRadius: BorderRadius.circular(8.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          child: Row(
+            children: [
+              Icon(Icons.shield_outlined, size: 16.w, color: color),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'market.mover_filters_concise'.tr(
+                    namedArgs: {
+                      'minPrice':
+                          _investorMoverMinPrice.toStringAsFixed(0),
+                      'dollarVolume': _formatVolume(
+                        _investorTimeframeMinDollarVolume[timeframeKey] ??
+                            _investorTimeframeMinDollarVolume['1D']!,
+                        compact: true,
+                      ),
+                    },
+                  ),
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Icon(Icons.info_outline, size: 16.w, color: color),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMoverFiltersDialog() {
+    final theme = Theme.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('market.mover_filters_dialog_title'.tr()),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'market.mover_filters_dialog_intro'.tr(),
+                  style: theme.textTheme.bodyMedium,
+                ),
+                SizedBox(height: 16.h),
+                _buildMoverFiltersDialogTimeframeRow(_dailyTimeframeKey),
+                SizedBox(height: 12.h),
+                _buildMoverFiltersDialogTimeframeRow(_weeklyTimeframeKey),
+                SizedBox(height: 12.h),
+                _buildMoverFiltersDialogTimeframeRow(_monthlyTimeframeKey),
+                SizedBox(height: 12.h),
+                _buildMoverFiltersDialogTimeframeRow(_yearlyTimeframeKey),
+                SizedBox(height: 16.h),
+                Text(
+                  'market.mover_filters_excluded_patterns'.tr(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text('common.close'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMoverFiltersDialogTimeframeRow(String timeframeKey) {
+    final theme = Theme.of(context);
+    final dollarVolume = _investorTimeframeMinDollarVolume[timeframeKey] ?? 0;
+    final maxAbs = _investorTimeframeMaxAbsChangePercent[timeframeKey] ?? 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _timeframeTabLabel(timeframeKey),
+          style: theme.textTheme.titleSmall,
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          'market.mover_filters_dialog_row'.tr(
+            namedArgs: {
+              'minPrice': _investorMoverMinPrice.toStringAsFixed(0),
+              'dollarVolume':
+                  _formatVolume(dollarVolume, compact: true),
+              'maxAbsChange': maxAbs.toStringAsFixed(0),
+            },
+          ),
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
     );
   }
 

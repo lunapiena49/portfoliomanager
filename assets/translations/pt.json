@@ -74,6 +74,84 @@
         "description": "As chaves API sao gerenciadas localmente nas configuracoes. Voce controla provedores, atualizacao de dados e quando requisicoes externas sao feitas."
       }
     },
+    "disclosure": {
+      "confirm": "Li e confirmo",
+      "confirmed": "Confirmado"
+    },
+    "disclosure_required": "Confirmacao necessaria para continuar",
+    "privacy": {
+      "title": "Sua privacidade em primeiro lugar",
+      "intro": "O Portfolio Manager foi projetado para viver no seu dispositivo. Antes de comecar, leia os principios que guiam o tratamento dos seus dados.",
+      "bullets": {
+        "local": {
+          "title": "Dados apenas no seu dispositivo",
+          "description": "Carteiras, posicoes, objetivos e configuracoes permanecem locais. Nao existe um servidor do app para onde sejam enviados."
+        },
+        "keys": {
+          "title": "Chaves API protegidas pelo sistema",
+          "description": "As chaves Gemini, EODHD e FMP sao cifradas pelo keystore do sistema operacional (Keychain, Android Keystore, DPAPI)."
+        },
+        "telemetry": {
+          "title": "Sem telemetria de uso",
+          "description": "O app nao envia eventos de uso, nao coleta identificadores e nao integra SDKs de analytics ou crash reporting de terceiros."
+        },
+        "control": {
+          "title": "Controle total sobre seus dados",
+          "description": "Voce pode apagar tudo a qualquer momento em Configuracoes: uma unica acao remove carteiras, objetivos, cache e chaves salvas."
+        }
+      },
+      "footnote": "Voce podera revisar essas informacoes a qualquer momento em Configuracoes > Revisar onboarding."
+    },
+    "storage": {
+      "title": "Onde o app guarda seus arquivos",
+      "intro": "Para total transparencia, esta e a estrutura exata de pastas que o Portfolio Manager cria no seu dispositivo. Tudo fica no sandbox privado do app e e removido na desinstalacao.",
+      "bullets": {
+        "root": {
+          "title": "PortfolioManager/",
+          "description": "Pasta raiz criada no diretorio privado de documentos do app. Nome explicito para voce reconhecer o que pertence a este app."
+        },
+        "data": {
+          "title": "PortfolioManager/data/",
+          "description": "Banco de dados local (Hive) com carteiras, objetivos e configuracoes. Arquivos binarios pequenos, legiveis apenas pelo app."
+        },
+        "cache": {
+          "title": "PortfolioManager/cache/market/",
+          "description": "Snapshots publicos de mercado (top movers, indice de precos) baixados da pipeline gratuita. Podem ser apagados sem perder seus dados."
+        },
+        "imports": {
+          "title": "PortfolioManager/imports/",
+          "description": "Copia local opcional dos CSV/PDF de broker que voce importa, util para reprocessar linhas sem precisar re-selecionar o arquivo."
+        },
+        "exports": {
+          "title": "PortfolioManager/exports/",
+          "description": "Backups JSON/PDF que voce gera. Nenhum arquivo e criado aqui ate que voce solicite explicitamente uma exportacao."
+        }
+      },
+      "footnote": "As chaves API NAO sao escritas nestas pastas: usam o keystore cifrado do sistema, inacessivel a outros apps."
+    },
+    "network": {
+      "title": "Conexoes de rede do app",
+      "intro": "Estes sao os unicos servidores com os quais o Portfolio Manager se comunica. Cada fluxo parte de voce, sem trafego em segundo plano.",
+      "bullets": {
+        "snapshot": {
+          "title": "Snapshot publico de mercado",
+          "description": "Baixa top_movers.json e prices_index.json do GitHub Pages (pipeline open source). Sem chaves, sem perfil de usuario."
+        },
+        "gemini": {
+          "title": "Google Gemini (opcional)",
+          "description": "Apenas se voce fornecer sua chave Gemini: o app envia suas perguntas e um resumo da carteira ao Google para a analise IA."
+        },
+        "eodhd": {
+          "title": "EODHD (opcional)",
+          "description": "Apenas se voce fornecer sua chave EODHD: precos em tempo real. Voce paga o plano e decide quando consultar."
+        },
+        "fmp": {
+          "title": "Financial Modeling Prep (opcional)",
+          "description": "Fallback de precos caso nao queira usar EODHD. Requer sua chave e so roda a seu pedido."
+        }
+      },
+      "footnote": "Todas as chamadas de rede ocorrem por sua iniciativa: atualizacao de precos, consulta IA, importacao de broker."
+    },
     "get_started": "Comecar"
   },
   "navigation": {
@@ -307,13 +385,86 @@
       "risk": "Analise de Risco",
       "performance": "Analise de Desempenho",
       "recommendations": "Recomendacoes"
+    },
+    "send_to_ai": "Enviar para o Gemini",
+    "presets": {
+      "title": "Analises rapidas",
+      "subtitle": "Escolha um preset ou ajuste quais dados compartilhar antes de enviar a IA",
+      "full_review": {
+        "title": "Analise completa",
+        "description": "Revisao completa: risco, diversificacao, desempenho e recomendacoes."
+      },
+      "risk": {
+        "title": "Risco",
+        "description": "Concentracao, exposicao setorial, geografica e cambial."
+      },
+      "diversification": {
+        "title": "Diversificacao",
+        "description": "Quao bem distribuida esta a carteira por ativos, setores e regioes."
+      },
+      "performance": {
+        "title": "Desempenho",
+        "description": "Principais contribuintes ao resultado, dividendos e comissoes."
+      },
+      "recommendations": {
+        "title": "Recomendacoes",
+        "description": "De 3 a 5 acoes concretas em ordem de prioridade."
+      },
+      "geographic": {
+        "title": "Exposicao geografica",
+        "description": "Balanco por regiao e moeda em relacao a moeda base."
+      },
+      "concentration": {
+        "title": "Concentracao",
+        "description": "Leitura de HHI, top N e numero efetivo de posicoes."
+      }
+    },
+    "data_slices": {
+      "core_summary": "Resumo da conta (nome, moeda base, valor, P&L)",
+      "holdings": "Posicoes principais (ate 50 por valor)",
+      "sector_allocation": "Alocacao setorial",
+      "asset_allocation": "Alocacao por tipo de ativo",
+      "region_allocation": "Alocacao geografica",
+      "currency_allocation": "Exposicao cambial",
+      "concentration": "Indicadores de concentracao (HHI, top N)",
+      "statistics": "Estatisticas da conta (retorno acumulado, dividendos, comissoes)",
+      "performance_history": "Historico de desempenho por periodo",
+      "investor_profile": "Perfil do investidor (idade, objetivos, patrimonio)"
+    },
+    "transparency": {
+      "title": "O que a IA vera",
+      "subtitle": "Decida quais dados compartilhar. A mesma selecao e declarada ao agente no inicio da mensagem.",
+      "required_by_preset": "Exigido pelo preset selecionado",
+      "preview_button": "Pre-visualizar mensagem",
+      "preview_title": "Mensagem enviada ao Gemini"
+    },
+    "metrics": {
+      "title": "Indicadores da carteira",
+      "subtitle": "Mesmos numeros que o agente recebe no bloco de concentracao.",
+      "position_count": "Numero de posicoes",
+      "profitable": "Posicoes em lucro",
+      "top_1": "Peso top 1",
+      "top_5": "Peso top 5",
+      "top_10": "Peso top 10",
+      "hhi": "Indice HHI",
+      "hhi_diversified": "diversificada",
+      "hhi_moderate": "moderada",
+      "hhi_concentrated": "concentrada",
+      "effective_n": "Numero efetivo de posicoes",
+      "base_currency_exposure": "Exposicao em {currency}"
     }
   },
   "market": {
     "title": "Visao Geral do Mercado",
     "top_gainers": "Maiores Altas",
     "top_losers": "Maiores Baixas",
-    "mover_filters": "Os top movers incluem apenas acoes com dollar volume >= {dollarVolume} e preco >= {minPrice}",
+    "mover_filters_concise": "Apenas titulos investor-grade: preco >= {minPrice} USD, volume financeiro >= {dollarVolume}, sem outliers de split/picos. Toque para ver os criterios.",
+    "mover_filters_dialog_title": "Criterios de selecao dos top movers",
+    "mover_filters_dialog_intro": "Para evitar penny stocks, pump-and-dump e variacoes distorcidas por splits ou outras operacoes societarias, mostramos apenas titulos que passam por estes filtros de qualidade para cada timeframe:",
+    "mover_filters_dialog_row": "Preco >= {minPrice} USD - volume financeiro minimo {dollarVolume} - variacao maxima aceita: +/-{maxAbsChange}%",
+    "mover_filters_excluded_patterns": "Tambem excluidos: warrants, direitos, units e acoes preferenciais; nas janelas 1M e 1Y o titulo precisa ter historico de negociacao suficiente (>=22 e >=200 dias de pregao na base de dados, respectivamente) para evitar IPOs muito recentes.",
+    "mover_filters_empty_state": "Nenhum titulo investor-grade neste timeframe com os dados atuais. Os filtros excluem penny stocks, pump-and-dump e movimentos distorcidos por splits. A lista sera preenchida na proxima atualizacao dos dados de mercado.",
+    "mover_filters_view_criteria": "Ver os criterios",
     "mover_volume": "Volume: {volume}",
     "mover_dollar_volume": "Volume financeiro: {dollarVolume}",
     "calendar": "Calendario Economico",

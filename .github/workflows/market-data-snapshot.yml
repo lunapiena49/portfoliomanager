@@ -43,6 +43,11 @@ jobs:
           MARKETS: US,LSE,XETRA,PA,TO,HK,AU,NSE
         run: |
           HISTORY_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/market_history.db.zip"
+          # NOTE: --min-dollar-volume / --min-price are the legacy raw floor.
+          # Investor-grade per-timeframe filters (scaled liquidity, anti-split
+          # cap, history depth, ticker pattern exclusion) are on by default
+          # via --investor-grade-filters; --investor-min-price tightens the
+          # penny-stock floor to USD 5.
           python scripts/eodhd/build_daily_market_snapshot.py \
             --output-dir dist/market-data \
             --log-file "${{ github.workspace }}/dist/logs/pipeline.log" \
@@ -52,9 +57,11 @@ jobs:
             --history-db-url "$HISTORY_URL" \
             --history-bootstrap-backtrack-days 12 \
             --history-backfill-days 365 \
-            --top-limit 20 \
+            --top-limit 50 \
             --min-dollar-volume 1000000 \
-            --min-price 1.0
+            --min-price 1.0 \
+            --investor-grade-filters \
+            --investor-min-price 5.0
 
       - name: Upload build logs
         if: always()

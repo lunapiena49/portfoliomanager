@@ -14,6 +14,7 @@ import json
 import logging
 import math
 import os
+import re
 import sqlite3
 import sys
 import time
@@ -34,6 +35,68 @@ DEFAULT_MIN_DOLLAR_VOLUME = 1_000_000
 DEFAULT_MIN_PRICE = 1.0
 DEFAULT_HISTORY_BACKFILL_DAYS = 365
 TIMEFRAME_LOOKBACK_DAYS: dict[str, int] = {"5D": 7, "1M": 30, "1Y": 365}
+
+# ----------------------------------------------------------------------------
+# Investor-grade quality filters (defaults).
+#
+# Goal: surface securities a long-term investor would actually consider, not
+# pump-and-dump micro-caps or symbols that look extreme only because of stock
+# splits or other corporate actions (e.g. NFLX showing -91% YoY because the
+# history reference predates a reverse split adjustment).
+# ----------------------------------------------------------------------------
+
+# Per-timeframe minimum daily dollar volume (close * volume).
+DEFAULT_TIMEFRAME_MIN_DOLLAR_VOLUME: dict[str, int] = {
+    "1D": 20_000_000,
+    "5D": 50_000_000,
+    "1M": 50_000_000,
+    "1Y": 100_000_000,
+}
+
+# Per-timeframe maximum absolute change percent. Anything beyond is almost
+# always a corporate action (split / spin-off / reverse merger) producing a
+# misleading number that an investor would rightly distrust.
+DEFAULT_TIMEFRAME_MAX_ABS_CHANGE: dict[str, float] = {
+    "1D": 25.0,
+    "5D": 30.0,
+    "1M": 50.0,
+    "1Y": 80.0,
+}
+
+# Minimum history depth (distinct trading days in the rolling history DB)
+# required for a ticker to be eligible in each timeframe. A ~1Y track record
+# excludes the freshest IPOs from the yearly chart, while still letting
+# anything with at least roughly a calendar month of trading appear in 1M.
+DEFAULT_TIMEFRAME_MIN_HISTORY_DAYS: dict[str, int] = {
+    "1D": 0,
+    "5D": 5,
+    "1M": 22,
+    "1Y": 200,
+}
+
+# Exclude derivative-like tickers that habitually trade erratically and that
+# investors do not buy as core positions (warrants, rights, units, preferred
+# share classes encoded as separate tickers).
+EXCLUDED_TICKER_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"-WS$"),     # warrants (e.g. ABCD-WS)
+    re.compile(r"-W$"),      # warrants
+    re.compile(r"\.WS$"),    # warrants
+    re.compile(r"WW$"),      # warrants
+    re.compile(r"-RT$"),     # rights
+    re.compile(r"-R$"),      # rights
+    re.compile(r"-U$"),      # units
+    re.compile(r"\.U$"),     # units
+    re.compile(r"-UN$"),     # units
+    re.compile(r"-P-"),      # preferred (e.g. T-P-C, BAC-P-K)
+    re.compile(r"-PR[A-Z]?$"),  # preferred (e.g. ALL-PRH)
+)
+
+
+def is_excluded_ticker(ticker: str) -> bool:
+    candidate = ticker.strip().upper()
+    if not candidate:
+        return True
+    return any(pattern.search(candidate) for pattern in EXCLUDED_TICKER_PATTERNS)
 
 
 @dataclass(frozen=True)
@@ -232,6 +295,32 @@ def parse_args() -> argparse.Namespace:
         "--keep-uncompressed-db",
         action="store_true",
         help="Keep uncompressed SQLite files next to their .zip counterparts.",
+    )
+    parser.add_argument(
+        "--investor-grade-filters",
+        action="store_true",
+        default=True,
+        help=(
+            "Apply investor-grade quality filters per timeframe (price floor, "
+            "scaled dollar volume, max absolute change to filter split/spike "
+            "noise, minimum history depth, excluded ticker patterns). Enabled "
+            "by default; disable with --no-investor-grade-filters."
+        ),
+    )
+    parser.add_argument(
+        "--no-investor-grade-filters",
+        dest="investor_grade_filters",
+        action="store_false",
+        help="Disable the investor-grade quality filters.",
+    )
+    parser.add_argument(
+        "--investor-min-price",
+        type=float,
+        default=5.0,
+        help=(
+            "Minimum close price for the investor-grade filter. Defaults to 5 "
+            "to keep penny stocks out of the top movers."
+        ),
     )
     return parser.parse_args()
 
@@ -1136,6 +1225,31 @@ def safe_percent_change(current: float, reference: float) -> Optional[float]:
     return value if math.isfinite(value) else None
 
 
+def load_history_depth_by_ticker(
+    conn: sqlite3.Connection,
+    market_code: str,
+    as_of_date: str,
+) -> dict[str, int]:
+    """Return a map of ticker -> distinct trading days available in the
+    rolling history DB up to (and including) ``as_of_date``.
+
+    Used to enforce a minimum track-record requirement for longer timeframes
+    (1M needs ~22 days, 1Y needs ~200) so freshly listed IPOs do not jump to
+    the top with misleading multi-thousand-percent moves.
+    """
+    cursor = conn.execute(
+        """
+        SELECT ticker, COUNT(DISTINCT as_of_date)
+        FROM history_prices
+        WHERE market_code = ?
+          AND as_of_date <= ?
+        GROUP BY ticker
+        """,
+        (market_code, as_of_date),
+    )
+    return {str(row[0]): int(row[1]) for row in cursor}
+
+
 
 def row_to_mover_json(row: DailyPriceRow, change_percent: float) -> dict[str, Any]:
     return {
@@ -1166,11 +1280,45 @@ def build_top_movers_payload(
     history_db_path: Path,
     history_backtrack_days: int,
     logger: logging.Logger,
+    investor_grade_filters: bool = True,
+    investor_min_price: float = 5.0,
+    timeframe_min_dollar_volume: Optional[dict[str, int]] = None,
+    timeframe_max_abs_change: Optional[dict[str, float]] = None,
+    timeframe_min_history_days: Optional[dict[str, int]] = None,
 ) -> dict[str, Any]:
-    """Compute top movers for all markets using rolling history references."""
+    """Compute top movers for all markets using rolling history references.
+
+    When ``investor_grade_filters`` is enabled (default), each timeframe is
+    additionally filtered to keep only securities a typical buy-and-hold
+    investor would consider:
+
+    * price >= ``investor_min_price`` (penny-stock floor)
+    * dollar volume >= ``timeframe_min_dollar_volume[tf]`` (liquidity floor
+      that scales with the timeframe -- weekly/monthly need more conviction)
+    * |change_percent| <= ``timeframe_max_abs_change[tf]`` (filters out the
+      multi-thousand-percent moves that are almost always stock splits or
+      other corporate actions, which are misleading rather than informative)
+    * minimum history depth in the rolling DB (1M needs ~1 month of data,
+      1Y needs ~10 months) so a brand-new IPO cannot dominate the long
+      timeframes with a partial sample
+    * exclusion of warrant / right / unit / preferred share derivative
+      tickers (see :data:`EXCLUDED_TICKER_PATTERNS`)
+    """
     rows_by_market: dict[str, list[DailyPriceRow]] = {}
     for row in rows:
         rows_by_market.setdefault(row.market_code, []).append(row)
+
+    tf_min_dv = dict(DEFAULT_TIMEFRAME_MIN_DOLLAR_VOLUME)
+    if timeframe_min_dollar_volume:
+        tf_min_dv.update(timeframe_min_dollar_volume)
+
+    tf_max_change = dict(DEFAULT_TIMEFRAME_MAX_ABS_CHANGE)
+    if timeframe_max_abs_change:
+        tf_max_change.update(timeframe_max_abs_change)
+
+    tf_min_history = dict(DEFAULT_TIMEFRAME_MIN_HISTORY_DAYS)
+    if timeframe_min_history_days:
+        tf_min_history.update(timeframe_min_history_days)
 
     markets_payload: list[dict[str, Any]] = []
 
@@ -1185,6 +1333,16 @@ def build_top_movers_payload(
             as_of_date = Counter(
                 row.as_of_date for row in market_rows
             ).most_common(1)[0][0]
+
+            history_depth_by_ticker: dict[str, int] = {}
+            if investor_grade_filters and any(
+                tf_min_history.get(tf, 0) > 0 for tf in TIMEFRAME_KEYS
+            ):
+                history_depth_by_ticker = load_history_depth_by_ticker(
+                    conn=conn,
+                    market_code=market.code,
+                    as_of_date=as_of_date,
+                )
 
             ranked: dict[str, list[tuple[DailyPriceRow, float]]] = {
                 tf: [] for tf in TIMEFRAME_KEYS
@@ -1228,6 +1386,8 @@ def build_top_movers_payload(
             timeframes_payload: dict[str, Any] = {}
             for tf in TIMEFRAME_KEYS:
                 pool = ranked[tf]
+
+                # Always-on: legacy raw filters (penny + 1M USD volume).
                 price_filtered_pool = [
                     item for item in pool if item[0].close >= min_price
                 ]
@@ -1236,12 +1396,56 @@ def build_top_movers_payload(
                     for item in price_filtered_pool
                     if item[0].dollar_volume >= min_dollar_volume
                 ]
-                positive_pool = [
-                    item for item in dollar_volume_filtered_pool if item[1] > 0
-                ]
-                negative_pool = [
-                    item for item in dollar_volume_filtered_pool if item[1] < 0
-                ]
+
+                if investor_grade_filters:
+                    investor_min_dv = tf_min_dv.get(tf, min_dollar_volume)
+                    investor_max_chg = tf_max_change.get(tf, math.inf)
+                    investor_min_history = tf_min_history.get(tf, 0)
+
+                    investor_pool: list[tuple[DailyPriceRow, float]] = []
+                    skipped_price = 0
+                    skipped_dollar_volume = 0
+                    skipped_change_cap = 0
+                    skipped_history = 0
+                    skipped_pattern = 0
+
+                    for entry in dollar_volume_filtered_pool:
+                        row_obj, change_pct = entry
+                        if row_obj.close < investor_min_price:
+                            skipped_price += 1
+                            continue
+                        if row_obj.dollar_volume < investor_min_dv:
+                            skipped_dollar_volume += 1
+                            continue
+                        if abs(change_pct) > investor_max_chg:
+                            skipped_change_cap += 1
+                            continue
+                        if (
+                            investor_min_history > 0
+                            and history_depth_by_ticker.get(row_obj.ticker, 0)
+                                < investor_min_history
+                        ):
+                            skipped_history += 1
+                            continue
+                        if is_excluded_ticker(row_obj.ticker):
+                            skipped_pattern += 1
+                            continue
+                        investor_pool.append(entry)
+
+                    final_pool = investor_pool
+                    investor_diagnostics = {
+                        "skipped_below_investor_price": skipped_price,
+                        "skipped_below_investor_dollar_volume": skipped_dollar_volume,
+                        "skipped_above_change_cap": skipped_change_cap,
+                        "skipped_below_history_depth": skipped_history,
+                        "skipped_excluded_pattern": skipped_pattern,
+                    }
+                else:
+                    final_pool = dollar_volume_filtered_pool
+                    investor_diagnostics = {}
+
+                positive_pool = [item for item in final_pool if item[1] > 0]
+                negative_pool = [item for item in final_pool if item[1] < 0]
                 gainers = sorted(positive_pool, key=lambda x: x[1], reverse=True)[:top_limit]
                 losers = sorted(negative_pool, key=lambda x: x[1])[:top_limit]
                 timeframes_payload[tf] = {
@@ -1251,22 +1455,45 @@ def build_top_movers_payload(
                     "eligible_after_dollar_volume_filter": len(
                         dollar_volume_filtered_pool
                     ),
+                    "eligible_after_investor_filters": len(final_pool)
+                        if investor_grade_filters else None,
+                    "filters": {
+                        "min_price": (
+                            investor_min_price if investor_grade_filters else min_price
+                        ),
+                        "min_dollar_volume": (
+                            tf_min_dv.get(tf, min_dollar_volume)
+                            if investor_grade_filters
+                            else min_dollar_volume
+                        ),
+                        "max_abs_change_percent": (
+                            tf_max_change.get(tf) if investor_grade_filters else None
+                        ),
+                        "min_history_days": (
+                            tf_min_history.get(tf, 0) if investor_grade_filters else 0
+                        ),
+                        "excluded_ticker_patterns": (
+                            [p.pattern for p in EXCLUDED_TICKER_PATTERNS]
+                            if investor_grade_filters
+                            else []
+                        ),
+                    },
+                    "investor_grade_diagnostics": investor_diagnostics,
                     "gainers": [row_to_mover_json(r, c) for r, c in gainers],
                     "losers": [row_to_mover_json(r, c) for r, c in losers],
                 }
 
             logger.info(
-                "Top movers [%s] min_dollar_volume>=%d min_price>=%.2f | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (after filters/before)",
+                "Top movers [%s] mode=%s | 1D=%d/%d 5D=%d/%d 1M=%d/%d 1Y=%d/%d eligible (final/raw)",
                 market.code,
-                min_dollar_volume,
-                min_price,
-                timeframes_payload["1D"]["eligible_after_dollar_volume_filter"],
+                "investor" if investor_grade_filters else "raw",
+                timeframes_payload["1D"]["eligible_symbols"],
                 timeframes_payload["1D"]["eligible_before_filters"],
-                timeframes_payload["5D"]["eligible_after_dollar_volume_filter"],
+                timeframes_payload["5D"]["eligible_symbols"],
                 timeframes_payload["5D"]["eligible_before_filters"],
-                timeframes_payload["1M"]["eligible_after_dollar_volume_filter"],
+                timeframes_payload["1M"]["eligible_symbols"],
                 timeframes_payload["1M"]["eligible_before_filters"],
-                timeframes_payload["1Y"]["eligible_after_dollar_volume_filter"],
+                timeframes_payload["1Y"]["eligible_symbols"],
                 timeframes_payload["1Y"]["eligible_before_filters"],
             )
 
@@ -1288,6 +1515,30 @@ def build_top_movers_payload(
             "min_dollar_volume": min_dollar_volume,
             "min_price": min_price,
             "top_limit": top_limit,
+            "investor_grade": investor_grade_filters,
+            "investor_min_price": (
+                investor_min_price if investor_grade_filters else None
+            ),
+            "timeframe_min_dollar_volume": (
+                {tf: tf_min_dv[tf] for tf in TIMEFRAME_KEYS}
+                if investor_grade_filters
+                else None
+            ),
+            "timeframe_max_abs_change_percent": (
+                {tf: tf_max_change[tf] for tf in TIMEFRAME_KEYS}
+                if investor_grade_filters
+                else None
+            ),
+            "timeframe_min_history_days": (
+                {tf: tf_min_history[tf] for tf in TIMEFRAME_KEYS}
+                if investor_grade_filters
+                else None
+            ),
+            "excluded_ticker_patterns": (
+                [p.pattern for p in EXCLUDED_TICKER_PATTERNS]
+                if investor_grade_filters
+                else []
+            ),
         },
         "markets": markets_payload,
         "counts": {"input_rows": len(rows), "markets": len(markets_payload)},
@@ -1523,6 +1774,8 @@ def main() -> int:
             history_db_path=history_db_path,
             history_backtrack_days=args.history_bootstrap_backtrack_days,
             logger=logger,
+            investor_grade_filters=args.investor_grade_filters,
+            investor_min_price=args.investor_min_price,
         )
         write_json(top_movers_path, payload, logger)
 
