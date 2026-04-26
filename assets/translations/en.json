@@ -265,6 +265,8 @@
       "regions_title": "Geographic Exposure Treemap",
       "regions_subtitle": "Regional exposure grouped by trading region and liquidity assets.",
       "empty": "No data available yet",
+      "other": "Other",
+      "other_label": "Other {count} positions",
       "tooltip": {
         "allocation": "Allocation",
         "value": "Value"
@@ -719,7 +721,9 @@
       "completed": "Completed",
       "total_value": "Total value",
       "progress_chart": "Progress chart",
-      "type_distribution": "Type distribution"
+      "type_distribution": "Type distribution",
+      "goal_count_one": "{count} goal",
+      "goal_count_other": "{count} goals"
     },
     "settings": {
       "show_completed": "Show completed goals",

@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/entities/portfolio_entities.dart';
 
 /// Pie chart widget for displaying portfolio allocation
@@ -96,12 +97,13 @@ class _AllocationPieChartState extends State<AllocationPieChart> {
       final fontSize = isTouched ? 16.sp : 12.sp;
       final radius = isTouched ? 60.r : 50.r;
       final entry = entries[i];
-      final percent = (entry.value / total * 100);
-      
+      final percent = (entry.value / total) * 100;
+      final showTitle = percent >= 5.0 || isTouched;
+
       return PieChartSectionData(
         color: Color(AppConstants.chartColors[i % AppConstants.chartColors.length]),
         value: entry.value,
-        title: '${percent.toStringAsFixed(1)}%',
+        title: showTitle ? CurrencyFormatter.formatPercent(percent) : '',
         radius: radius,
         titleStyle: TextStyle(
           fontSize: fontSize,
@@ -120,16 +122,23 @@ class _AllocationPieChartState extends State<AllocationPieChart> {
 
   Widget _buildLegend(BuildContext context, double total) {
     final entries = widget.allocation.entries.toList();
-    
+    final localeString = context.locale.toString();
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: List.generate(entries.length, (i) {
           final entry = entries[i];
-          final percent = (entry.value / total * 100).toStringAsFixed(1);
+          final percent = (entry.value / total) * 100;
+          final percentLabel = CurrencyFormatter.formatPercent(percent);
+          final valueLabel = CurrencyFormatter.format(
+            entry.value,
+            widget.baseCurrency,
+            locale: localeString,
+          );
           final isTouched = i == touchedIndex;
-          
+
           return Padding(
             padding: EdgeInsets.symmetric(vertical: 4.h),
             child: Row(
@@ -144,17 +153,32 @@ class _AllocationPieChartState extends State<AllocationPieChart> {
                 ),
                 SizedBox(width: 8.w),
                 Expanded(
-                  child: Text(
-                    entry.key,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: isTouched ? FontWeight.bold : FontWeight.normal,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: isTouched ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        valueLabel,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
+                SizedBox(width: 4.w),
                 Text(
-                  '$percent%',
+                  percentLabel,
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: isTouched ? FontWeight.bold : FontWeight.normal,

@@ -46,25 +46,20 @@ class PortfolioRegionMapper {
     final currency = position.currency.toUpperCase();
     final exchange = (position.exchange ?? '').toUpperCase();
 
-    if (assetType.contains('cash') ||
-        symbol == 'cash' ||
-        name.contains('cash') ||
-        name.contains('liquid')) {
+    if (assetType.contains('cash') || symbol == 'cash') {
       return liquidity;
     }
 
-    if (assetType.contains('commod') ||
-        sector.contains('basic material') ||
-        sector.contains('energy')) {
+    if (assetType.contains('commod')) {
       return commodities;
     }
 
     if (sector.contains('broad') ||
-        name.contains('world') ||
-        name.contains('global') ||
+        _wordMatch(name, 'world') ||
+        _wordMatch(name, 'global') ||
         name.contains('all world') ||
         name.contains('all-world') ||
-        name.contains('acwi') ||
+        _wordMatch(name, 'acwi') ||
         name.contains('msci world')) {
       return unassigned;
     }
@@ -92,6 +87,35 @@ class PortfolioRegionMapper {
     }
 
     return restOfWorld;
+  }
+
+  static int colorForRegion(String regionCode) {
+    switch (regionCode) {
+      case unitedStates:
+        return 0xFF2196F3;
+      case europe:
+        return 0xFF4CAF50;
+      case asia:
+        return 0xFFFF9800;
+      case restOfWorld:
+        return 0xFFE91E63;
+      case liquidity:
+        return 0xFF607D8B;
+      case commodities:
+        return 0xFFFF5722;
+      case unassigned:
+      default:
+        return 0xFF9E9E9E;
+    }
+  }
+
+  static bool _wordMatch(String haystack, String needle) {
+    if (needle.isEmpty || haystack.isEmpty) return false;
+    final pattern = RegExp(
+      '\\b${RegExp.escape(needle)}\\b',
+      caseSensitive: false,
+    );
+    return pattern.hasMatch(haystack);
   }
 
   static String? _normalizeOverride(String? override) {

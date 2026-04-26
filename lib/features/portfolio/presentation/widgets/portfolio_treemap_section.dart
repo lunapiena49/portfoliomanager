@@ -6,8 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/entities/portfolio_entities.dart';
 import '../../domain/utils/portfolio_region_mapper.dart';
+
+const int _kMaxTreemapTiles = 16;
+const double _kOtherBucketThreshold = 1.0;
+const double _kMinTileSizePx = 24.0;
 
 class PortfolioTreemapSection extends StatelessWidget {
   final Portfolio portfolio;
@@ -20,25 +25,30 @@ class PortfolioTreemapSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final positions = portfolio.positions
-        .where((position) => position.valueInBaseCurrency > 0)
+        .where((position) =>
+            position.valueInBaseCurrency > 0 &&
+            position.valueInBaseCurrency.isFinite)
         .toList();
     final totalValue = positions.fold<double>(
       0.0,
       (sum, position) => sum + position.valueInBaseCurrency,
     );
     final baseCurrency = portfolio.baseCurrency;
+    final localeString = context.locale.toString();
 
     final positionNodes = _buildPositionNodes(
       context,
       positions,
       totalValue,
       baseCurrency,
+      localeString,
     );
     final regionNodes = _buildRegionNodes(
       context,
       positions,
       totalValue,
       baseCurrency,
+      localeString,
     );
 
     return Column(
@@ -71,6 +81,7 @@ class PortfolioTreemapSection extends StatelessWidget {
     List<Position> positions,
     double totalValue,
     String baseCurrency,
+    String locale,
   ) {
     if (positions.isEmpty || totalValue <= 0) {
       return [];
@@ -79,28 +90,68 @@ class PortfolioTreemapSection extends StatelessWidget {
     final sorted = [...positions]
       ..sort((a, b) => b.valueInBaseCurrency.compareTo(a.valueInBaseCurrency));
 
-    return List.generate(sorted.length, (index) {
-      final position = sorted[index];
-      final value = position.valueInBaseCurrency;
-      final percent = totalValue == 0 ? 0.0 : (value / totalValue * 100).toDouble();
-      final color = Color(
-        AppConstants.chartColors[index % AppConstants.chartColors.length],
-      );
-      final tooltip = _buildTooltip(
-        context,
-        position.symbol,
-        percent,
-        value,
-        baseCurrency,
-      );
+    final visible = <Position>[];
+    final bucket = <Position>[];
 
-      return TreemapNode(
-        label: position.symbol,
-        value: value,
-        color: color,
-        tooltip: tooltip,
+    for (var i = 0; i < sorted.length; i++) {
+      final position = sorted[i];
+      final percent = (position.valueInBaseCurrency / totalValue) * 100;
+      final overflow = visible.length >= _kMaxTreemapTiles - 1;
+      final tooSmall = percent < _kOtherBucketThreshold;
+      if (overflow || (tooSmall && i > 0)) {
+        bucket.add(position);
+      } else {
+        visible.add(position);
+      }
+    }
+
+    final nodes = <TreemapNode>[];
+    for (var i = 0; i < visible.length; i++) {
+      final position = visible[i];
+      final value = position.valueInBaseCurrency;
+      final percent = (value / totalValue) * 100;
+      nodes.add(
+        TreemapNode(
+          label: position.symbol,
+          value: value,
+          color: Color(_paletteColor(i)),
+          tooltip: _buildTooltip(
+            position.symbol,
+            percent,
+            value,
+            baseCurrency,
+            locale,
+          ),
+        ),
       );
-    });
+    }
+
+    if (bucket.isNotEmpty) {
+      final bucketValue = bucket.fold<double>(
+        0,
+        (sum, p) => sum + p.valueInBaseCurrency,
+      );
+      final bucketPercent = (bucketValue / totalValue) * 100;
+      final tooltipLabel = 'portfolio.charts.other_label'.tr(
+        namedArgs: {'count': bucket.length.toString()},
+      );
+      nodes.add(
+        TreemapNode(
+          label: 'portfolio.charts.other'.tr(),
+          value: bucketValue,
+          color: Color(_paletteColor(visible.length)),
+          tooltip: _buildTooltip(
+            tooltipLabel,
+            bucketPercent,
+            bucketValue,
+            baseCurrency,
+            locale,
+          ),
+        ),
+      );
+    }
+
+    return nodes;
   }
 
   List<TreemapNode> _buildRegionNodes(
@@ -108,6 +159,7 @@ class PortfolioTreemapSection extends StatelessWidget {
     List<Position> positions,
     double totalValue,
     String baseCurrency,
+    String locale,
   ) {
     if (positions.isEmpty || totalValue <= 0) {
       return [];
@@ -126,29 +178,21 @@ class PortfolioTreemapSection extends StatelessWidget {
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return List.generate(entries.length, (index) {
-      final entry = entries[index];
-      final label = _regionLabel(context, entry.key);
-      final value = entry.value;
-      final percent = totalValue == 0 ? 0.0 : (value / totalValue * 100).toDouble();
-      final color = Color(
-        AppConstants.chartColors[index % AppConstants.chartColors.length],
-      );
-      final tooltip = _buildTooltip(
-        context,
-        label,
-        percent,
-        value,
-        baseCurrency,
-      );
-
-      return TreemapNode(
-        label: label,
-        value: value,
-        color: color,
-        tooltip: tooltip,
-      );
-    });
+    return [
+      for (final entry in entries)
+        TreemapNode(
+          label: _regionLabel(context, entry.key),
+          value: entry.value,
+          color: Color(PortfolioRegionMapper.colorForRegion(entry.key)),
+          tooltip: _buildTooltip(
+            _regionLabel(context, entry.key),
+            (entry.value / totalValue) * 100,
+            entry.value,
+            baseCurrency,
+            locale,
+          ),
+        ),
+    ];
   }
 
   String _regionLabel(BuildContext context, String regionCode) {
@@ -173,44 +217,28 @@ class PortfolioTreemapSection extends StatelessWidget {
   }
 
   String _buildTooltip(
-    BuildContext context,
     String label,
     double percent,
     double value,
     String baseCurrency,
+    String locale,
   ) {
+    final percentLabel = CurrencyFormatter.formatPercent(percent);
+    final valueLabel =
+        CurrencyFormatter.format(value, baseCurrency, locale: locale);
     return '$label\n'
-        '${'portfolio.charts.tooltip.allocation'.tr()}: ${percent.toStringAsFixed(1)}%\n'
-        '${'portfolio.charts.tooltip.value'.tr()}: ${_formatCurrency(value, baseCurrency)}';
+        '${'portfolio.charts.tooltip.allocation'.tr()}: $percentLabel\n'
+        '${'portfolio.charts.tooltip.value'.tr()}: $valueLabel';
   }
 
-  String _formatCurrency(double value, String currency) {
-    final formatter = NumberFormat.currency(
-      symbol: _getCurrencySymbol(currency),
-      decimalDigits: 2,
-    );
-    return formatter.format(value);
-  }
-
-  String _getCurrencySymbol(String currency) {
-    switch (currency.toUpperCase()) {
-      case 'EUR':
-        return 'EUR ';
-      case 'USD':
-        return r'$';
-      case 'GBP':
-        return 'GBP ';
-      case 'CHF':
-        return 'CHF ';
-      case 'JPY':
-        return 'JPY ';
-      case 'CAD':
-        return 'CAD ';
-      case 'AUD':
-        return 'AUD ';
-      default:
-        return '${currency.toUpperCase()} ';
+  static int _paletteColor(int index) {
+    final palette = AppConstants.chartColors;
+    if (index < palette.length) {
+      return palette[index];
     }
+    final hue = (index * 137.508) % 360.0;
+    final hsl = HSLColor.fromAHSL(1.0, hue, 0.55, 0.5);
+    return hsl.toColor().toARGB32();
   }
 }
 
@@ -304,89 +332,162 @@ class TreemapChart extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final sorted = [...nodes]
-      ..sort((a, b) => b.value.compareTo(a.value));
-
     return LayoutBuilder(
       builder: (context, constraints) {
+        if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
+          return const SizedBox.shrink();
+        }
         final size = Size(constraints.maxWidth, constraints.maxHeight);
-        final rect = Offset.zero & size;
-        final tiles = _layoutTiles(sorted, rect, true);
+        final tiles = _squarify(nodes, Offset.zero & size);
         final gap = 4.w;
 
-        return Stack(
-          children: tiles
-              .map((tile) {
-                final gapRect = _applyGap(tile.rect, gap);
-                if (gapRect.width <= 0 || gapRect.height <= 0) {
-                  return const SizedBox.shrink();
-                }
-                return Positioned(
-                  left: gapRect.left,
-                  top: gapRect.top,
-                  width: gapRect.width,
-                  height: gapRect.height,
-                  child: _TreemapTileWidget(
-                    node: tile.node,
-                  ),
-                );
-              })
-              .whereType<Widget>()
-              .toList(),
-        );
+        final children = <Widget>[];
+        for (final tile in tiles) {
+          final gapRect = _applyGap(tile.rect, gap);
+          if (gapRect.width <= 0 || gapRect.height <= 0) {
+            continue;
+          }
+          final showLabel =
+              gapRect.width >= _kMinTileSizePx && gapRect.height >= _kMinTileSizePx;
+          children.add(
+            Positioned(
+              left: gapRect.left,
+              top: gapRect.top,
+              width: gapRect.width,
+              height: gapRect.height,
+              child: _TreemapTileWidget(
+                node: tile.node,
+                showLabel: showLabel,
+              ),
+            ),
+          );
+        }
+
+        return Stack(children: children);
       },
     );
   }
 
-  List<_TreemapTile> _layoutTiles(
-    List<TreemapNode> nodes,
-    Rect rect,
-    bool vertical,
-  ) {
+  List<_TreemapTile> _squarify(List<TreemapNode> nodes, Rect rect) {
     if (nodes.isEmpty || rect.width <= 0 || rect.height <= 0) {
       return [];
     }
 
-    if (nodes.length == 1) {
-      return [_TreemapTile(node: nodes.first, rect: rect)];
-    }
-
-    final total = nodes.fold<double>(0, (sum, node) => sum + node.value);
-    if (total == 0) {
+    final totalValue = nodes.fold<double>(0, (sum, node) => sum + node.value);
+    if (totalValue <= 0) {
       return [];
     }
+    final totalArea = rect.width * rect.height;
+    if (totalArea <= 0) {
+      return [];
+    }
+    final scale = totalArea / totalValue;
 
-    final first = nodes.first;
-    final ratio = (first.value / total).clamp(0.0, 1.0);
+    final scaled = nodes
+        .map((n) => _ScaledNode(node: n, area: n.value * scale))
+        .toList();
 
-    if (vertical) {
-      final width = rect.width * ratio;
-      final firstRect = Rect.fromLTWH(rect.left, rect.top, width, rect.height);
-      final remainingRect = Rect.fromLTWH(
-        rect.left + width,
-        rect.top,
-        rect.width - width,
-        rect.height,
-      );
-      return [
-        _TreemapTile(node: first, rect: firstRect),
-        ..._layoutTiles(nodes.sublist(1), remainingRect, !vertical),
-      ];
+    final tiles = <_TreemapTile>[];
+    var available = rect;
+    var remaining = scaled;
+
+    while (remaining.isNotEmpty) {
+      final shortSide = math.min(available.width, available.height);
+      if (shortSide <= 0) break;
+
+      final row = <_ScaledNode>[];
+      var index = 0;
+      while (index < remaining.length) {
+        final candidate = remaining[index];
+        final newRow = [...row, candidate];
+        if (row.isEmpty ||
+            _worst(newRow, shortSide) <= _worst(row, shortSide)) {
+          row.add(candidate);
+          index++;
+        } else {
+          break;
+        }
+      }
+
+      if (row.isEmpty) {
+        break;
+      }
+
+      final placed = _layoutRow(row, available);
+      tiles.addAll(placed.tiles);
+      available = placed.remaining;
+      remaining = remaining.sublist(row.length);
     }
 
-    final height = rect.height * ratio;
-    final firstRect = Rect.fromLTWH(rect.left, rect.top, rect.width, height);
-    final remainingRect = Rect.fromLTWH(
-      rect.left,
-      rect.top + height,
-      rect.width,
-      rect.height - height,
-    );
+    return tiles;
+  }
 
-    return [
-      _TreemapTile(node: first, rect: firstRect),
-      ..._layoutTiles(nodes.sublist(1), remainingRect, !vertical),
-    ];
+  double _worst(List<_ScaledNode> row, double w) {
+    if (row.isEmpty) return double.infinity;
+    final s = row.fold<double>(0, (sum, n) => sum + n.area);
+    if (s <= 0) return double.infinity;
+    var rmax = row.first.area;
+    var rmin = row.first.area;
+    for (final n in row) {
+      if (n.area > rmax) rmax = n.area;
+      if (n.area < rmin) rmin = n.area;
+    }
+    if (rmin <= 0) return double.infinity;
+    final w2 = w * w;
+    final s2 = s * s;
+    return math.max((w2 * rmax) / s2, s2 / (w2 * rmin));
+  }
+
+  _RowLayout _layoutRow(List<_ScaledNode> row, Rect available) {
+    final s = row.fold<double>(0, (sum, n) => sum + n.area);
+    final isHorizontal = available.width >= available.height;
+    final tiles = <_TreemapTile>[];
+
+    if (isHorizontal) {
+      final stripWidth = s / available.height;
+      var y = available.top;
+      for (final node in row) {
+        final h = node.area / stripWidth;
+        tiles.add(_TreemapTile(
+          node: node.node,
+          rect: Rect.fromLTWH(available.left, y, stripWidth, h),
+        ));
+        y += h;
+      }
+      final newLeft = available.left + stripWidth;
+      final newWidth = math.max(0.0, available.width - stripWidth);
+      return _RowLayout(
+        tiles: tiles,
+        remaining: Rect.fromLTWH(
+          newLeft,
+          available.top,
+          newWidth,
+          available.height,
+        ),
+      );
+    }
+
+    final stripHeight = s / available.width;
+    var x = available.left;
+    for (final node in row) {
+      final w = node.area / stripHeight;
+      tiles.add(_TreemapTile(
+        node: node.node,
+        rect: Rect.fromLTWH(x, available.top, w, stripHeight),
+      ));
+      x += w;
+    }
+    final newTop = available.top + stripHeight;
+    final newHeight = math.max(0.0, available.height - stripHeight);
+    return _RowLayout(
+      tiles: tiles,
+      remaining: Rect.fromLTWH(
+        available.left,
+        newTop,
+        available.width,
+        newHeight,
+      ),
+    );
   }
 
   Rect _applyGap(Rect rect, double gap) {
@@ -399,9 +500,11 @@ class TreemapChart extends StatelessWidget {
 
 class _TreemapTileWidget extends StatelessWidget {
   final TreemapNode node;
+  final bool showLabel;
 
   const _TreemapTileWidget({
     required this.node,
+    required this.showLabel,
   });
 
   @override
@@ -412,38 +515,38 @@ class _TreemapTileWidget extends StatelessWidget {
       message: node.tooltip,
       triggerMode: kIsWeb ? TooltipTriggerMode.longPress : TooltipTriggerMode.tap,
       waitDuration: Duration.zero,
-      showDuration: const Duration(seconds: 2),
+      showDuration: const Duration(seconds: 4),
+      preferBelow: false,
       decoration: BoxDecoration(
         color: Colors.black87,
         borderRadius: BorderRadius.circular(6.r),
       ),
       textStyle: TextStyle(color: Colors.white, fontSize: 12.sp),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          decoration: BoxDecoration(
-            color: node.color,
-            borderRadius: BorderRadius.circular(6.r),
-          ),
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  node.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12.sp,
+      child: Container(
+        decoration: BoxDecoration(
+          color: node.color,
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+        child: showLabel
+            ? Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      node.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.sp,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ),
+              )
+            : null,
       ),
     );
   }
@@ -479,3 +582,22 @@ class _TreemapTile {
   });
 }
 
+class _ScaledNode {
+  final TreemapNode node;
+  final double area;
+
+  const _ScaledNode({
+    required this.node,
+    required this.area,
+  });
+}
+
+class _RowLayout {
+  final List<_TreemapTile> tiles;
+  final Rect remaining;
+
+  const _RowLayout({
+    required this.tiles,
+    required this.remaining,
+  });
+}

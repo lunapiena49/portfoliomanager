@@ -265,6 +265,8 @@
       "regions_title": "Treemap Geografische Exposition",
       "regions_subtitle": "Regionale Exposition nach Handelsregion und Liquiditaet.",
       "empty": "Noch keine Daten vorhanden",
+      "other": "Andere",
+      "other_label": "Andere {count} Positionen",
       "tooltip": {
         "allocation": "Allokation",
         "value": "Wert"
@@ -719,7 +721,9 @@
       "completed": "Abgeschlossen",
       "total_value": "Gesamtwert",
       "progress_chart": "Fortschrittsdiagramm",
-      "type_distribution": "Verteilung nach Typ"
+      "type_distribution": "Verteilung nach Typ",
+      "goal_count_one": "{count} Ziel",
+      "goal_count_other": "{count} Ziele"
     },
     "settings": {
       "show_completed": "Abgeschlossene Ziele anzeigen",

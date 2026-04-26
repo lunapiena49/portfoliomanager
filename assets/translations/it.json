@@ -265,6 +265,8 @@
       "regions_title": "Treemap Esposizione Geografica",
       "regions_subtitle": "Esposizione regionale per area e liquidita.",
       "empty": "Nessun dato disponibile",
+      "other": "Altre",
+      "other_label": "Altre {count} posizioni",
       "tooltip": {
         "allocation": "Allocazione",
         "value": "Valore"
@@ -719,7 +721,9 @@
       "completed": "Completati",
       "total_value": "Valore totale",
       "progress_chart": "Grafico progressi",
-      "type_distribution": "Distribuzione per tipo"
+      "type_distribution": "Distribuzione per tipo",
+      "goal_count_one": "{count} obiettivo",
+      "goal_count_other": "{count} obiettivi"
     },
     "settings": {
       "show_completed": "Mostra obiettivi completati",

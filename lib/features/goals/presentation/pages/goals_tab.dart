@@ -537,7 +537,10 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
 
   Widget _buildProgressChart(List<InvestmentGoal> goals) {
     final chartData = goals.map((goal) {
-      final progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
+      final rawProgress = goal.targetAmount > 0
+          ? (goal.currentAmount / goal.targetAmount) * 100
+          : 0.0;
+      final progress = rawProgress.clamp(0.0, 100.0);
       return GoalChartData(
         goal.name,
         progress,
@@ -675,7 +678,10 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                           textAlign: TextAlign.center,
                         ),
                         Text(
-                          '${data.value} goals',
+                          (data.value == 1
+                                  ? 'goals.analytics.goal_count_one'
+                                  : 'goals.analytics.goal_count_other')
+                              .tr(namedArgs: {'count': data.value.toString()}),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),

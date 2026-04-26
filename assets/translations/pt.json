@@ -265,6 +265,8 @@
       "regions_title": "Treemap de Exposicao Geografica",
       "regions_subtitle": "Exposicao regional por area e ativos liquidos.",
       "empty": "Ainda nao ha dados disponiveis",
+      "other": "Outras",
+      "other_label": "Outras {count} posicoes",
       "tooltip": {
         "allocation": "Alocacao",
         "value": "Valor"
@@ -719,7 +721,9 @@
       "completed": "Concluidos",
       "total_value": "Valor total",
       "progress_chart": "Grafico de progresso",
-      "type_distribution": "Distribuicao por tipo"
+      "type_distribution": "Distribuicao por tipo",
+      "goal_count_one": "{count} objetivo",
+      "goal_count_other": "{count} objetivos"
     },
     "settings": {
       "show_completed": "Mostrar objetivos concluidos",
