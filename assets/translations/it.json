@@ -708,7 +708,18 @@
     "file_invalid": "Formato file non valido. Seleziona un file CSV o PDF valido.",
     "parse_error": "Impossibile elaborare il file. Controlla il formato.",
     "api_error": "Errore API. Riprova piu tardi.",
-    "storage_error": "Impossibile salvare i dati. Riprova."
+    "storage_error": "Impossibile salvare i dati. Riprova.",
+    "market": {
+      "snapshot_unavailable": "Snapshot del mercato non disponibile. Verifica la connessione e riprova."
+    }
+  },
+  "splash": {
+    "market_sync": {
+      "title": "Aggiornamento dati di mercato",
+      "subtitle": "Scarico l'ultimo snapshot pubblico da GitHub Pages...",
+      "progress": "{percent}%",
+      "ready": "Dati pronti."
+    }
   },
   "goals": {
     "title": "Obiettivi",

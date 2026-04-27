@@ -17,6 +17,12 @@ class MarketSnapshotService {
   static const String _topMoversFileName = 'top_movers.json';
   static const String _pricesIndexFileName = 'prices_index.json';
 
+  /// Weight of top_movers.json in the combined refresh progress (0..1).
+  /// Top movers is small (a few hundred KB), prices_index is much larger
+  /// (often >5 MB), so we give the prices index the bulk of the bar.
+  static const double _topMoversProgressWeight = 0.30;
+  static const double _pricesIndexProgressWeight = 0.70;
+
   final Dio _dio;
 
   static const Set<String> _exchangeSuffixes = <String>{
@@ -67,10 +73,21 @@ class MarketSnapshotService {
     return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
   }
 
-  Future<Map<String, dynamic>?> fetchTopMoversSnapshot() async {
+  Future<Map<String, dynamic>?> fetchTopMoversSnapshot({
+    void Function(double progress)? onProgress,
+  }) async {
     if (!isConfigured) return null;
     try {
-      final response = await _dio.get('$_baseUrl/top_movers.json');
+      final response = await _dio.get(
+        '$_baseUrl/top_movers.json',
+        onReceiveProgress: onProgress == null
+            ? null
+            : (received, total) {
+                if (total <= 0) return;
+                final ratio = (received / total).clamp(0.0, 1.0);
+                onProgress(ratio);
+              },
+      );
       final payload = response.data;
       if (payload is! Map) return null;
       final map = Map<String, dynamic>.from(payload);
@@ -83,6 +100,64 @@ class MarketSnapshotService {
       final cached = await loadCachedTopMovers();
       return cached;
     }
+  }
+
+  /// Refreshes both distributed snapshots (top_movers + prices_index) in
+  /// sequence, reporting an aggregated progress in [0.0, 1.0] through
+  /// [onProgress]. Failures of either download are absorbed -- the method
+  /// returns true only if at least one snapshot was successfully fetched.
+  ///
+  /// This is the entry point used by the splash screen on app start so the
+  /// user sees a visible loading bar while the day's data is pulled from
+  /// GitHub Pages.
+  Future<bool> refreshAll({
+    void Function(double progress)? onProgress,
+  }) async {
+    if (!isConfigured) {
+      onProgress?.call(1.0);
+      return false;
+    }
+
+    onProgress?.call(0.0);
+
+    bool anySuccess = false;
+
+    try {
+      final movers = await fetchTopMoversSnapshot(
+        onProgress: onProgress == null
+            ? null
+            : (ratio) => onProgress(ratio * _topMoversProgressWeight),
+      );
+      if (movers != null) {
+        anySuccess = true;
+      }
+    } catch (error, stack) {
+      debugPrint('MarketSnapshotService.refreshAll movers error: $error');
+      debugPrint('$stack');
+    }
+
+    onProgress?.call(_topMoversProgressWeight);
+
+    try {
+      final prices = await fetchPricesIndex(
+        forceRefresh: true,
+        onProgress: onProgress == null
+            ? null
+            : (ratio) => onProgress(
+                  _topMoversProgressWeight +
+                      ratio * _pricesIndexProgressWeight,
+                ),
+      );
+      if (prices != null) {
+        anySuccess = true;
+      }
+    } catch (error, stack) {
+      debugPrint('MarketSnapshotService.refreshAll prices error: $error');
+      debugPrint('$stack');
+    }
+
+    onProgress?.call(1.0);
+    return anySuccess;
   }
 
   /// Reads the last top_movers snapshot persisted on disk, if any.
@@ -100,8 +175,10 @@ class MarketSnapshotService {
   ///
   /// Returns a map keyed by ``MARKET:TICKER`` and ``TICKER`` (flat) with
   /// compact price entries: {c: close, cu: currency, m: market, d: date}.
-  Future<Map<String, dynamic>?> fetchPricesIndex(
-      {bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>?> fetchPricesIndex({
+    bool forceRefresh = false,
+    void Function(double progress)? onProgress,
+  }) async {
     if (!isConfigured) return null;
 
     final now = DateTime.now();
@@ -109,11 +186,21 @@ class MarketSnapshotService {
         _cachedPricesIndex != null &&
         _pricesIndexCachedAt != null &&
         now.difference(_pricesIndexCachedAt!) < _pricesIndexCacheTtl) {
+      onProgress?.call(1.0);
       return _cachedPricesIndex;
     }
 
     try {
-      final response = await _dio.get('$_baseUrl/prices_index.json');
+      final response = await _dio.get(
+        '$_baseUrl/prices_index.json',
+        onReceiveProgress: onProgress == null
+            ? null
+            : (received, total) {
+                if (total <= 0) return;
+                final ratio = (received / total).clamp(0.0, 1.0);
+                onProgress(ratio);
+              },
+      );
       final payload = response.data;
       if (payload is! Map) return null;
 

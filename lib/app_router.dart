@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/widgets/pluri_logo.dart';
+import 'services/api/market_snapshot_service.dart';
 import 'services/storage/local_storage_service.dart';
 import 'features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
@@ -211,6 +212,13 @@ class _SplashPageState extends State<SplashPage>
   String? _pendingRoute;
   Timer? _delayTimer;
 
+  // Daily market data sync state. Drives the progress bar shown below the
+  // logo so the user has visible feedback while the snapshot is downloaded
+  // from GitHub Pages on app start.
+  bool _syncRunning = false;
+  bool _syncCompleted = false;
+  double _syncProgress = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -237,6 +245,7 @@ class _SplashPageState extends State<SplashPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<OnboardingBloc>().add(CheckOnboardingStatusEvent());
+      _maybeRunDailySync();
     });
   }
 
@@ -245,6 +254,45 @@ class _SplashPageState extends State<SplashPage>
     _delayTimer?.cancel();
     _fadeOutController.dispose();
     super.dispose();
+  }
+
+  Future<void> _maybeRunDailySync() async {
+    // Skip the daily download when we already pulled today (the UI keeps
+    // the progress bar hidden and falls back to the cached snapshot).
+    if (!LocalStorageService.isMarketSnapshotStale()) {
+      return;
+    }
+
+    setState(() {
+      _syncRunning = true;
+      _syncProgress = 0.0;
+    });
+
+    final service = MarketSnapshotService();
+    try {
+      final ok = await service.refreshAll(
+        onProgress: (value) {
+          if (!mounted) return;
+          setState(() {
+            _syncProgress = value.clamp(0.0, 1.0);
+          });
+        },
+      );
+      if (ok) {
+        await LocalStorageService.setLastMarketSyncToday();
+      }
+    } catch (_) {
+      // The snapshot refresh is best-effort: never block app start on a
+      // failed download. The market tab will surface the error if needed.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _syncRunning = false;
+          _syncCompleted = true;
+          _syncProgress = 1.0;
+        });
+      }
+    }
   }
 
   void _handleOnboardingState(OnboardingState state) {
@@ -311,86 +359,134 @@ class _SplashPageState extends State<SplashPage>
               ),
             ),
             child: SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.center,
+                      child: PluriLogo(
                         width: logoWidth,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            PluriLogo(
-                              width: logoWidth,
-                              tintColor: _neonMint,
-                              showOrbital: true,
-                            ),
-                            const SizedBox(height: 14),
-                            Container(
-                              width: logoWidth * 0.25,
-                              height: 1,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    _neonMint.withValues(alpha: 0.28),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                AppConstants.appName,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      letterSpacing: 0.2,
-                                      shadows: [
-                                        Shadow(
-                                          color: _neonMint.withValues(
-                                              alpha: 0.4),
-                                          blurRadius: 18,
-                                        ),
-                                        Shadow(
-                                          color: _neonMint.withValues(
-                                              alpha: 0.15),
-                                          blurRadius: 40,
-                                        ),
-                                      ],
-                                    ),
-                              ),
-                            ),
+                        tintColor: _neonMint,
+                        showOrbital: true,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      width: logoWidth * 0.25,
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            _neonMint.withValues(alpha: 0.28),
+                            Colors.transparent,
                           ],
                         ),
                       ),
-                      const SizedBox(height: 28),
-                      const SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.4,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFF3DF2A7),
-                          ),
-                        ),
+                    ),
+                    const SizedBox(height: 14),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        AppConstants.appName,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                              shadows: [
+                                Shadow(
+                                  color: _neonMint.withValues(alpha: 0.4),
+                                  blurRadius: 18,
+                                ),
+                                Shadow(
+                                  color: _neonMint.withValues(alpha: 0.15),
+                                  blurRadius: 40,
+                                ),
+                              ],
+                            ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildSyncIndicator(context, logoWidth),
+                  ],
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSyncIndicator(BuildContext context, double logoWidth) {
+    if (!_syncRunning && !_syncCompleted) {
+      return const SizedBox(
+        width: 32,
+        height: 32,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.4,
+          valueColor: AlwaysStoppedAnimation<Color>(_neonMint),
+        ),
+      );
+    }
+
+    final percent = (_syncProgress.clamp(0.0, 1.0) * 100).round();
+    final barWidth = logoWidth.clamp(220.0, 360.0);
+    final progressLabel = 'splash.market_sync.progress'
+        .tr(namedArgs: {'percent': percent.toString()});
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'splash.market_sync.title'.tr(),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.92),
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _syncCompleted
+              ? 'splash.market_sync.ready'.tr()
+              : 'splash.market_sync.subtitle'.tr(),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.62),
+              ),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: barWidth,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: _syncProgress.clamp(0.0, 1.0),
+              minHeight: 6,
+              backgroundColor: Colors.white.withValues(alpha: 0.10),
+              valueColor: const AlwaysStoppedAnimation<Color>(_neonMint),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          progressLabel,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.75),
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+        ),
+      ],
     );
   }
 }

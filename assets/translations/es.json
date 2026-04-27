@@ -708,7 +708,18 @@
     "file_invalid": "Formato de archivo invalido. Selecciona un archivo CSV o PDF valido.",
     "parse_error": "Error al procesar el archivo. Verifica el formato.",
     "api_error": "Error de API. Intenta mas tarde.",
-    "storage_error": "Error al guardar datos. Intenta de nuevo."
+    "storage_error": "Error al guardar datos. Intenta de nuevo.",
+    "market": {
+      "snapshot_unavailable": "Snapshot del mercado no disponible. Verifica la conexion y reintenta."
+    }
+  },
+  "splash": {
+    "market_sync": {
+      "title": "Actualizacion de datos de mercado",
+      "subtitle": "Descargando el ultimo snapshot publico desde GitHub Pages...",
+      "progress": "{percent}%",
+      "ready": "Datos listos."
+    }
   },
   "goals": {
     "title": "Objetivos",

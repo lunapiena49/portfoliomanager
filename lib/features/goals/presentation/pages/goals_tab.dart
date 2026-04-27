@@ -95,21 +95,27 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          _buildHeader(),
-          _buildTabBar(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildGoalsList(),
-                _buildAnalyticsView(),
-                _buildSettingsView(),
-              ],
+      // SafeArea avoids the system status bar overlap that made the
+      // "Obiettivi" header collide with clock and notification icons on
+      // Android devices.
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildHeader(),
+            _buildTabBar(),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildGoalsList(),
+                  _buildAnalyticsView(),
+                  _buildSettingsView(),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton.extended(
@@ -200,6 +206,10 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w),
+      // Outer vertical padding leaves breathing room above and below the
+      // pill indicator; horizontal indicatorPadding shrinks the blue
+      // rectangle inward so it no longer touches the label text.
+      padding: EdgeInsets.symmetric(vertical: 4.h),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12.r),
@@ -210,6 +220,16 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
           color: Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(10.r),
         ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicatorPadding: EdgeInsets.symmetric(
+          horizontal: 8.w,
+          vertical: 4.h,
+        ),
+        labelPadding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 4.h,
+        ),
+        dividerColor: Colors.transparent,
         labelColor: colorScheme.onPrimary,
         unselectedLabelColor: colorScheme.onSurfaceVariant,
         tabs: [

@@ -225,6 +225,36 @@ class LocalStorageService {
     await _settingsBox.delete(AppConstants.lastRouteTimestampKey);
   }
 
+  /// Returns the ISO date (YYYY-MM-DD) of the last successful market
+  /// snapshot sync, or null if it has never run.
+  static String? getLastMarketSyncDate() {
+    final value = _settingsBox.get(AppConstants.lastMarketSyncDateKey);
+    if (value is String && value.length >= 10) return value;
+    return null;
+  }
+
+  /// Records today as the most recent successful market snapshot sync.
+  /// Stored in local time (the user's perception of "today") so the gate
+  /// matches the daily refresh expectation.
+  static Future<void> setLastMarketSyncToday() async {
+    final now = DateTime.now();
+    final iso = '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    await _settingsBox.put(AppConstants.lastMarketSyncDateKey, iso);
+  }
+
+  /// True when the snapshot has not been refreshed yet today.
+  static bool isMarketSnapshotStale() {
+    final last = getLastMarketSyncDate();
+    if (last == null) return true;
+    final now = DateTime.now();
+    final today = '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    return last != today;
+  }
+
   /// Get base currency
   static String getBaseCurrency() {
     return _settingsBox.get(AppConstants.baseCurrencyKey, defaultValue: 'EUR');

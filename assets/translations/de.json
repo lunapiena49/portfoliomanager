@@ -708,7 +708,18 @@
     "file_invalid": "Ungueltiges Dateiformat. Waehlen Sie eine gueltige CSV- oder PDF-Datei.",
     "parse_error": "Dateiverarbeitung fehlgeschlagen. Ueberpruefen Sie das Format.",
     "api_error": "API-Fehler. Versuchen Sie es spaeter erneut.",
-    "storage_error": "Speichern fehlgeschlagen. Versuchen Sie es erneut."
+    "storage_error": "Speichern fehlgeschlagen. Versuchen Sie es erneut.",
+    "market": {
+      "snapshot_unavailable": "Markt-Snapshot nicht verfuegbar. Ueberpruefen Sie Ihre Verbindung und versuchen Sie es erneut."
+    }
+  },
+  "splash": {
+    "market_sync": {
+      "title": "Marktdaten werden aktualisiert",
+      "subtitle": "Lade den neuesten oeffentlichen Snapshot von GitHub Pages herunter...",
+      "progress": "{percent}%",
+      "ready": "Daten bereit."
+    }
   },
   "goals": {
     "title": "Ziele",

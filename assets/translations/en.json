@@ -708,7 +708,18 @@
     "file_invalid": "Invalid file format. Please select a valid CSV or PDF file.",
     "parse_error": "Failed to parse the file. Please check the format.",
     "api_error": "API error. Please try again later.",
-    "storage_error": "Failed to save data. Please try again."
+    "storage_error": "Failed to save data. Please try again.",
+    "market": {
+      "snapshot_unavailable": "Market snapshot unavailable. Check your connection and retry."
+    }
+  },
+  "splash": {
+    "market_sync": {
+      "title": "Updating market data",
+      "subtitle": "Downloading the latest public snapshot from GitHub Pages...",
+      "progress": "{percent}%",
+      "ready": "Data ready."
+    }
   },
   "goals": {
     "title": "Goals",

@@ -1113,8 +1113,10 @@ class _MarketTabState extends State<MarketTab>
   }
 
   void _recordFetchError(String scope, Object error) {
-    final message = '$scope: $error';
-    _fetchErrors.add(message);
+    // Only the cleaned-up message is shown to users; the scope is kept in
+    // the debug log for engineers to trace which fetch failed.
+    final userMessage = error.toString();
+    _fetchErrors.add(userMessage);
     debugPrint('Market fetch error [$scope]: $error');
   }
 
@@ -1337,7 +1339,7 @@ class _MarketTabState extends State<MarketTab>
     if (!_fmpService.hasApiKey) {
       _recordFetchError(
         'movers',
-        'Distributed market snapshot unavailable and FMP API key not configured.',
+        'errors.market.snapshot_unavailable'.tr(),
       );
       if (!mounted) return;
       setState(() {

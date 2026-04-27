@@ -30,6 +30,7 @@ class AppConstants {
   static const String rebalanceTargetsKey = 'rebalance_targets';
   static const String lastRouteKey = 'last_route_path';
   static const String lastRouteTimestampKey = 'last_route_timestamp_ms';
+  static const String lastMarketSyncDateKey = 'last_market_sync_iso_date';
 
   // Hive Box Names
   static const String settingsBox = 'settings_box';
