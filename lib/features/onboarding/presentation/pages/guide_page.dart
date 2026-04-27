@@ -14,13 +14,23 @@ class GuidePage extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.all(16.w),
         children: [
+          _buildIntro(context),
+          SizedBox(height: 16.h),
+          _buildSection(
+            context,
+            icon: Icons.architecture,
+            titleKey: 'guide.sections.overview.title',
+            contentKey: 'guide.sections.overview.content',
+            detailsKey: 'guide.sections.overview.details',
+            expanded: true,
+          ),
+          SizedBox(height: 16.h),
           _buildSection(
             context,
             icon: Icons.rocket_launch,
             titleKey: 'guide.sections.getting_started.title',
             contentKey: 'guide.sections.getting_started.content',
             detailsKey: 'guide.sections.getting_started.details',
-            expanded: true,
           ),
           SizedBox(height: 16.h),
           _buildSection(
@@ -81,10 +91,26 @@ class GuidePage extends StatelessWidget {
           SizedBox(height: 16.h),
           _buildSection(
             context,
+            icon: Icons.key_outlined,
+            titleKey: 'guide.sections.api_keys.title',
+            contentKey: 'guide.sections.api_keys.content',
+            detailsKey: 'guide.sections.api_keys.details',
+          ),
+          SizedBox(height: 16.h),
+          _buildSection(
+            context,
             icon: Icons.lock_outline,
             titleKey: 'guide.sections.privacy_security.title',
             contentKey: 'guide.sections.privacy_security.content',
             detailsKey: 'guide.sections.privacy_security.details',
+          ),
+          SizedBox(height: 16.h),
+          _buildSection(
+            context,
+            icon: Icons.insights_outlined,
+            titleKey: 'guide.sections.metrics.title',
+            contentKey: 'guide.sections.metrics.content',
+            detailsKey: 'guide.sections.metrics.details',
           ),
           SizedBox(height: 16.h),
           _buildSection(
@@ -103,6 +129,39 @@ class GuidePage extends StatelessWidget {
             detailsKey: 'guide.sections.glossary.details',
           ),
           SizedBox(height: 32.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIntro(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.menu_book_outlined,
+            color: theme.colorScheme.primary,
+            size: 24.r,
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              'guide.intro'.tr(),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
