@@ -123,11 +123,14 @@ Aggiorna `dist/market-data/top_movers.json`, `prices_index.json`, `market_histor
    - Traduzioni tutte popolate
    - `dist/market-data/top_movers.json` con `as_of_date` recente
 
-8. **End-of-session sync obbligatorio**: a fine di **ogni** sessione, repo locale e repo GitHub devono essere allineati.
-   Prima di chiudere sempre: `rtk git status`, poi se ci sono modifiche utili committarle e `rtk git push`.
-   Nessun commit locale deve restare non pushato. Se il push fallisce per non-fast-forward (tipico dopo
-   `daily-data-commit.yml`), `rtk git pull --rebase origin main` e ripushare. Non committare mai file ignorati
-   o untracked locali (`dist/`, `.claude/scheduled_tasks.lock`).
+8. **Commit + push sempre, senza chiedere conferma**: dopo **ogni** task validata
+   (analyze pulito + test verdi), procedere immediatamente con `rtk git add <file>` mirato,
+   `rtk git commit -m "..."` e `rtk git push`. Non chiedere "vuoi che committi?" -- e' assunto.
+   Vale anche a fine sessione: repo locale e repo GitHub devono sempre essere identici, nessun
+   commit locale puo' restare non pushato. Se il push fallisce per non-fast-forward (tipico dopo
+   `daily-data-commit.yml`): `rtk git pull --rebase origin main` e ripushare. Non committare mai
+   file ignorati o untracked non richiesti (`dist/`, `.claude/scheduled_tasks.lock`, `build/`,
+   `.dart_tool/`, `.env*`, file con secret).
 
 ## 5. Convenzioni commit
 
