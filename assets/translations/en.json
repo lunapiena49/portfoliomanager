@@ -29,6 +29,7 @@
     "done": "Done",
     "skip": "Skip",
     "close": "Close",
+    "dismiss": "Dismiss",
     "yes": "Yes",
     "no": "No",
     "ok": "OK",
@@ -611,6 +612,92 @@
       "api_key_hint": "Enter your FMP API key",
       "api_key_saved": "FMP API key saved"
     },
+    "market_data": {
+      "title": "Market data",
+      "intro": "Configure one or more providers for historical and real-time quotes. Without any key the app uses the free daily snapshot (refreshed once a day at 22:35 UTC by the public pipeline).",
+      "refresh_interval": {
+        "title": "Refresh frequency",
+        "description": "Pick how often a position price is considered stale and refetched. Shorter = more API calls on the provider's free tier; longer = fewer calls but more delay. Formula: calls/day = positions x refresh_per_day.",
+        "options": {
+          "manual": "Manual (on demand only)",
+          "hourly": "Hourly (~24 calls/day per position)",
+          "every4h": "Every 4 hours (~6 calls/day per position)",
+          "every12h": "Every 12 hours (~2 calls/day per position)",
+          "daily": "Daily (1 call/day per position)"
+        },
+        "descriptions": {
+          "manual": "No auto-refresh: prices update only when you tap 'Refresh'. Zero API calls until you ask. Recommended for very tight free tiers.",
+          "hourly": "Suits generous tiers only (Finnhub 60/min, Twelve Data 800/day). 30 positions = ~720 calls/day -- well past Alpha Vantage and Marketstack free.",
+          "every4h": "Balanced: 6 calls/position/day. Fits Twelve Data (800/day = 130 positions) and Tiingo (50 symbols/hour). Recommended default for standard free tiers.",
+          "every12h": "Conservative: 2 calls/position/day. Comfortable on FMP (250/day = 125 positions) and Polygon free.",
+          "daily": "Maximum savings: 1 call/position/day. Fits Alpha Vantage (25/day = 25 positions). Aligned with the public snapshot cadence."
+        }
+      }
+    },
+    "providers": {
+      "api_key_label": "{provider} API key",
+      "api_key_hint": "Paste here the key generated on the provider dashboard",
+      "api_key_saved": "{provider} key saved",
+      "api_key_cleared": "{provider} key removed",
+      "copy_endpoint": "Copy sample endpoint",
+      "endpoint_copied": "Endpoint copied to clipboard",
+      "signup": "Sign up",
+      "docs": "Docs",
+      "url_copied": "Link copied to clipboard",
+      "no_key_required": "No key required: this provider is public.",
+      "tag_realtime": "Real-time",
+      "tag_historic": "Historic",
+      "eodhd": {
+        "short": "EOD historic + real-time + economic calendar (already integrated).",
+        "description": "End-of-day and real-time provider already wired into the app. Current endpoint: https://eodhd.com/api with api_token parameter. Used by the price cascade (real-time -> EOD -> snapshot) and the economic calendar.",
+        "free_quota": "Free tier: 20 calls/day, 1-year history, DEMO tickers available (AAPL.US, TSLA.US, BTC-USD.CC...)."
+      },
+      "fmp": {
+        "short": "Quotes, top movers and economic calendar (already integrated).",
+        "description": "Financial Modeling Prep, integrated for price fallback and top-mover backup. Current endpoint: https://financialmodelingprep.com/stable with apikey parameter. Legacy /api/v3/ remains accessible for existing plans.",
+        "free_quota": "Basic free tier: 250 calls/day, ~5 years of EOD history, 500 MB/30-day bandwidth."
+      },
+      "alphaVantage": {
+        "short": "Global stock history + technical indicators.",
+        "description": "Alpha Vantage exposes TIME_SERIES_DAILY/INTRADAY, fundamentals, FX, crypto and 50+ technical indicators. Current endpoint: https://www.alphavantage.co/query with apikey parameter. Very deep history (20+ years with outputsize=full).",
+        "free_quota": "Free tier: 25 calls/day, 5 calls/minute. Lifetime free key issued from the support page."
+      },
+      "twelveData": {
+        "short": "Multi-asset (stocks, forex, crypto) + real-time WebSocket.",
+        "description": "Twelve Data exposes time_series, quote, indicators, profile, ticker search and more. Current endpoint: https://api.twelvedata.com with apikey parameter. Particularly strong on forex and global indices.",
+        "free_quota": "Free trial: 800 credits/day + 8 per minute. Includes real-time WebSocket on US, forex and crypto."
+      },
+      "finnhub": {
+        "short": "US real-time quotes + news + earnings.",
+        "description": "Finnhub covers US real-time quotes, OHLC candles, fundamentals, company news, earnings calendar and symbol search. Current endpoint: https://finnhub.io/api/v1 with token parameter. The free plan has a generous rate limit.",
+        "free_quota": "Free tier: 60 calls/minute on all base US endpoints. Ideal for frequent refreshes."
+      },
+      "polygon": {
+        "short": "OHLC aggregates + institutional data (US).",
+        "description": "Polygon.io provides per-ticker aggregates (1m/5m/1h/1d), tick-level trades & quotes (paid) and fundamentals. Current endpoint: https://api.polygon.io with apiKey parameter. Free tier limited to EOD.",
+        "free_quota": "Free tier: 5 calls/minute, EOD only, up to 2 years of history. Starter plan unlocks real-time."
+      },
+      "marketstack": {
+        "short": "Global EOD on 30,000+ tickers (apilayer).",
+        "description": "Marketstack (apilayer) specializes in global historical EOD across 30,000+ tickers. Current endpoint: https://api.marketstack.com/v2 with access_key parameter. The free tier requires HTTP rather than HTTPS.",
+        "free_quota": "Free tier: 100 calls/month (Free plan) or 1,000/month (Free 1K plan). EOD only, max 12 months of history."
+      },
+      "tiingo": {
+        "short": "US/global EOD + IEX intraday + 30+ years history.",
+        "description": "Tiingo offers 30+ years of stock and ETF EOD, IEX delayed/real-time and fundamentals. Current endpoint: https://api.tiingo.com with token parameter or Authorization: Token <key> header. Particularly reliable for backtesting.",
+        "free_quota": "Free tier: 50 unique symbols/month, 1,000 calls/hour, 30+ years EOD history."
+      },
+      "nasdaqDataLink": {
+        "short": "Time-series + tables (formerly Quandl).",
+        "description": "Nasdaq Data Link (formerly Quandl) aggregates 250+ time-series and table datasets from 400+ publishers (commodities, macro, alt-data). Current endpoint: https://data.nasdaq.com/api/v3 with api_key parameter. Only 40 free datasets, the rest are paid.",
+        "free_quota": "Free tier: 50,000 calls/day (300/10s, 2,000/10min). 40 free datasets without subscription."
+      },
+      "stooq": {
+        "short": "Public free CSV, no key.",
+        "description": "Stooq publishes free EOD CSV files for 12,000+ stocks, indices, ETFs, forex and crypto. No key needed: download directly from https://stooq.com/q/d/l/?s=<ticker>&i=d. Great as a free fallback but no SLA, no real-time.",
+        "free_quota": "No documented rate limit, but respect human usage (no mass scraping). Ideal as a free historical fallback."
+      }
+    },
     "about": {
       "title": "About",
       "version": "Version",
@@ -671,6 +758,21 @@
         "title": "API keys and optional providers",
         "content": "Which keys are needed, where they are stored, what happens without them.",
         "details": "**The three optional keys**\n- **Gemini** (Google) — AI analysis and chat. If absent, AI features are disabled but the rest of the app works.\n- **EODHD** — real-time and end-of-day quotes, plus economic calendar. If absent, prices come only from the snapshot.\n- **FMP** (Financial Modeling Prep) — quote fallback. Improves coverage on tickers EODHD doesn't handle well.\n\nNo key is mandatory: the app is designed to be useful even \"with keys off\" (public top movers, manual portfolio management).\n\n**Where keys live**\nKeys are stored in `flutter_secure_storage`, which uses the platform's native keystore:\n- iOS: Keychain (encrypted with `kSecAttrAccessibleAfterFirstUnlock`).\n- Android: EncryptedSharedPreferences with AES-256 key in the Keystore.\n- Windows: per-user DPAPI.\n- macOS: Keychain.\n- Linux: libsecret / Secret Service.\n- Web: Web Crypto API (with browser limits).\n\n**Price fallback chain**\nWhen refreshing a position's value, the app tries in order:\n1. EODHD real-time → if EODHD key present and market is open.\n2. EODHD end-of-day → if EODHD key present.\n3. FMP → if FMP key present.\n4. Public snapshot → always available, but with `isPriceReliable=false` and staleness icon.\n\n**Connection test**\nIn Settings → AI / Market you can press \"Test connection\" to validate the entered key: the app makes a lightweight call to the provider's endpoint and gives instant feedback.\n\n**Where to get keys**\n- Gemini: Google AI Studio (`aistudio.google.com`). Generous free tier for personal use.\n- EODHD: `eodhd.com` — limited free plan, paid plans for extended real-time.\n- FMP: `financialmodelingprep.com` — free plan with rate limits.\n\n**Operational best practices**\n- Rotate keys periodically on the provider dashboards.\n- Don't share screenshots that show the key in clear.\n- On suspected compromise, revoke immediately on the provider dashboard and generate a new key.\n- Data reset in Settings also clears stored keys."
+      },
+      "providers_catalog": {
+        "title": "Supported provider catalog",
+        "content": "The 10 historical/real-time data providers integrated in the app, with endpoints, free tier and when to use them.",
+        "details": "**Integrated providers (10 + Gemini AI)**\nThe app supports 10 market-data providers (historical + real-time) and Google Gemini for AI analysis. Each provider has an expandable card in Settings > Market data with sample endpoint, signup link, docs link and API key form. Keys are stored in flutter_secure_storage (Keychain/DPAPI/libsecret).\n\n**EODHD** (already integrated at runtime)\n- Endpoint: https://eodhd.com/api -- api_token parameter\n- Free tier: 20 calls/day, 1 year history, DEMO tickers available\n- Strong on: real-time + EOD + global economic calendar\n\n**Financial Modeling Prep (FMP)** (already integrated at runtime)\n- Endpoint: https://financialmodelingprep.com/stable -- apikey parameter\n- Free Basic tier: 250 calls/day, 5 years history, 500 MB/30d bandwidth\n- Strong on: top movers, fundamentals, economic calendar\n\n**Alpha Vantage**\n- Endpoint: https://www.alphavantage.co/query -- apikey parameter\n- Free tier: 25 calls/day, 5 calls/minute, lifetime free key\n- Strong on: deep TIME_SERIES_DAILY (20+ years), 50+ technical indicators, FX/crypto\n\n**Twelve Data**\n- Endpoint: https://api.twelvedata.com -- apikey parameter\n- Trial: 800 credits/day + free real-time WebSocket\n- Strong on: multi-asset (stocks/forex/crypto/global indices), real-time push\n\n**Finnhub**\n- Endpoint: https://finnhub.io/api/v1 -- token parameter\n- Free tier: 60 calls/minute on US base endpoints\n- Strong on: US real-time quotes, news, earnings calendar, fundamentals\n\n**Polygon.io**\n- Endpoint: https://api.polygon.io -- apiKey parameter\n- Free tier: 5 calls/minute, EOD only, 2 years history\n- Strong on: OHLC aggregates on custom windows (1m, 5m, 1h, 1d)\n\n**Marketstack** (apilayer)\n- Endpoint: https://api.marketstack.com/v2 -- access_key parameter\n- Free tier: 100 calls/month (1,000 on the updated Free 1K plan), global EOD\n- Strong on: 30,000+ ticker coverage on European/Asian exchanges\n\n**Tiingo**\n- Endpoint: https://api.tiingo.com -- token parameter (or Authorization: Token <key> header)\n- Free tier: 50 symbols/month, 1,000 calls/hour, 30+ years history\n- Strong on: backtesting (deep, reliable history), IEX delayed/real-time\n\n**Nasdaq Data Link** (formerly Quandl)\n- Endpoint: https://data.nasdaq.com/api/v3 -- api_key parameter\n- Free tier: 50,000 calls/day (300/10s, 2,000/10min), 40 free datasets\n- Strong on: macro/commodity/alt-data time-series, esoteric datasets\n\n**Stooq**\n- Endpoint: https://stooq.com/q/d/l/?s=<ticker>&i=d -- no key\n- Public CSV, EOD on 12,000+ assets (stocks, indices, ETFs, forex, crypto)\n- Strong on: free fallback without registration, decade-long history\n\n**Which to choose?**\n- **US-only portfolio + frequent refresh**: Finnhub (60/min) or Twelve Data (800/day).\n- **Deep history for backtesting**: Tiingo or Alpha Vantage.\n- **European/Asian markets**: Marketstack (paid plan), EODHD, FMP.\n- **Macroeconomics / commodities**: Nasdaq Data Link.\n- **Free intraday aggregates**: Polygon (5/min is enough for testing).\n- **Pure no-key fallback**: Stooq.\n\n**Price fallback cascade (already active)**\n1. EODHD real-time (if key)\n2. EODHD EOD (if key)\n3. FMP (if key)\n4. Public GitHub Pages snapshot\n\nThe other 7 providers are currently \"saved key + documented endpoint\": runtime integration may be enabled per provider in future releases.\n\n**Key security**\nEvery key is encrypted in the system keystore. Never logged, never exported. The Settings 'Clear data' action wipes all stored keys."
+      },
+      "refresh_interval": {
+        "title": "Data refresh frequency",
+        "content": "How often prices are considered stale and refetched from the active provider.",
+        "details": "**What this setting controls**\nSettings > Market data > Refresh frequency defines the **price-cache staleness threshold**. When a position is displayed and its cached quote is older than the threshold, the app refetches. Between two consecutive fetches no network call is made.\n\n**Without any personal API key**\nThe app relies exclusively on the **public daily snapshot** built by the GitHub Actions pipeline:\n- The `market-data-snapshot.yml` workflow runs daily at 22:35 UTC.\n- The `daily-data-commit.yml` workflow commits a 'proof of freshness' at 07:00 UTC.\n- The local `session-start.ps1` hook pulls fresh data on every session open.\n- Result: data refreshed **once per day**, aligned with the previous trading-day close. Zero API calls made by the app.\n\n**With a personal API key**\nThe app can refetch in real time (subject to the provider tier). The chosen frequency drives how many calls per day are made.\n\n**The 5 available options**\n- **Manual** (default for tight free tiers): no auto-fetch. Refreshes only when you tap 'Refresh'. Zero API consumption.\n- **Hourly**: ~24 calls/position/day. Only for generous tiers (Finnhub 60/min, Twelve Data 800/day).\n- **Every 4 hours**: ~6 calls/position/day. Balanced for comfort tiers (Twelve Data 130 positions, Tiingo 50 symbols/hour).\n- **Every 12 hours**: ~2 calls/position/day. Suits moderate tiers (FMP 250/day = 125 positions, Polygon 5/min).\n- **Daily** (recommended default): 1 call/position/day. Compatible even with Alpha Vantage tier (25/day = 25 positions). Aligned with the public-snapshot cadence.\n\n**Daily call calculation**\nSimple formula: `daily_calls = positions x refreshes_per_day`.\n\nExamples:\n- 30 positions + Daily = 30 calls/day (Alpha Vantage 25/day: OVER quota).\n- 30 positions + Every 12h = 60 calls/day (FMP 250/day: 24% of tier).\n- 30 positions + Every 4h = 180 calls/day (Twelve Data 800/day: 22% of tier).\n- 30 positions + Hourly = 720 calls/day (Finnhub 60/min = 86,400/day: well below).\n\n**Precise semantics**\nThe app does NOT poll on a timer. Staleness is evaluated **on-access**: when you open Home/Market or tap 'Refresh', the app checks for each position `(now - cached_at) >= threshold` and refetches only the positions that need it. This avoids needless calls while the app is in the background.\n\n**When to bump the frequency**\n- Intraday trading on a few positions: Hourly with Finnhub.\n- Active monitoring during market hours: Every 4h.\n- Weekly rebalancing or casual checks: Daily or Manual.\n\n**When to lower it**\n- Very tight free tier (Alpha Vantage 25/day, Marketstack 100/month).\n- Metered/slow connection.\n- Privacy-first: fewer calls = fewer traces with external providers."
+      },
+      "quota_alerts": {
+        "title": "Quota and rate-limit alerts",
+        "content": "The app shows a persistent banner when a key hits a quota limit or is rate-limited.",
+        "details": "**What triggers the alert**\nWhen any of your API keys returns a response interpreted as 'limit hit' from the provider, the app shows a colored banner above the current screen.\n\n**The three categories detected**\n- **Rate limit** (HTTP 429 generic): too many calls in the time window. Orange banner, auto-dismisses after 12 seconds. Retrying later usually fixes it.\n- **Quota exhausted** (HTTP 429 + body containing 'quota/exhausted/daily/monthly' or HTTP 403 with 'limit/exceeded'): daily or monthly tier finished. Red banner. Wait for reset or upgrade the tier.\n- **Invalid key** (HTTP 401 or 403 without quota pattern): key revoked, expired, never existed or mistyped. Dark-red banner. Go to Settings and rotate/fix the key.\n\n**Monitored providers**\nGemini, EODHD, FMP, Alpha Vantage, Twelve Data, Finnhub, Polygon, Marketstack, Tiingo, Nasdaq Data Link. Each provider has its own label in the banner so you immediately know which key to act on.\n\n**De-duplication**\nIf the same `(provider, reason)` repeats within 60 seconds, the app does **not** show the banner again to avoid spam. After 60 seconds, a fresh identical error will resurface the alert.\n\n**Auto-dismiss**\nThe banner closes automatically after 12 seconds even without tap. You can dismiss it manually with the 'Dismiss' button on the banner.\n\n**Banner privacy**\nThe banner shows only: provider name, reason (rate limit / quota / invalid key), and a translation of the error body when available. **Never** the key, never full endpoints, never the user or IP.\n\n**What to do when a banner shows**\n1. **Rate limit**: wait 30-60 seconds and retry. If it persists, lower the refresh frequency.\n2. **Quota exhausted**: open the provider dashboard, check daily/monthly usage. Consider a higher tier or switch to another provider configured in the app.\n3. **Invalid key**: open Settings > Market data, expand the provider, save a new key.\n\n**Telemetry**\nThe event is used **only** for the banner. Not logged externally, not sent to third-party servers, not persisted across sessions."
       },
       "privacy_security": {
         "title": "Privacy and security",
@@ -794,6 +896,32 @@
       "progress": "Progress",
       "target_date": "Target date",
       "created_date": "Created date"
+    }
+  },
+  "api_quota": {
+    "providers": {
+      "gemini": "Gemini",
+      "eodhd": "EODHD",
+      "fmp": "Financial Modeling Prep",
+      "alphaVantage": "Alpha Vantage",
+      "twelveData": "Twelve Data",
+      "finnhub": "Finnhub",
+      "polygon": "Polygon.io",
+      "marketstack": "Marketstack",
+      "tiingo": "Tiingo",
+      "nasdaqDataLink": "Nasdaq Data Link"
+    },
+    "rate_limit": {
+      "title": "Rate limit hit",
+      "body": "{provider} throttled your requests (HTTP 429). Wait a moment and retry, or lower the refresh frequency."
+    },
+    "quota_exceeded": {
+      "title": "Quota exhausted",
+      "body": "The {provider} free tier ran out of daily or monthly calls. Wait for the reset or upgrade the plan to continue."
+    },
+    "invalid_key": {
+      "title": "Invalid API key",
+      "body": "{provider} rejected the key (HTTP 401/403). Open Settings > Market data and verify or rotate the key."
     }
   }
 }

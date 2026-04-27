@@ -29,6 +29,7 @@
     "done": "Fertig",
     "skip": "Ueberspringen",
     "close": "Schliessen",
+    "dismiss": "Schliessen",
     "yes": "Ja",
     "no": "Nein",
     "ok": "OK",
@@ -611,6 +612,92 @@
       "api_key_hint": "Geben Sie Ihren FMP API-Schluessel ein",
       "api_key_saved": "FMP API-Schluessel gespeichert"
     },
+    "market_data": {
+      "title": "Marktdaten",
+      "intro": "Konfigurieren Sie einen oder mehrere Anbieter fuer historische und Echtzeit-Kurse. Ohne Schluessel verwendet die App den kostenlosen taeglichen Snapshot (einmal taeglich um 22:35 UTC durch die oeffentliche Pipeline aktualisiert).",
+      "refresh_interval": {
+        "title": "Aktualisierungsfrequenz",
+        "description": "Bestimmt, wie oft der Preis einer Position als veraltet gilt und neu abgerufen wird. Kuerzer = mehr Anrufe auf dem Free Tier des Anbieters; laenger = weniger Anrufe aber aeltere Kurse. Formel: Anrufe/Tag = Positionen x Refresh_pro_Tag.",
+        "options": {
+          "manual": "Manuell (nur auf Anfrage)",
+          "hourly": "Stuendlich (~24 Anrufe/Tag pro Position)",
+          "every4h": "Alle 4 Stunden (~6 Anrufe/Tag pro Position)",
+          "every12h": "Alle 12 Stunden (~2 Anrufe/Tag pro Position)",
+          "daily": "Taeglich (1 Anruf/Tag pro Position)"
+        },
+        "descriptions": {
+          "manual": "Keine Auto-Aktualisierung: Preise werden nur aktualisiert, wenn Sie 'Aktualisieren' tippen. Null API-Anrufe bis Sie es wollen. Empfohlen fuer sehr knappe Free Tiers.",
+          "hourly": "Nur fuer grosszuegige Tiers geeignet (Finnhub 60/Min, Twelve Data 800/Tag). 30 Positionen = ~720 Anrufe/Tag: weit ueber Alpha Vantage oder Marketstack Free.",
+          "every4h": "Ausgewogen: 6 Anrufe/Position/Tag. Passt zu Twelve Data (800/Tag = 130 Positionen) und Tiingo (50 Symbole/Stunde). Empfohlener Default fuer Standard-Free-Tier.",
+          "every12h": "Konservativ: 2 Anrufe/Position/Tag. Bequem fuer FMP (250/Tag = 125 Positionen) und Polygon Free.",
+          "daily": "Maximale Ersparnis: 1 Anruf/Position/Tag. Sogar mit Alpha Vantage kompatibel (25/Tag = 25 Positionen). An den oeffentlichen Snapshot-Rhythmus angepasst."
+        }
+      }
+    },
+    "providers": {
+      "api_key_label": "{provider} API-Schluessel",
+      "api_key_hint": "Fuegen Sie hier den im Anbieter-Dashboard erzeugten Schluessel ein",
+      "api_key_saved": "{provider}-Schluessel gespeichert",
+      "api_key_cleared": "{provider}-Schluessel entfernt",
+      "copy_endpoint": "Beispiel-Endpoint kopieren",
+      "endpoint_copied": "Endpoint in die Zwischenablage kopiert",
+      "signup": "Registrieren",
+      "docs": "Docs",
+      "url_copied": "Link in die Zwischenablage kopiert",
+      "no_key_required": "Kein Schluessel noetig: dieser Anbieter ist oeffentlich.",
+      "tag_realtime": "Echtzeit",
+      "tag_historic": "Historisch",
+      "eodhd": {
+        "short": "EOD historisch + Echtzeit + Wirtschaftskalender (bereits integriert).",
+        "description": "End-of-Day- und Echtzeit-Anbieter, der bereits in der App integriert ist. Aktueller Endpoint: https://eodhd.com/api mit Parameter api_token. Wird von der Preis-Kaskade (Real-Time -> EOD -> Snapshot) und dem Wirtschaftskalender verwendet.",
+        "free_quota": "Free Tier: 20 Anrufe/Tag, 1 Jahr Historie, DEMO-Tickers verfuegbar (AAPL.US, TSLA.US, BTC-USD.CC...)."
+      },
+      "fmp": {
+        "short": "Kurse, Top Movers und Wirtschaftskalender (bereits integriert).",
+        "description": "Financial Modeling Prep, integriert fuer Preis-Fallback und Top-Movers-Backup. Aktueller Endpoint: https://financialmodelingprep.com/stable mit Parameter apikey. Der Legacy-Branch /api/v3/ bleibt fuer bestehende Plaene zugaenglich.",
+        "free_quota": "Free Basic Tier: 250 Anrufe/Tag, ~5 Jahre EOD, 500 MB/30 Tage Bandbreite."
+      },
+      "alphaVantage": {
+        "short": "Globale Aktien-Historie + technische Indikatoren.",
+        "description": "Alpha Vantage bietet TIME_SERIES_DAILY/INTRADAY, Fundamentals, FX, Crypto und ueber 50 technische Indikatoren. Aktueller Endpoint: https://www.alphavantage.co/query mit Parameter apikey. Sehr tiefe Historie (20+ Jahre mit outputsize=full).",
+        "free_quota": "Free Tier: 25 Anrufe/Tag, 5 Anrufe/Minute. Lebenslanger kostenloser Schluessel ueber die Support-Seite."
+      },
+      "twelveData": {
+        "short": "Multi-Asset (Aktien, Forex, Crypto) + Echtzeit-WebSocket.",
+        "description": "Twelve Data bietet time_series, quote, indicators, profile, ticker search und mehr. Aktueller Endpoint: https://api.twelvedata.com mit Parameter apikey. Besonders stark bei Forex und globalen Indizes.",
+        "free_quota": "Free Trial: 800 Credits/Tag + 8 pro Minute. Inkl. Echtzeit-WebSocket fuer US, Forex und Crypto."
+      },
+      "finnhub": {
+        "short": "US-Echtzeit-Kurse + News + Earnings.",
+        "description": "Finnhub deckt US-Echtzeit-Kurse, OHLC-Candles, Fundamentals, News, Earnings-Kalender und Symbol-Suche ab. Aktueller Endpoint: https://finnhub.io/api/v1 mit Parameter token. Der Free Plan hat ein grosszuegiges Rate Limit.",
+        "free_quota": "Free Tier: 60 Anrufe/Minute auf allen US-Basis-Endpoints. Ideal fuer haeufige Aktualisierungen."
+      },
+      "polygon": {
+        "short": "OHLC-Aggregates + institutionelle Daten (US).",
+        "description": "Polygon.io liefert pro Ticker Aggregates (1m/5m/1h/1d), Tick-Trades & Quotes (kostenpflichtig) und Fundamentals. Aktueller Endpoint: https://api.polygon.io mit Parameter apiKey. Free Tier auf EOD beschraenkt.",
+        "free_quota": "Free Tier: 5 Anrufe/Minute, nur EOD, bis zu 2 Jahre Historie. Starter Plan schaltet Echtzeit frei."
+      },
+      "marketstack": {
+        "short": "Globale EOD 30.000+ Tickers (apilayer).",
+        "description": "Marketstack (apilayer) ist auf globale historische EOD ueber 30.000+ Tickers spezialisiert. Aktueller Endpoint: https://api.marketstack.com/v2 mit Parameter access_key. Im Free Tier verlangt der Endpoint HTTP statt HTTPS.",
+        "free_quota": "Free Tier: 100 Anrufe/Monat (Free Plan) oder 1.000/Monat (aktualisierter Free 1K Plan). Nur EOD, max 12 Monate Historie."
+      },
+      "tiingo": {
+        "short": "US/global EOD + IEX intraday + 30+ Jahre Historie.",
+        "description": "Tiingo bietet 30+ Jahre EOD auf Aktien und ETFs, IEX delayed/real-time und Fundamentals. Aktueller Endpoint: https://api.tiingo.com mit Parameter token oder Header Authorization: Token <Schluessel>. Besonders zuverlaessig fuer Backtesting.",
+        "free_quota": "Free Tier: 50 eindeutige Symbole/Monat, 1.000 Anrufe/Stunde, 30+ Jahre EOD."
+      },
+      "nasdaqDataLink": {
+        "short": "Time-Series + Tabellen (ehem. Quandl).",
+        "description": "Nasdaq Data Link (ehemals Quandl) aggregiert 250+ Time-Series- und Tabellen-Datasets von 400+ Publishern (Rohstoffe, Makro, Alt-Data). Aktueller Endpoint: https://data.nasdaq.com/api/v3 mit Parameter api_key. Nur 40 kostenlose Datasets, der Rest ist kostenpflichtig.",
+        "free_quota": "Free Tier: 50.000 Anrufe/Tag (300/10s, 2.000/10min). 40 kostenlose Datasets ohne Abo."
+      },
+      "stooq": {
+        "short": "Oeffentliche kostenlose CSVs, kein Schluessel.",
+        "description": "Stooq veroeffentlicht kostenlose CSVs mit EOD von 12.000+ Aktien, Indizes, ETFs, Forex und Crypto. Kein Schluessel: Direktdownload von https://stooq.com/q/d/l/?s=<ticker>&i=d. Hervorragender kostenloser Fallback, aber ohne SLA und Echtzeit.",
+        "free_quota": "Kein deklariertes Rate Limit, aber respektieren Sie menschliche Nutzung (kein Mass-Scraping). Ideal als kostenloser historischer Fallback."
+      }
+    },
     "about": {
       "title": "Ueber",
       "version": "Version",
@@ -671,6 +758,21 @@
         "title": "API keys und optionale Provider",
         "content": "Welche Schlüssel benötigt werden, wo sie abgelegt werden und was ohne sie passiert.",
         "details": "**Die drei optionalen Schlüssel**\n- **Gemini** (Google) — KI-Analyse und Chat. Fehlt er, sind die KI-Funktionen deaktiviert, der Rest der App funktioniert weiterhin.\n- **EODHD** — Echtzeit- und End-of-Day-Kurse sowie Wirtschaftskalender. Fehlt er, kommen Kurse ausschließlich aus dem Snapshot.\n- **FMP** (Financial Modeling Prep) — Kurs-Fallback. Verbessert die Abdeckung bei Tickern, die EODHD nicht gut handhabt.\n\nKein Schlüssel ist Pflicht: die App ist so konzipiert, dass sie auch \"mit ausgeschalteten Schlüsseln\" nützlich ist (öffentliche Top Movers, manuelle Portfolioverwaltung).\n\n**Wo die Schlüssel liegen**\nSchlüssel werden in `flutter_secure_storage` abgelegt, das den nativen Keystore der jeweiligen Plattform verwendet:\n- iOS: Keychain (verschlüsselt mit `kSecAttrAccessibleAfterFirstUnlock`).\n- Android: EncryptedSharedPreferences mit AES-256-Schlüssel im Keystore.\n- Windows: benutzerbezogenes DPAPI.\n- macOS: Keychain.\n- Linux: libsecret / Secret Service.\n- Web: Web Crypto API (mit Browser-Limits).\n\n**Kurs-Fallback-Kette**\nBeim Auffrischen des Wertes einer Position probiert die App in dieser Reihenfolge:\n1. EODHD real-time → wenn EODHD-Schlüssel vorhanden und Markt geöffnet.\n2. EODHD end-of-day → wenn EODHD-Schlüssel vorhanden.\n3. FMP → wenn FMP-Schlüssel vorhanden.\n4. Öffentlicher Snapshot → immer verfügbar, aber mit `isPriceReliable=false` und Staleness-Symbol.\n\n**Verbindungstest**\nUnter Einstellungen → KI / Markt können Sie \"Verbindung testen\" drücken, um den eingegebenen Schlüssel zu validieren: die App führt einen leichtgewichtigen Aufruf gegen den Provider-Endpunkt aus und gibt sofortiges Feedback.\n\n**Wo Sie Schlüssel erhalten**\n- Gemini: Google AI Studio (`aistudio.google.com`). Großzügiges Free-Tier für den persönlichen Gebrauch.\n- EODHD: `eodhd.com` — eingeschränkter Free-Plan, kostenpflichtige Pläne für erweiterte Echtzeit.\n- FMP: `financialmodelingprep.com` — Free-Plan mit Rate Limits.\n\n**Operative Best Practices**\n- Schlüssel periodisch in den Provider-Dashboards rotieren.\n- Keine Screenshots teilen, auf denen der Schlüssel im Klartext sichtbar ist.\n- Bei Verdacht auf Kompromittierung sofort im Provider-Dashboard widerrufen und einen neuen Schlüssel erzeugen.\n- Der Daten-Reset in den Einstellungen entfernt auch die gespeicherten Schlüssel."
+      },
+      "providers_catalog": {
+        "title": "Katalog der unterstuetzten Anbieter",
+        "content": "Die 10 in der App integrierten Anbieter fuer historische und Echtzeit-Daten, mit Endpoints, Free Tier und Empfehlungen.",
+        "details": "**Integrierte Anbieter (10 + Gemini AI)**\nDie App unterstuetzt 10 Marktdaten-Anbieter (historisch + Echtzeit) und Google Gemini fuer AI-Analyse. Jeder Anbieter hat eine ausklappbare Karte in Einstellungen > Marktdaten mit Beispiel-Endpoint, Signup-Link, Docs-Link und API-Schluessel-Formular. Schluessel werden in flutter_secure_storage (Keychain/DPAPI/libsecret) gespeichert.\n\n**EODHD** (bereits zur Laufzeit integriert)\n- Endpoint: https://eodhd.com/api -- Parameter api_token\n- Free Tier: 20 Anrufe/Tag, 1 Jahr Historie, DEMO-Tickers verfuegbar\n- Stark bei: Echtzeit + EOD + globaler Wirtschaftskalender\n\n**Financial Modeling Prep (FMP)** (bereits zur Laufzeit integriert)\n- Endpoint: https://financialmodelingprep.com/stable -- Parameter apikey\n- Free Basic Tier: 250 Anrufe/Tag, 5 Jahre Historie, 500 MB/30 Tage Bandbreite\n- Stark bei: Top Movers, Fundamentals, Wirtschaftskalender\n\n**Alpha Vantage**\n- Endpoint: https://www.alphavantage.co/query -- Parameter apikey\n- Free Tier: 25 Anrufe/Tag, 5 Anrufe/Minute, lebenslanger kostenloser Schluessel\n- Stark bei: tiefem TIME_SERIES_DAILY (20+ Jahre), 50+ technischen Indikatoren, FX/Crypto\n\n**Twelve Data**\n- Endpoint: https://api.twelvedata.com -- Parameter apikey\n- Trial: 800 Credits/Tag + kostenloser Echtzeit-WebSocket\n- Stark bei: Multi-Asset (Aktien/Forex/Crypto/globale Indizes), Real-Time Push\n\n**Finnhub**\n- Endpoint: https://finnhub.io/api/v1 -- Parameter token\n- Free Tier: 60 Anrufe/Minute auf US-Basis-Endpoints\n- Stark bei: US-Echtzeit-Kursen, News, Earnings-Kalender, Fundamentals\n\n**Polygon.io**\n- Endpoint: https://api.polygon.io -- Parameter apiKey\n- Free Tier: 5 Anrufe/Minute, nur EOD, 2 Jahre Historie\n- Stark bei: OHLC-Aggregates auf benutzerdefinierten Fenstern (1m, 5m, 1h, 1d)\n\n**Marketstack** (apilayer)\n- Endpoint: https://api.marketstack.com/v2 -- Parameter access_key\n- Free Tier: 100 Anrufe/Monat (1.000 im aktualisierten Free 1K Plan), globales EOD\n- Stark bei: 30.000+ Ticker-Abdeckung an europaeischen/asiatischen Boersen\n\n**Tiingo**\n- Endpoint: https://api.tiingo.com -- Parameter token (oder Header Authorization: Token <Schluessel>)\n- Free Tier: 50 Symbole/Monat, 1.000 Anrufe/Stunde, 30+ Jahre Historie\n- Stark bei: Backtesting (tiefer, zuverlaessiger Historie), IEX delayed/real-time\n\n**Nasdaq Data Link** (ehem. Quandl)\n- Endpoint: https://data.nasdaq.com/api/v3 -- Parameter api_key\n- Free Tier: 50.000 Anrufe/Tag (300/10s, 2.000/10min), 40 kostenlose Datasets\n- Stark bei: Makro/Rohstoff/Alt-Data Time-Series, esoterischen Datasets\n\n**Stooq**\n- Endpoint: https://stooq.com/q/d/l/?s=<ticker>&i=d -- kein Schluessel\n- Oeffentliche CSVs, EOD auf 12.000+ Assets (Aktien, Indizes, ETFs, Forex, Crypto)\n- Stark bei: kostenlosem Fallback ohne Registrierung, jahrzehntelanger Historie\n\n**Welchen waehlen?**\n- Fuer **US-only Portfolio + haeufige Aktualisierung**: Finnhub (60/Min) oder Twelve Data (800/Tag).\n- Fuer **tiefe Historie fuer Backtesting**: Tiingo oder Alpha Vantage.\n- Fuer **europaeische/asiatische Maerkte**: Marketstack (paid plan), EODHD, FMP.\n- Fuer **Makro / Rohstoffe**: Nasdaq Data Link.\n- Fuer **kostenlose Intraday-Aggregates**: Polygon (5/Min reicht zum Testen).\n- Fuer **reinen Fallback ohne Schluessel**: Stooq.\n\n**Preis-Fallback-Kaskade (bereits aktiv)**\n1. EODHD real-time (wenn Schluessel)\n2. EODHD EOD (wenn Schluessel)\n3. FMP (wenn Schluessel)\n4. Oeffentlicher GitHub-Pages-Snapshot\n\nDie anderen 7 Anbieter sind aktuell im Modus 'Schluessel gespeichert + Endpoint dokumentiert': Die Laufzeit-Integration kann pro Anbieter in zukuenftigen Releases aktiviert werden.\n\n**Schluessel-Sicherheit**\nJeder Schluessel wird im System-Keystore verschluesselt. Niemals geloggt, niemals exportiert. Die 'Daten loeschen'-Aktion in den Einstellungen entfernt alle gespeicherten Schluessel."
+      },
+      "refresh_interval": {
+        "title": "Daten-Aktualisierungsfrequenz",
+        "content": "Wie oft Preise als veraltet gelten und vom aktiven Anbieter neu abgerufen werden.",
+        "details": "**Was diese Einstellung steuert**\nEinstellungen > Marktdaten > Aktualisierungsfrequenz definiert die **Veralt-Schwelle des Preis-Caches**. Wenn eine Position angezeigt wird und ihr gecachter Kurs aelter als die Schwelle ist, holt die App neu. Zwischen zwei aufeinanderfolgenden Fetches gibt es keinen Netzwerkanruf.\n\n**Ohne persoenlichen API-Schluessel**\nDie App stuetzt sich ausschliesslich auf den **oeffentlichen taeglichen Snapshot**, der von der GitHub Actions Pipeline erzeugt wird:\n- Workflow `market-data-snapshot.yml` laeuft taeglich um 22:35 UTC.\n- Workflow `daily-data-commit.yml` committed die 'proof of freshness' um 07:00 UTC.\n- Der lokale Hook `session-start.ps1` zieht bei jedem Sessionstart neue Daten.\n- Ergebnis: Daten **einmal pro Tag** aktualisiert, an den Schluss des Vortages angeglichen. Null API-Anrufe von der App.\n\n**Mit persoenlichem API-Schluessel**\nDie App kann in Echtzeit nachladen (gemaess Anbieter-Tier). Die gewaehlte Frequenz bestimmt, wie viele Anrufe pro Tag gemacht werden.\n\n**Die 5 verfuegbaren Optionen**\n- **Manuell** (Default fuer enge Free Tiers): kein Auto-Fetch. Sie aktualisieren beim Tippen auf 'Aktualisieren'. Null API-Verbrauch.\n- **Stuendlich**: ~24 Anrufe/Position/Tag. Nur fuer grosszuegige Tiers (Finnhub 60/Min, Twelve Data 800/Tag).\n- **Alle 4 Stunden**: ~6 Anrufe/Position/Tag. Ausgewogen fuer Comfort-Tiers (Twelve Data 130 Positionen, Tiingo 50 Symbole/Stunde).\n- **Alle 12 Stunden**: ~2 Anrufe/Position/Tag. Geeignet fuer moderate Tiers (FMP 250/Tag = 125 Positionen, Polygon 5/Min).\n- **Taeglich** (empfohlener Default): 1 Anruf/Position/Tag. Sogar mit Alpha Vantage kompatibel (25/Tag = 25 Positionen). An den oeffentlichen Snapshot-Rhythmus angepasst.\n\n**Berechnung der Tagesanrufe**\nEinfache Formel: `Anrufe_Tag = Positionen x Refresh_Tag`.\n\nBeispiele:\n- 30 Positionen + Taeglich = 30 Anrufe/Tag (Alpha Vantage 25/Tag: UEBERSCHREITET Quota).\n- 30 Positionen + Alle 12h = 60 Anrufe/Tag (FMP 250/Tag: 24% des Tier).\n- 30 Positionen + Alle 4h = 180 Anrufe/Tag (Twelve Data 800/Tag: 22% des Tier).\n- 30 Positionen + Stuendlich = 720 Anrufe/Tag (Finnhub 60/Min = 86.400/Tag: weit darunter).\n\n**Praezise Semantik**\nDie App macht KEIN Polling mit Timer. Veraltheit wird **on-access** bewertet: Wenn Sie Home/Markt oeffnen oder 'Aktualisieren' tippen, prueft die App fuer jede Position `(jetzt - cached_at) >= Schwelle` und holt nur die noetigen Positionen neu. Das vermeidet unnoetige Anrufe, waehrend die App im Hintergrund ist.\n\n**Wann die Frequenz erhoehen**\n- Intraday-Trading auf wenigen Positionen: Stuendlich mit Finnhub.\n- Aktives Monitoring waehrend Marktoeffnung: Alle 4h.\n- Woechentliches Rebalancing oder beilaeufige Checks: Taeglich oder Manuell.\n\n**Wann sie senken**\n- Sehr enges Free Tier (Alpha Vantage 25/Tag, Marketstack 100/Monat).\n- Gemessene/langsame Verbindung.\n- Privacy-first: weniger Anrufe = weniger Spuren bei externen Anbietern."
+      },
+      "quota_alerts": {
+        "title": "Quota- und Rate-Limit-Alerts",
+        "content": "Die App zeigt einen permanenten Banner, wenn ein Schluessel das Quota erreicht oder Rate-Limit erhaelt.",
+        "details": "**Was den Alert ausloest**\nWenn einer Ihrer API-Schluessel vom Anbieter eine als 'Limit erreicht' interpretierte Antwort erhaelt, zeigt die App einen farbigen Banner ueber dem aktuellen Bildschirm.\n\n**Die drei erkannten Kategorien**\n- **Rate Limit** (HTTP 429 generisch): zu viele Anrufe im Zeitfenster. Oranger Banner, verschwindet nach 12 Sekunden. Erneutes Probieren spaeter loest es typischerweise.\n- **Quota erschoepft** (HTTP 429 + Body mit 'quota/exhausted/daily/monthly' oder HTTP 403 mit 'limit/exceeded'): taegliches oder monatliches Tier verbraucht. Roter Banner. Warten Sie auf den Reset oder upgraden Sie das Tier.\n- **Ungueltiger Schluessel** (HTTP 401 oder 403 ohne Quota-Pattern): Schluessel widerrufen, abgelaufen, nie existiert oder falsch eingegeben. Dunkelroter Banner. Gehen Sie in Einstellungen und erneuern/korrigieren Sie den Schluessel.\n\n**Ueberwachte Anbieter**\nGemini, EODHD, FMP, Alpha Vantage, Twelve Data, Finnhub, Polygon, Marketstack, Tiingo, Nasdaq Data Link. Jeder Anbieter hat sein eigenes Label im Banner, sodass Sie sofort wissen, welchen Schluessel zu bearbeiten.\n\n**De-Duplikation**\nWenn sich derselbe `(Anbieter, Grund)` innerhalb von 60 Sekunden wiederholt, zeigt die App den Banner **nicht** erneut, um Spam zu vermeiden. Nach 60 Sekunden bringt ein neuer identischer Fehler den Alert zurueck.\n\n**Auto-Schliessen**\nDer Banner schliesst sich automatisch nach 12 Sekunden auch ohne Tap. Sie koennen ihn manuell mit dem 'Schliessen'-Button im Banner schliessen.\n\n**Banner-Privatsphaere**\nDer Banner zeigt nur: Anbietername, Grund (Rate Limit / Quota / ungueltiger Schluessel) und eine Uebersetzung des Fehlerbodys, falls verfuegbar. **Niemals** den Schluessel, niemals vollstaendige Endpoints, niemals Benutzer oder IP.\n\n**Was tun wenn ein Banner erscheint**\n1. **Rate Limit**: 30-60 Sekunden warten und erneut versuchen. Bleibt es bestehen, senken Sie die Aktualisierungsfrequenz.\n2. **Quota erschoepft**: oeffnen Sie das Anbieter-Dashboard, pruefen Sie die Tages-/Monatsnutzung. Erwaegen Sie ein hoeheres Tier oder wechseln Sie zu einem anderen in der App konfigurierten Anbieter.\n3. **Ungueltiger Schluessel**: oeffnen Sie Einstellungen > Marktdaten, klappen Sie den Anbieter aus, speichern Sie einen neuen Schluessel.\n\n**Telemetrie**\nDas Ereignis wird **nur** fuer den Banner verwendet. Nicht extern geloggt, nicht an Drittserver gesendet, nicht ueber Sessions hinweg persistiert."
       },
       "privacy_security": {
         "title": "Datenschutz und Sicherheit",
@@ -794,6 +896,32 @@
       "progress": "Fortschritt",
       "target_date": "Zieldatum",
       "created_date": "Erstellungsdatum"
+    }
+  },
+  "api_quota": {
+    "providers": {
+      "gemini": "Gemini",
+      "eodhd": "EODHD",
+      "fmp": "Financial Modeling Prep",
+      "alphaVantage": "Alpha Vantage",
+      "twelveData": "Twelve Data",
+      "finnhub": "Finnhub",
+      "polygon": "Polygon.io",
+      "marketstack": "Marketstack",
+      "tiingo": "Tiingo",
+      "nasdaqDataLink": "Nasdaq Data Link"
+    },
+    "rate_limit": {
+      "title": "Rate-Limit erreicht",
+      "body": "{provider} hat Ihre Anfragen verlangsamt (HTTP 429). Warten Sie ein paar Sekunden und versuchen Sie es erneut oder reduzieren Sie die Aktualisierungsfrequenz."
+    },
+    "quota_exceeded": {
+      "title": "Quota erschoepft",
+      "body": "Das Free Tier von {provider} hat die taeglichen oder monatlichen Anrufe erschoepft. Warten Sie auf den Reset oder aktualisieren Sie den Plan."
+    },
+    "invalid_key": {
+      "title": "Ungueltiger API-Schluessel",
+      "body": "{provider} hat den Schluessel abgelehnt (HTTP 401/403). Gehen Sie in Einstellungen > Marktdaten und pruefen oder erneuern Sie den Schluessel."
     }
   }
 }

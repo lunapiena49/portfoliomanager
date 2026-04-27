@@ -31,6 +31,8 @@ class AppConstants {
   static const String lastRouteKey = 'last_route_path';
   static const String lastRouteTimestampKey = 'last_route_timestamp_ms';
   static const String lastMarketSyncDateKey = 'last_market_sync_iso_date';
+  static const String marketDataRefreshIntervalKey =
+      'market_data_refresh_interval';
 
   // Hive Box Names
   static const String settingsBox = 'settings_box';

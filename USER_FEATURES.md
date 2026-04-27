@@ -103,8 +103,19 @@ Aggiornato alla sessione: **2026-04-18** (Ultrareview #1).
 
 - **Generali**: lingua (6), valuta base (7), tema (light/dark/system) - [lib/features/settings/presentation/pages/settings_page.dart](lib/features/settings/presentation/pages/settings_page.dart)
 - **AI**: chiave API Gemini con test connessione
-- **EODHD**: chiave API opzionale per quotazioni real-time
-- **FMP**: chiave API opzionale come fallback
+- **Dati di mercato** (sezione dedicata nuova):
+  - Intro che spiega snapshot pubblico gratuito (1x/giorno, nessuna chiave) vs chiavi personali (refresh real-time)
+  - **Frequenza di aggiornamento** selezionabile: Manuale / Ogni ora / Ogni 4h / Ogni 12h / Giornaliera, ognuna con descrizione dettagliata (esempi calls/giorno per posizione e compatibilita' con tier free dei provider)
+  - **10 provider supportati con scheda espandibile** ognuno: EODHD, FMP, Alpha Vantage, Twelve Data, Finnhub, Polygon.io, Marketstack, Tiingo, Nasdaq Data Link, Stooq
+  - Per ogni provider: chip free-quota / real-time / historic, descrizione testuale, endpoint di esempio copiabile, link signup, link docs, campo API key con save / clear / visibility-toggle (Stooq e' pubblico, non richiede chiave)
+  - Definizione provider in [lib/core/constants/market_data_providers.dart](lib/core/constants/market_data_providers.dart)
+- **Alert quota / rate limit** (banner globale persistente):
+  - Quando un endpoint provider restituisce 429 (rate limit), 429 con quota esaurita, o 401/403 (chiave invalida), un MaterialBanner colorato appare sopra qualsiasi schermata
+  - Tre categorie distinte con colore e icona dedicati: rate limit (arancione), quota esaurita (rosso), chiave invalida (rosso scuro)
+  - Auto-dismiss 12s, de-duplicazione 60s su (provider, motivo) per evitare spam
+  - Listener globale: [lib/core/widgets/api_quota_alert_listener.dart](lib/core/widgets/api_quota_alert_listener.dart)
+  - Servizio singleton: [lib/services/api/api_quota_alert_service.dart](lib/services/api/api_quota_alert_service.dart)
+  - Provider monitorati: Gemini, EODHD, FMP, Alpha Vantage, Twelve Data, Finnhub, Polygon, Marketstack, Tiingo, Nasdaq Data Link
 - **Gestione dati**:
   - Esporta tutti i dati (JSON)
   - Backup / ripristino locale

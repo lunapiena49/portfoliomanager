@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/app_localization.dart';
+import 'core/widgets/api_quota_alert_listener.dart';
 import 'services/storage/disclosure_service.dart';
 import 'services/storage/local_storage_service.dart';
 import 'services/storage/storage_paths.dart';
@@ -68,6 +69,12 @@ class PortfolioManagerApp extends StatefulWidget {
 
 class _PortfolioManagerAppState extends State<PortfolioManagerApp>
     with WidgetsBindingObserver {
+  /// Shared with both [MaterialApp.scaffoldMessengerKey] and the global
+  /// [ApiQuotaAlertListener] so quota banners attach to the same messenger
+  /// the page-level Scaffolds use.
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
   @override
   void initState() {
     super.initState();
@@ -152,20 +159,24 @@ class _PortfolioManagerAppState extends State<PortfolioManagerApp>
                 }
               }
             },
-            child: BlocBuilder<SettingsBloc, SettingsState>(
-              builder: (context, settingsState) {
-                return MaterialApp.router(
-                  title: 'Portfolio Manager',
-                  debugShowCheckedModeBanner: false,
-                  localizationsDelegates: context.localizationDelegates,
-                  supportedLocales: context.supportedLocales,
-                  locale: context.locale,
-                  theme: AppTheme.lightTheme,
-                  darkTheme: AppTheme.darkTheme,
-                  themeMode: _getThemeMode(settingsState),
-                  routerConfig: AppRouter.router,
-                );
-              },
+            child: ApiQuotaAlertListener(
+              messengerKey: _scaffoldMessengerKey,
+              child: BlocBuilder<SettingsBloc, SettingsState>(
+                builder: (context, settingsState) {
+                  return MaterialApp.router(
+                    title: 'Portfolio Manager',
+                    debugShowCheckedModeBanner: false,
+                    scaffoldMessengerKey: _scaffoldMessengerKey,
+                    localizationsDelegates: context.localizationDelegates,
+                    supportedLocales: context.supportedLocales,
+                    locale: context.locale,
+                    theme: AppTheme.lightTheme,
+                    darkTheme: AppTheme.darkTheme,
+                    themeMode: _getThemeMode(settingsState),
+                    routerConfig: AppRouter.router,
+                  );
+                },
+              ),
             ),
           ),
         );

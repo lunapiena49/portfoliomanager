@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/market_data_providers.dart';
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
 import '../../features/goals/domain/entities/goals_entities.dart';
 import '../../features/rebalancing/domain/entities/rebalancing_entities.dart';
@@ -25,6 +26,13 @@ class LocalStorageService {
   static String? _cachedGeminiKey;
   static String? _cachedFmpKey;
   static String? _cachedEodhdKey;
+
+  /// Cache of the secondary market-data provider keys (Alpha Vantage,
+  /// Twelve Data, Finnhub, Polygon, Marketstack, Tiingo, Nasdaq Data Link).
+  /// Keyed by [MarketDataProvider]. EODHD/FMP are mirrored here too on init
+  /// so callers can iterate uniformly, but the canonical cache for those
+  /// two stays in [_cachedFmpKey] / [_cachedEodhdKey] for back-compat.
+  static final Map<MarketDataProvider, String> _cachedProviderKeys = {};
 
   /// Initialize storage.
   ///
@@ -100,6 +108,15 @@ class LocalStorageService {
     _cachedEodhdKey = await _secureStorage.read(
       key: AppConstants.eodhdApiKeyKey,
     );
+
+    _cachedProviderKeys.clear();
+    for (final provider in MarketDataProvider.values) {
+      final key = ProviderCatalog.storageKeyFor(provider);
+      final value = await _secureStorage.read(key: key);
+      if (value != null && value.trim().isNotEmpty) {
+        _cachedProviderKeys[provider] = value;
+      }
+    }
   }
 
   // ==================== SETTINGS ====================
@@ -307,13 +324,69 @@ class LocalStorageService {
     if (apiKey == null || apiKey.isEmpty) {
       await _secureStorage.delete(key: AppConstants.eodhdApiKeyKey);
       _cachedEodhdKey = null;
+      _cachedProviderKeys.remove(MarketDataProvider.eodhd);
     } else {
       await _secureStorage.write(
         key: AppConstants.eodhdApiKeyKey,
         value: apiKey,
       );
       _cachedEodhdKey = apiKey;
+      _cachedProviderKeys[MarketDataProvider.eodhd] = apiKey;
     }
+  }
+
+  /// Generic getter for any market-data provider's API key.
+  ///
+  /// EODHD/FMP route through their dedicated cache for back-compat with
+  /// existing call-sites; new providers (Alpha Vantage, Tiingo, ...) read
+  /// from [_cachedProviderKeys].
+  static String? getProviderApiKey(MarketDataProvider provider) {
+    switch (provider) {
+      case MarketDataProvider.eodhd:
+        return _cachedEodhdKey;
+      case MarketDataProvider.fmp:
+        return _cachedFmpKey;
+      default:
+        return _cachedProviderKeys[provider];
+    }
+  }
+
+  /// Generic setter for any market-data provider's API key.
+  static Future<void> setProviderApiKey(
+    MarketDataProvider provider,
+    String? apiKey,
+  ) async {
+    final storageKey = ProviderCatalog.storageKeyFor(provider);
+    final trimmed = apiKey?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      await _secureStorage.delete(key: storageKey);
+      _cachedProviderKeys.remove(provider);
+      if (provider == MarketDataProvider.eodhd) _cachedEodhdKey = null;
+      if (provider == MarketDataProvider.fmp) _cachedFmpKey = null;
+      return;
+    }
+    await _secureStorage.write(key: storageKey, value: trimmed);
+    _cachedProviderKeys[provider] = trimmed;
+    if (provider == MarketDataProvider.eodhd) _cachedEodhdKey = trimmed;
+    if (provider == MarketDataProvider.fmp) _cachedFmpKey = trimmed;
+  }
+
+  /// Persisted market-data refresh staleness threshold. Default: daily.
+  static MarketDataRefreshInterval getMarketDataRefreshInterval() {
+    final raw = _settingsBox.get(AppConstants.marketDataRefreshIntervalKey);
+    return MarketDataRefreshIntervalDuration.fromStorage(
+      raw is String ? raw : null,
+    );
+  }
+
+  /// Save the user's chosen refresh staleness threshold.
+  static Future<void> setMarketDataRefreshInterval(
+    MarketDataRefreshInterval value,
+  ) async {
+    await _settingsBox.put(
+      AppConstants.marketDataRefreshIntervalKey,
+      value.storageValue,
+    );
   }
 
   // ==================== PORTFOLIO ====================
@@ -454,11 +527,13 @@ class LocalStorageService {
     await _portfolioBox.clear();
     await _goalsBox.clear();
     await _secureStorage.delete(key: AppConstants.geminiApiKeyKey);
-    await _secureStorage.delete(key: AppConstants.fmpApiKeyKey);
-    await _secureStorage.delete(key: AppConstants.eodhdApiKeyKey);
+    for (final provider in MarketDataProvider.values) {
+      await _secureStorage.delete(key: ProviderCatalog.storageKeyFor(provider));
+    }
     _cachedGeminiKey = null;
     _cachedFmpKey = null;
     _cachedEodhdKey = null;
+    _cachedProviderKeys.clear();
   }
 
   /// Export all data as JSON

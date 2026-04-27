@@ -3,6 +3,7 @@ import '../../core/constants/app_constants.dart';
 import '../../features/analysis/domain/analysis_preset.dart';
 import '../../features/analysis/domain/analysis_prompt_builder.dart';
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
+import 'api_quota_alert_service.dart';
 import 'retry_interceptor.dart';
 
 /// Service for interacting with Google Gemini API
@@ -148,6 +149,11 @@ class GeminiService {
 
   /// Map a DioException to a domain exception without leaking response body.
   Exception _mapDioException(DioException e) {
+    // Centralized notification: surfaces a user-facing alert when the call
+    // failed because of a quota/rate-limit/invalid-key condition. Always
+    // safe to call -- the helper is a no-op for unrelated failures.
+    reportProviderDioException(ApiQuotaProvider.gemini, e);
+
     final status = e.response?.statusCode;
     if (status == 400) {
       return Exception('Invalid request');

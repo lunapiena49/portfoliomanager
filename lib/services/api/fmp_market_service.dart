@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../core/constants/app_constants.dart';
+import 'api_quota_alert_service.dart';
 import 'retry_interceptor.dart';
 
 /// Service for interacting with Financial Modeling Prep market endpoints.
@@ -30,7 +31,7 @@ class FmpMarketService {
     _ensureApiKey();
 
     final endpoint = gainers ? '/biggest-gainers' : '/biggest-losers';
-    final response = await _dio.get(
+    final response = await _guardedGet(
       endpoint,
       queryParameters: {
         'apikey': _apiKey,
@@ -58,7 +59,7 @@ class FmpMarketService {
       return null;
     }
 
-    final response = await _dio.get(
+    final response = await _guardedGet(
       '/stock-price-change',
       queryParameters: {
         'symbol': normalizedSymbol,
@@ -90,7 +91,7 @@ class FmpMarketService {
       return null;
     }
 
-    final response = await _dio.get(
+    final response = await _guardedGet(
       '/quote-short',
       queryParameters: {
         'symbol': normalizedSymbol,
@@ -118,7 +119,7 @@ class FmpMarketService {
   }) async {
     _ensureApiKey();
 
-    final response = await _dio.get(
+    final response = await _guardedGet(
       '/economic-calendar',
       queryParameters: {
         'from': from,
@@ -142,6 +143,20 @@ class FmpMarketService {
   void _ensureApiKey() {
     if (!hasApiKey) {
       throw Exception('FMP API key not configured');
+    }
+  }
+
+  /// Wrap [Dio.get] so any DioException is reported to the global quota
+  /// alert service before being rethrown. Caller-visible behavior unchanged.
+  Future<Response<dynamic>> _guardedGet(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      return await _dio.get(path, queryParameters: queryParameters);
+    } on DioException catch (e) {
+      reportProviderDioException(ApiQuotaProvider.fmp, e);
+      rethrow;
     }
   }
 }

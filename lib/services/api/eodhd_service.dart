@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../core/constants/app_constants.dart';
+import 'api_quota_alert_service.dart';
 import 'retry_interceptor.dart';
 
 /// Service for interacting with the EODHD API using the user's personal key.
@@ -37,7 +38,7 @@ class EodhdService {
   ) async {
     _ensureApiKey();
     final symbol = '${ticker.trim().toUpperCase()}.${exchange.trim().toUpperCase()}';
-    final response = await _dio.get(
+    final response = await _guardedGet(
       '/real-time/$symbol',
       queryParameters: {'api_token': _apiKey, 'fmt': 'json'},
     );
@@ -57,7 +58,7 @@ class EodhdService {
   ) async {
     _ensureApiKey();
     final symbol = '${ticker.trim().toUpperCase()}.${exchange.trim().toUpperCase()}';
-    final response = await _dio.get(
+    final response = await _guardedGet(
       '/eod/$symbol',
       queryParameters: {
         'api_token': _apiKey,
@@ -72,6 +73,21 @@ class EodhdService {
       return Map<String, dynamic>.from(data.first as Map);
     }
     return null;
+  }
+
+  /// Wrap [Dio.get] so any DioException is reported to the global quota
+  /// alert service before being rethrown. The underlying error contract is
+  /// unchanged for callers; the alert is a side effect.
+  Future<Response<dynamic>> _guardedGet(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      return await _dio.get(path, queryParameters: queryParameters);
+    } on DioException catch (e) {
+      reportProviderDioException(ApiQuotaProvider.eodhd, e);
+      rethrow;
+    }
   }
 
   /// Attempts real-time first, falls back to EOD.

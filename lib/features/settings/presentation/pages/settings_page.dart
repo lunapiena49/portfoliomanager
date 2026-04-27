@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/market_data_providers.dart';
 import '../../../../core/localization/app_localization.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../services/api/gemini_service.dart';
 import '../../../onboarding/presentation/bloc/onboarding_bloc.dart';
 import '../bloc/settings_bloc.dart';
 
+/// Settings page.
+///
+/// Surface area: general (lang/currency/theme), AI (Gemini), market-data
+/// providers (EODHD, FMP, Alpha Vantage, Twelve Data, Finnhub, Polygon,
+/// Marketstack, Tiingo, Nasdaq Data Link, Stooq), refresh-interval picker,
+/// data management, about.
+///
+/// The market-data section is rendered from the static [ProviderCatalog]:
+/// add a provider there and it shows up here automatically.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -21,42 +32,47 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _geminiApiKeyController =
       TextEditingController();
-  final TextEditingController _fmpApiKeyController = TextEditingController();
-  final TextEditingController _eodhdApiKeyController = TextEditingController();
+  final Map<MarketDataProvider, TextEditingController> _providerControllers =
+      {};
+  final Map<MarketDataProvider, bool> _providerObscure = {};
+
   bool _isTestingConnection = false;
   bool _obscureGeminiApiKey = true;
-  bool _obscureFmpApiKey = true;
-  bool _obscureEodhdApiKey = true;
   String _lastSyncedGeminiApiKey = '';
-  String _lastSyncedFmpApiKey = '';
-  String _lastSyncedEodhdApiKey = '';
+  final Map<MarketDataProvider, String> _lastSyncedProviderKeys = {};
 
   @override
   void initState() {
     super.initState();
+    for (final provider in MarketDataProvider.values) {
+      _providerControllers[provider] = TextEditingController();
+      _providerObscure[provider] = true;
+    }
     context.read<SettingsBloc>().add(LoadSettingsEvent());
     final state = context.read<SettingsBloc>().state;
     if (state is SettingsLoaded) {
-      if (state.settings.geminiApiKey != null) {
-        _geminiApiKeyController.text = state.settings.geminiApiKey!;
-        _lastSyncedGeminiApiKey = state.settings.geminiApiKey!;
-      }
-      if (state.settings.fmpApiKey != null) {
-        _fmpApiKeyController.text = state.settings.fmpApiKey!;
-        _lastSyncedFmpApiKey = state.settings.fmpApiKey!;
-      }
-      if (state.settings.eodhdApiKey != null) {
-        _eodhdApiKeyController.text = state.settings.eodhdApiKey!;
-        _lastSyncedEodhdApiKey = state.settings.eodhdApiKey!;
-      }
+      _hydrateFromState(state);
+    }
+  }
+
+  void _hydrateFromState(SettingsLoaded state) {
+    if (state.settings.geminiApiKey != null) {
+      _geminiApiKeyController.text = state.settings.geminiApiKey!;
+      _lastSyncedGeminiApiKey = state.settings.geminiApiKey!;
+    }
+    for (final provider in MarketDataProvider.values) {
+      final value = state.settings.providerApiKeys[provider] ?? '';
+      _providerControllers[provider]!.text = value;
+      _lastSyncedProviderKeys[provider] = value;
     }
   }
 
   @override
   void dispose() {
     _geminiApiKeyController.dispose();
-    _fmpApiKeyController.dispose();
-    _eodhdApiKeyController.dispose();
+    for (final c in _providerControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -70,27 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
           );
         }
 
-        final geminiApiKey = state.settings.geminiApiKey ?? '';
-        if (geminiApiKey != _lastSyncedGeminiApiKey) {
-          _lastSyncedGeminiApiKey = geminiApiKey;
-          if (_geminiApiKeyController.text != geminiApiKey) {
-            _geminiApiKeyController.text = geminiApiKey;
-          }
-        }
-        final fmpApiKey = state.settings.fmpApiKey ?? '';
-        if (fmpApiKey != _lastSyncedFmpApiKey) {
-          _lastSyncedFmpApiKey = fmpApiKey;
-          if (_fmpApiKeyController.text != fmpApiKey) {
-            _fmpApiKeyController.text = fmpApiKey;
-          }
-        }
-        final eodhdApiKey = state.settings.eodhdApiKey ?? '';
-        if (eodhdApiKey != _lastSyncedEodhdApiKey) {
-          _lastSyncedEodhdApiKey = eodhdApiKey;
-          if (_eodhdApiKeyController.text != eodhdApiKey) {
-            _eodhdApiKeyController.text = eodhdApiKey;
-          }
-        }
+        _syncControllersFromState(state);
 
         return Scaffold(
           appBar: AppBar(
@@ -105,22 +101,19 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           body: ListView(
             children: [
-              // General Section
               _buildSectionHeader('settings.general.title'.tr()),
               _buildLanguageTile(context, state),
               _buildCurrencyTile(context, state),
               _buildThemeTile(context, state),
 
-              // Market Data Section (EODHD -- primary optional key)
-              _buildSectionHeader('settings.eodhd.title'.tr()),
-              _buildEodhdApiKeyTile(context),
+              _buildSectionHeader('settings.market_data.title'.tr()),
+              _buildMarketDataIntro(context),
+              _buildRefreshIntervalTile(context, state),
+              ..._buildProviderTiles(context, state),
 
-              // AI Section
               _buildSectionHeader('settings.ai.title'.tr()),
               _buildGeminiApiKeyTile(context),
-              _buildFmpApiKeyTile(context),
 
-              // Data Section
               _buildSectionHeader('settings.data.title'.tr()),
               _buildDataTile(
                 context,
@@ -138,7 +131,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 onTap: () => _showClearDataDialog(context),
               ),
 
-              // About Section
               _buildSectionHeader('settings.about.title'.tr()),
               _buildAboutTile(
                 context,
@@ -170,6 +162,26 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  void _syncControllersFromState(SettingsLoaded state) {
+    final geminiApiKey = state.settings.geminiApiKey ?? '';
+    if (geminiApiKey != _lastSyncedGeminiApiKey) {
+      _lastSyncedGeminiApiKey = geminiApiKey;
+      if (_geminiApiKeyController.text != geminiApiKey) {
+        _geminiApiKeyController.text = geminiApiKey;
+      }
+    }
+    for (final provider in MarketDataProvider.values) {
+      final value = state.settings.providerApiKeys[provider] ?? '';
+      if (value != _lastSyncedProviderKeys[provider]) {
+        _lastSyncedProviderKeys[provider] = value;
+        final controller = _providerControllers[provider]!;
+        if (controller.text != value) {
+          controller.text = value;
+        }
+      }
+    }
+  }
+
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 8.h),
@@ -183,58 +195,26 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildFmpApiKeyTile(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
+  Widget _buildMarketDataIntro(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.30),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.query_stats, color: Theme.of(context).primaryColor),
-                SizedBox(width: 12.w),
-                Text(
-                  'settings.fmp.api_key'.tr(),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              controller: _fmpApiKeyController,
-              obscureText: _obscureFmpApiKey,
-              decoration: InputDecoration(
-                hintText: 'settings.fmp.api_key_hint'.tr(),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        _obscureFmpApiKey
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () => setState(
-                        () => _obscureFmpApiKey = !_obscureFmpApiKey,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.save),
-                      onPressed: () {
-                        context.read<SettingsBloc>().add(
-                              UpdateFmpApiKeyEvent(_fmpApiKeyController.text),
-                            );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('settings.fmp.api_key_saved'.tr()),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+            Icon(Icons.info_outline,
+                size: 18.r, color: theme.colorScheme.primary),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'settings.market_data.intro'.tr(),
+                style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
               ),
             ),
           ],
@@ -243,85 +223,389 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildEodhdApiKeyTile(BuildContext context) {
+  Widget _buildRefreshIntervalTile(
+    BuildContext context,
+    SettingsLoaded state,
+  ) {
+    final interval = state.settings.marketDataRefreshInterval;
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.bar_chart, color: Theme.of(context).primaryColor),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'settings.eodhd.api_key'.tr(),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        'settings.eodhd.api_key_optional_hint'.tr(),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              controller: _eodhdApiKeyController,
-              obscureText: _obscureEodhdApiKey,
-              decoration: InputDecoration(
-                hintText: 'settings.eodhd.api_key_hint'.tr(),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        _obscureEodhdApiKey
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () => setState(
-                        () => _obscureEodhdApiKey = !_obscureEodhdApiKey,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.save),
-                      onPressed: () {
-                        context.read<SettingsBloc>().add(
-                              UpdateEodhdApiKeyEvent(
-                                _eodhdApiKeyController.text,
-                              ),
-                            );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content:
-                                Text('settings.eodhd.api_key_saved'.tr()),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+      child: ListTile(
+        leading:
+            Icon(Icons.schedule, color: Theme.of(context).primaryColor),
+        title: Text('settings.market_data.refresh_interval.title'.tr()),
+        subtitle: Text(
+          'settings.market_data.refresh_interval.options.${interval.name}'
+              .tr(),
         ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => _showRefreshIntervalDialog(context, state),
       ),
     );
+  }
+
+  Future<void> _showRefreshIntervalDialog(
+    BuildContext context,
+    SettingsLoaded state,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('settings.market_data.refresh_interval.title'.tr()),
+          content: SingleChildScrollView(
+            child: RadioGroup<MarketDataRefreshInterval>(
+              groupValue: state.settings.marketDataRefreshInterval,
+              onChanged: (value) {
+                if (value == null) return;
+                context
+                    .read<SettingsBloc>()
+                    .add(UpdateMarketDataRefreshIntervalEvent(value));
+                Navigator.of(dialogContext).pop();
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'settings.market_data.refresh_interval.description'.tr(),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  SizedBox(height: 12.h),
+                  ...MarketDataRefreshInterval.values.map((opt) {
+                    return RadioListTile<MarketDataRefreshInterval>(
+                      title: Text(
+                        'settings.market_data.refresh_interval.options.${opt.name}'
+                            .tr(),
+                      ),
+                      subtitle: Text(
+                        'settings.market_data.refresh_interval.descriptions.${opt.name}'
+                            .tr(),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      value: opt,
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildProviderTiles(
+    BuildContext context,
+    SettingsLoaded state,
+  ) {
+    return ProviderCatalog.all.map((cfg) {
+      return _buildProviderTile(context, cfg, state);
+    }).toList(growable: false);
+  }
+
+  Widget _buildProviderTile(
+    BuildContext context,
+    ProviderConfig cfg,
+    SettingsLoaded state,
+  ) {
+    final controller = _providerControllers[cfg.id]!;
+    final obscure = _providerObscure[cfg.id] ?? true;
+    final hasKey = state.settings.hasProviderKey(cfg.id);
+
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      child: ExpansionTile(
+        leading: CircleAvatar(
+          radius: 16.r,
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          child: Icon(
+            _iconFor(cfg.id),
+            size: 16.r,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        title: Text(
+          cfg.displayName,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        subtitle: Text(
+          'settings.providers.${cfg.id.name}.short'.tr(),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        trailing: hasKey
+            ? Icon(Icons.check_circle,
+                color: AppTheme.successColor, size: 20.r)
+            : (cfg.requiresKey
+                ? const Icon(Icons.radio_button_unchecked, size: 20)
+                : Icon(Icons.public,
+                    color: AppTheme.successColor, size: 20.r)),
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'settings.providers.${cfg.id.name}.description'.tr(),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                SizedBox(height: 8.h),
+                _buildProviderQuotaChip(context, cfg),
+                SizedBox(height: 12.h),
+                if (cfg.requiresKey)
+                  TextField(
+                    controller: controller,
+                    obscureText: obscure,
+                    decoration: InputDecoration(
+                      labelText: 'settings.providers.api_key_label'
+                          .tr(namedArgs: {'provider': cfg.displayName}),
+                      hintText: 'settings.providers.api_key_hint'.tr(),
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(obscure
+                                ? Icons.visibility
+                                : Icons.visibility_off),
+                            onPressed: () => setState(() {
+                              _providerObscure[cfg.id] = !obscure;
+                            }),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.save),
+                            onPressed: () => _saveProviderKey(cfg),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            tooltip: 'common.delete'.tr(),
+                            onPressed: () => _clearProviderKey(cfg),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    padding: EdgeInsets.all(10.w),
+                    decoration: BoxDecoration(
+                      color: AppTheme.successColor.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle,
+                            color: AppTheme.successColor, size: 18.r),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            'settings.providers.no_key_required'.tr(),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                SizedBox(height: 12.h),
+                _buildEndpointRow(context, cfg),
+                SizedBox(height: 12.h),
+                _buildProviderActionRow(context, cfg),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProviderQuotaChip(BuildContext context, ProviderConfig cfg) {
+    final theme = Theme.of(context);
+    return Wrap(
+      spacing: 6.w,
+      runSpacing: 6.h,
+      children: [
+        _chip(
+          context,
+          icon: Icons.electric_bolt,
+          text: 'settings.providers.${cfg.id.name}.free_quota'.tr(),
+          color: theme.colorScheme.tertiary,
+        ),
+        if (cfg.supportsRealtime)
+          _chip(
+            context,
+            icon: Icons.bolt,
+            text: 'settings.providers.tag_realtime'.tr(),
+            color: theme.colorScheme.primary,
+          ),
+        if (cfg.supportsHistoric)
+          _chip(
+            context,
+            icon: Icons.history,
+            text: 'settings.providers.tag_historic'.tr(),
+            color: theme.colorScheme.secondary,
+          ),
+      ],
+    );
+  }
+
+  Widget _chip(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: color.withValues(alpha: 0.40)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 12.r),
+          SizedBox(width: 4.w),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEndpointRow(BuildContext context, ProviderConfig cfg) {
+    return Container(
+      padding: EdgeInsets.all(8.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: SelectableText(
+              cfg.exampleEndpoint,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    height: 1.3,
+                  ),
+            ),
+          ),
+          IconButton(
+            iconSize: 18.r,
+            tooltip: 'settings.providers.copy_endpoint'.tr(),
+            icon: const Icon(Icons.copy),
+            onPressed: () async {
+              await Clipboard.setData(
+                ClipboardData(text: cfg.exampleEndpoint),
+              );
+              if (!mounted) return;
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content:
+                      Text('settings.providers.endpoint_copied'.tr()),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProviderActionRow(BuildContext context, ProviderConfig cfg) {
+    return Wrap(
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: [
+        OutlinedButton.icon(
+          icon: const Icon(Icons.open_in_new, size: 16),
+          label: Text('settings.providers.signup'.tr()),
+          onPressed: () => _copyToClipboard(cfg.signupUrl),
+        ),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.menu_book_outlined, size: 16),
+          label: Text('settings.providers.docs'.tr()),
+          onPressed: () => _copyToClipboard(cfg.docsUrl),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _copyToClipboard(String url) async {
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('settings.providers.url_copied'.tr())),
+    );
+  }
+
+  void _saveProviderKey(ProviderConfig cfg) {
+    final controller = _providerControllers[cfg.id]!;
+    context
+        .read<SettingsBloc>()
+        .add(UpdateProviderApiKeyEvent(cfg.id, controller.text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('settings.providers.api_key_saved'
+            .tr(namedArgs: {'provider': cfg.displayName})),
+      ),
+    );
+  }
+
+  void _clearProviderKey(ProviderConfig cfg) {
+    _providerControllers[cfg.id]!.clear();
+    context
+        .read<SettingsBloc>()
+        .add(UpdateProviderApiKeyEvent(cfg.id, null));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('settings.providers.api_key_cleared'
+            .tr(namedArgs: {'provider': cfg.displayName})),
+      ),
+    );
+  }
+
+  IconData _iconFor(MarketDataProvider id) {
+    switch (id) {
+      case MarketDataProvider.eodhd:
+        return Icons.bar_chart;
+      case MarketDataProvider.fmp:
+        return Icons.query_stats;
+      case MarketDataProvider.alphaVantage:
+        return Icons.text_format;
+      case MarketDataProvider.twelveData:
+        return Icons.show_chart;
+      case MarketDataProvider.finnhub:
+        return Icons.bolt;
+      case MarketDataProvider.polygon:
+        return Icons.public;
+      case MarketDataProvider.marketstack:
+        return Icons.stacked_line_chart;
+      case MarketDataProvider.tiingo:
+        return Icons.timeline;
+      case MarketDataProvider.nasdaqDataLink:
+        return Icons.account_tree_outlined;
+      case MarketDataProvider.stooq:
+        return Icons.cloud_download;
+    }
   }
 
   Widget _buildLanguageTile(BuildContext context, SettingsLoaded state) {
     return ListTile(
       leading: const Icon(Icons.language),
       title: Text('settings.general.language'.tr()),
-      subtitle: Text(AppLocalization.getLanguageName(state.settings.languageCode)),
+      subtitle:
+          Text(AppLocalization.getLanguageName(state.settings.languageCode)),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _showLanguageDialog(context, state),
     );
@@ -393,7 +677,9 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                             );
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('settings.ai.api_key_saved'.tr())),
+                          SnackBar(
+                            content: Text('settings.ai.api_key_saved'.tr()),
+                          ),
                         );
                       },
                     ),
@@ -403,7 +689,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             SizedBox(height: 12.h),
             OutlinedButton.icon(
-              onPressed: _isTestingConnection ? null : () => _testConnection(context),
+              onPressed:
+                  _isTestingConnection ? null : () => _testConnection(context),
               icon: _isTestingConnection
                   ? SizedBox(
                       width: 16.w,
@@ -446,7 +733,8 @@ class _SettingsPageState extends State<SettingsPage> {
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
-      trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right) : null),
+      trailing:
+          trailing ?? (onTap != null ? const Icon(Icons.chevron_right) : null),
       onTap: onTap,
     );
   }
@@ -462,7 +750,8 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _showLanguageDialog(BuildContext context, SettingsLoaded state) async {
+  Future<void> _showLanguageDialog(
+      BuildContext context, SettingsLoaded state) async {
     final languages = AppLocalization.getAllLanguages();
 
     await showDialog(
@@ -493,7 +782,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Future<void> _showCurrencyDialog(BuildContext context, SettingsLoaded state) async {
+  Future<void> _showCurrencyDialog(
+      BuildContext context, SettingsLoaded state) async {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -502,7 +792,9 @@ class _SettingsPageState extends State<SettingsPage> {
           groupValue: state.settings.baseCurrency,
           onChanged: (value) {
             if (value != null) {
-              context.read<SettingsBloc>().add(UpdateBaseCurrencyEvent(value));
+              context
+                  .read<SettingsBloc>()
+                  .add(UpdateBaseCurrencyEvent(value));
               Navigator.pop(context);
             }
           },
@@ -522,7 +814,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Future<void> _showThemeDialog(BuildContext context, SettingsLoaded state) async {
+  Future<void> _showThemeDialog(
+      BuildContext context, SettingsLoaded state) async {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -602,7 +895,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ? 'settings.ai.connection_success'.tr()
                 : 'settings.ai.connection_error'.tr(),
           ),
-          backgroundColor: success ? AppTheme.successColor : AppTheme.errorColor,
+          backgroundColor:
+              success ? AppTheme.successColor : AppTheme.errorColor,
         ),
       );
     }
@@ -611,9 +905,10 @@ class _SettingsPageState extends State<SettingsPage> {
   void _resetOnboarding(BuildContext context) {
     context.read<OnboardingBloc>().add(ResetOnboardingEvent());
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('settings.about.onboarding_reset_message'.tr())),
+      SnackBar(
+        content: Text('settings.about.onboarding_reset_message'.tr()),
+      ),
     );
-    // Navigate to splash to restart onboarding flow
     context.go(RouteNames.splash);
   }
 }

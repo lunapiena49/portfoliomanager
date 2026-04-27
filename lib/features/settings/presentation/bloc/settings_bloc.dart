@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../../core/constants/market_data_providers.dart';
 import '../../../../services/storage/local_storage_service.dart';
 
 /// Sentinel so [AppSettings.copyWith] can clear nullable API keys via
@@ -86,6 +87,28 @@ class UpdateEodhdApiKeyEvent extends SettingsEvent {
   List<Object?> get props => [apiKey];
 }
 
+/// Generic update for any market-data provider key. Preferred over the
+/// provider-specific events for new providers; the legacy ones (Gemini,
+/// EODHD, FMP) keep their dedicated events for back-compat.
+class UpdateProviderApiKeyEvent extends SettingsEvent {
+  final MarketDataProvider provider;
+  final String? apiKey;
+
+  const UpdateProviderApiKeyEvent(this.provider, this.apiKey);
+
+  @override
+  List<Object?> get props => [provider, apiKey];
+}
+
+class UpdateMarketDataRefreshIntervalEvent extends SettingsEvent {
+  final MarketDataRefreshInterval interval;
+
+  const UpdateMarketDataRefreshIntervalEvent(this.interval);
+
+  @override
+  List<Object?> get props => [interval];
+}
+
 class ClearAllDataEvent extends SettingsEvent {}
 
 // ==================== STATES ====================
@@ -128,6 +151,18 @@ class AppSettings extends Equatable {
   final String? geminiApiKey;
   final String? fmpApiKey;
   final String? eodhdApiKey;
+
+  /// Keys for the secondary market-data providers (Alpha Vantage, Twelve
+  /// Data, Finnhub, Polygon, Marketstack, Tiingo, Nasdaq Data Link). Stored
+  /// uniformly so the settings UI can iterate. EODHD/FMP are also mirrored
+  /// here so callers that work generically (e.g. quota classifier) don't
+  /// need to special-case them.
+  final Map<MarketDataProvider, String> providerApiKeys;
+
+  /// Staleness threshold for the user's quote cache. Drives how often the
+  /// app refetches per-position prices.
+  final MarketDataRefreshInterval marketDataRefreshInterval;
+
   final bool notificationsEnabled;
   final bool priceAlertsEnabled;
   final bool dailySummaryEnabled;
@@ -139,6 +174,8 @@ class AppSettings extends Equatable {
     this.geminiApiKey,
     this.fmpApiKey,
     this.eodhdApiKey,
+    this.providerApiKeys = const {},
+    this.marketDataRefreshInterval = MarketDataRefreshInterval.daily,
     this.notificationsEnabled = true,
     this.priceAlertsEnabled = true,
     this.dailySummaryEnabled = false,
@@ -151,6 +188,8 @@ class AppSettings extends Equatable {
     Object? geminiApiKey = _copyWithUnset,
     Object? fmpApiKey = _copyWithUnset,
     Object? eodhdApiKey = _copyWithUnset,
+    Map<MarketDataProvider, String>? providerApiKeys,
+    MarketDataRefreshInterval? marketDataRefreshInterval,
     bool? notificationsEnabled,
     bool? priceAlertsEnabled,
     bool? dailySummaryEnabled,
@@ -168,6 +207,9 @@ class AppSettings extends Equatable {
       eodhdApiKey: identical(eodhdApiKey, _copyWithUnset)
           ? this.eodhdApiKey
           : eodhdApiKey as String?,
+      providerApiKeys: providerApiKeys ?? this.providerApiKeys,
+      marketDataRefreshInterval:
+          marketDataRefreshInterval ?? this.marketDataRefreshInterval,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       priceAlertsEnabled: priceAlertsEnabled ?? this.priceAlertsEnabled,
       dailySummaryEnabled: dailySummaryEnabled ?? this.dailySummaryEnabled,
@@ -177,8 +219,19 @@ class AppSettings extends Equatable {
   bool get hasGeminiApiKey => geminiApiKey != null && geminiApiKey!.isNotEmpty;
   bool get hasFmpApiKey => fmpApiKey != null && fmpApiKey!.isNotEmpty;
   bool get hasEodhdApiKey => eodhdApiKey != null && eodhdApiKey!.isNotEmpty;
-  /// True if any market-data API key (EODHD or FMP) is configured.
-  bool get hasMarketApiKey => hasEodhdApiKey || hasFmpApiKey;
+
+  /// True if the given provider has a non-empty key configured.
+  bool hasProviderKey(MarketDataProvider provider) {
+    final v = providerApiKeys[provider];
+    return v != null && v.isNotEmpty;
+  }
+
+  /// True if at least one keyed market-data provider (EODHD/FMP/Alpha
+  /// Vantage/...) is configured.
+  bool get hasMarketApiKey {
+    if (hasEodhdApiKey || hasFmpApiKey) return true;
+    return providerApiKeys.values.any((v) => v.isNotEmpty);
+  }
 
   @override
   List<Object?> get props => [
@@ -188,6 +241,8 @@ class AppSettings extends Equatable {
         geminiApiKey,
         fmpApiKey,
         eodhdApiKey,
+        providerApiKeys,
+        marketDataRefreshInterval,
         notificationsEnabled,
         priceAlertsEnabled,
         dailySummaryEnabled,
@@ -205,6 +260,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateGeminiApiKeyEvent>(_onUpdateGeminiApiKey);
     on<UpdateFmpApiKeyEvent>(_onUpdateFmpApiKey);
     on<UpdateEodhdApiKeyEvent>(_onUpdateEodhdApiKey);
+    on<UpdateProviderApiKeyEvent>(_onUpdateProviderApiKey);
+    on<UpdateMarketDataRefreshIntervalEvent>(
+        _onUpdateMarketDataRefreshInterval);
     on<ClearAllDataEvent>(_onClearAllData);
   }
 
@@ -250,6 +308,30 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     return null;
   }
 
+  Map<MarketDataProvider, String> _resolveProviderApiKeys(
+    String? eodhd,
+    String? fmp,
+  ) {
+    final result = <MarketDataProvider, String>{};
+    if (eodhd != null && eodhd.isNotEmpty) {
+      result[MarketDataProvider.eodhd] = eodhd;
+    }
+    if (fmp != null && fmp.isNotEmpty) {
+      result[MarketDataProvider.fmp] = fmp;
+    }
+    for (final provider in MarketDataProvider.values) {
+      if (provider == MarketDataProvider.eodhd ||
+          provider == MarketDataProvider.fmp) {
+        continue;
+      }
+      final value = LocalStorageService.getProviderApiKey(provider);
+      if (value != null && value.trim().isNotEmpty) {
+        result[provider] = value.trim();
+      }
+    }
+    return result;
+  }
+
   Future<void> _onLoadSettings(
     LoadSettingsEvent event,
     Emitter<SettingsState> emit,
@@ -257,13 +339,19 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     emit(SettingsLoading());
 
     try {
+      final eodhdKey = _resolveEodhdApiKey();
+      final fmpKey = _resolveFmpApiKey();
+
       final settings = AppSettings(
         themeMode: LocalStorageService.getThemeMode(),
         languageCode: LocalStorageService.getLanguage(),
         baseCurrency: LocalStorageService.getBaseCurrency(),
         geminiApiKey: _resolveGeminiApiKey(),
-        fmpApiKey: _resolveFmpApiKey(),
-        eodhdApiKey: _resolveEodhdApiKey(),
+        fmpApiKey: fmpKey,
+        eodhdApiKey: eodhdKey,
+        providerApiKeys: _resolveProviderApiKeys(eodhdKey, fmpKey),
+        marketDataRefreshInterval:
+            LocalStorageService.getMarketDataRefreshInterval(),
       );
 
       emit(SettingsLoaded(settings));
@@ -354,8 +442,69 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     if (state is SettingsLoaded) {
       final currentSettings = (state as SettingsLoaded).settings;
       await LocalStorageService.setEodhdApiKey(event.apiKey);
-      emit(SettingsLoaded(currentSettings.copyWith(eodhdApiKey: event.apiKey)));
+      final nextMap =
+          Map<MarketDataProvider, String>.from(currentSettings.providerApiKeys);
+      final trimmed = event.apiKey?.trim();
+      if (trimmed == null || trimmed.isEmpty) {
+        nextMap.remove(MarketDataProvider.eodhd);
+      } else {
+        nextMap[MarketDataProvider.eodhd] = trimmed;
+      }
+      emit(SettingsLoaded(currentSettings.copyWith(
+        eodhdApiKey: event.apiKey,
+        providerApiKeys: nextMap,
+      )));
     }
+  }
+
+  Future<void> _onUpdateProviderApiKey(
+    UpdateProviderApiKeyEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    if (state is! SettingsLoaded) return;
+    final currentSettings = (state as SettingsLoaded).settings;
+
+    await LocalStorageService.setProviderApiKey(event.provider, event.apiKey);
+
+    final nextMap =
+        Map<MarketDataProvider, String>.from(currentSettings.providerApiKeys);
+    final trimmed = event.apiKey?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      nextMap.remove(event.provider);
+    } else {
+      nextMap[event.provider] = trimmed;
+    }
+
+    // Mirror to the legacy fields when EODHD/FMP are updated through the
+    // generic event so all consumers see the new value.
+    if (event.provider == MarketDataProvider.eodhd) {
+      emit(SettingsLoaded(currentSettings.copyWith(
+        eodhdApiKey: event.apiKey,
+        providerApiKeys: nextMap,
+      )));
+      return;
+    }
+    if (event.provider == MarketDataProvider.fmp) {
+      emit(SettingsLoaded(currentSettings.copyWith(
+        fmpApiKey: event.apiKey,
+        providerApiKeys: nextMap,
+      )));
+      return;
+    }
+
+    emit(SettingsLoaded(currentSettings.copyWith(providerApiKeys: nextMap)));
+  }
+
+  Future<void> _onUpdateMarketDataRefreshInterval(
+    UpdateMarketDataRefreshIntervalEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    if (state is! SettingsLoaded) return;
+    final currentSettings = (state as SettingsLoaded).settings;
+    await LocalStorageService.setMarketDataRefreshInterval(event.interval);
+    emit(SettingsLoaded(currentSettings.copyWith(
+      marketDataRefreshInterval: event.interval,
+    )));
   }
 
   Future<void> _onClearAllData(
