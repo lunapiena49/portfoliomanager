@@ -68,13 +68,25 @@ rtk flutter devices                           # lista device
 ```
 
 ### Release
+
+Tutti i build di release **devono** essere offuscati (`--obfuscate
+--split-debug-info`) -- il repo e' pubblico, quindi gli APK e bundle
+distribuiti non possono esporre nomi e simboli Dart in chiaro.
+
 ```bash
 rtk flutter clean
 rtk flutter pub get
-rtk flutter build web --release               # -> build/web/
-rtk flutter build apk --release               # -> build/app/outputs/flutter-apk/app-release.apk
-rtk flutter build appbundle --release         # -> .aab per Play Store
+rtk flutter build web --release \
+  --obfuscate --split-debug-info=build/symbols/web              # -> build/web/
+rtk flutter build apk --release \
+  --obfuscate --split-debug-info=build/symbols/android          # -> build/app/outputs/flutter-apk/app-release.apk
+rtk flutter build appbundle --release \
+  --obfuscate --split-debug-info=build/symbols/android          # -> .aab per Play Store
 ```
+
+I simboli (`build/symbols/`) restano fuori da git (in `.gitignore` via
+`build/`) ma vanno conservati nell'archivio della release per fare
+de-obfuscation degli stack trace di crash.
 
 ### Git / GitHub
 ```bash

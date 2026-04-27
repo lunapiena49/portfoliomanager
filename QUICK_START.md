@@ -68,10 +68,16 @@ flutter run -d <DEVICE_ID>
 
 ## 6) Build PRODUZIONE - Browser Web
 
+Tutti i build di release sono offuscati di default (`--obfuscate
+--split-debug-info`): il repo e' pubblico, quindi gli artefatti distribuiti
+non devono esporre nomi e simboli Dart.
+
 ```powershell
 flutter clean
 flutter pub get
-flutter build web --release
+flutter build web --release `
+  --obfuscate `
+  --split-debug-info=build/symbols/web
 ```
 
 Smoke test locale della build prod:
@@ -87,11 +93,17 @@ Poi apri: `http://localhost:8080`
 ```powershell
 flutter clean
 flutter pub get
-flutter build apk --release
+flutter build apk --release `
+  --obfuscate `
+  --split-debug-info=build/symbols/android
 ```
 
 APK output:
 - `build/app/outputs/flutter-apk/app-release.apk`
+
+I simboli di debug finiscono in `build/symbols/android/` (gia' in
+`.gitignore` via `build/`). Conservali insieme alla release: servono per
+de-obfuscation degli stack trace dei crash report.
 
 Installazione su device collegato:
 

@@ -32,23 +32,42 @@ Chiedi all'utente quale build serve (multipla ok):
 
 ## Build
 
+**Obfuscation e' default**, non opzionale. Il repo e' pubblico (per la pipeline
+snapshot servita da GitHub Pages) quindi gli APK e bundle distribuiti DEVONO
+avere simboli offuscati per ridurre la superficie di reverse-engineering --
+chiunque scarichi l'APK dal Play Store o dal sito non deve poter ricostruire
+in modo banale la struttura del codice Dart.
+
+I simboli vengono salvati in `build/symbols/<piattaforma>/` (gia' in
+`.gitignore` via `build/`) e servono per il de-obfuscation degli stack trace
+in caso di crash report. **NON cancellarli** dopo il build: tienili
+nell'archivio della release.
+
 Web:
 ```bash
-rtk flutter build web --release
+rtk flutter build web --release \
+  --obfuscate \
+  --split-debug-info=build/symbols/web
 ```
 
 Android APK:
 ```bash
-rtk flutter build apk --release
+rtk flutter build apk --release \
+  --obfuscate \
+  --split-debug-info=build/symbols/android
 ```
 
 Android AAB (Play Store):
 ```bash
-rtk flutter build appbundle --release
+rtk flutter build appbundle --release \
+  --obfuscate \
+  --split-debug-info=build/symbols/android
 ```
 
-Per build obfuscated (raccomandato prima di pubblicazione store), aggiungere:
-`--obfuscate --split-debug-info=./symbols`
+Se l'utente chiede esplicitamente un build NON offuscato (per debug del
+binario), puoi rimuovere i flag, ma chiedi conferma prima ("Vuoi davvero un
+build non offuscato? Esporrebbe nomi e simboli Dart nell'artefatto") e
+documenta la scelta nella sessione.
 
 ## Post-build
 

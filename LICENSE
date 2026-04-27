@@ -1,0 +1,68 @@
+PROPRIETARY SOFTWARE LICENSE
+============================
+
+Copyright (c) 2026 Filippo Salemi (lunapiena49). All rights reserved.
+
+This source code, including any compiled or derivative works (collectively,
+the "Software"), is the exclusive property of the copyright holder and is
+protected by copyright laws and international treaty provisions.
+
+The Software is published in this public repository SOLELY to enable the
+distribution of the daily market-data snapshot via GitHub Pages and to
+facilitate transparent issue tracking. Public visibility of this source
+code does NOT constitute a license to use, copy, modify, distribute, sell,
+sublicense, or create derivative works of the Software, in whole or in
+part, by any party other than the copyright holder.
+
+PROHIBITED ACTIONS (without prior written consent of the copyright holder)
+--------------------------------------------------------------------------
+
+  1. Reproduction, redistribution, or hosting of the source code or any
+     compiled binary derived from it, in any medium or form.
+  2. Use of the Software, the brand "PluriFin", the brand "Portfolio
+     Manager", the application icon, the logo (including the
+     `pluriFin-anim.json` Lottie file and `logo-plurifin.svg`), or any
+     graphical asset shipped in `assets/`, for the purpose of building,
+     publishing, marketing, or operating a competing or substantially
+     similar product.
+  3. Commercial exploitation in any form, including but not limited to
+     resale, paid hosting, embedding into a paid offering, or use within
+     a paid service.
+  4. Removal, alteration, or obscuring of any copyright, trademark, or
+     attribution notice contained in the source files, the assets, or the
+     compiled application.
+
+PERMITTED ACTIONS
+-----------------
+
+  1. Reading the source code for personal educational purposes.
+  2. Filing public issues and pull requests on the original repository at
+     https://github.com/lunapiena49/portfoliomanager
+     (acceptance of contributions is at the sole discretion of the
+     copyright holder; merged contributions become part of the Software
+     under this same license).
+  3. Downloading and consuming the public market-data snapshot files
+     served from GitHub Pages
+     (https://lunapiena49.github.io/portfoliomanager) for personal,
+     non-commercial use.
+
+NO WARRANTY
+-----------
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF,
+OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+ENFORCEMENT
+-----------
+
+Unauthorized use of the Software may be prosecuted to the fullest extent
+permitted by applicable law. Violations may also be reported to GitHub
+under the DMCA takedown procedure
+(https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy).
+
+For licensing inquiries, contact: filippo.salemi.23@gmail.com

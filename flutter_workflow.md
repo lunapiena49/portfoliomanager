@@ -33,7 +33,7 @@ workflows:
       - name: Build iOS IPA
         script: flutter build ipa --release --obfuscate --split-debug-info=./symbols
       - name: Build Web
-        script: flutter build web --release
+        script: flutter build web --release --obfuscate --split-debug-info=./symbols/web
     artifacts:
       - build/**/outputs/**/*.aab
       - build/ios/ipa/*.ipa
@@ -158,8 +158,8 @@ flutter build ipa --release --obfuscate --split-debug-info=./symbols
 flutter build windows --release --obfuscate --split-debug-info=./symbols
 flutter pub run msix:create --store
 
-# Web with source maps for debugging
-flutter build web --release --source-maps
+# Web release (obfuscated) with source maps for debugging
+flutter build web --release --obfuscate --split-debug-info=./symbols/web --source-maps
 ```
 
 **Keep the symbols directory secure**—it's required to symbolicate crash reports from obfuscated builds.
