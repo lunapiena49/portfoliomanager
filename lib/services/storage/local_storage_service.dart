@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +7,7 @@ import '../../core/constants/app_constants.dart';
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
 import '../../features/goals/domain/entities/goals_entities.dart';
 import '../../features/rebalancing/domain/entities/rebalancing_entities.dart';
+import 'storage_paths.dart';
 
 /// Service for local data persistence.
 ///
@@ -24,9 +26,26 @@ class LocalStorageService {
   static String? _cachedFmpKey;
   static String? _cachedEodhdKey;
 
-  /// Initialize storage
+  /// Initialize storage.
+  ///
+  /// Preconditions:
+  ///  * [StoragePaths.init] must have completed, so the Hive boxes are
+  ///    created under the visible, user-inspectable path
+  ///    `<docs>/PortfolioManager/data/` instead of the anonymous default
+  ///    `app_flutter/` root.
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+
+    if (kIsWeb) {
+      // On web Hive persists via IndexedDB -- `initFlutter` is the only
+      // supported bootstrap, custom paths do not apply.
+      await Hive.initFlutter();
+    } else {
+      // Native platforms: pin Hive to the explicit data directory so the
+      // user can recognize which folder belongs to the app.
+      Hive.init(StoragePaths.dataDir);
+    }
+
     _settingsBox = await _openBoxWithRecovery(AppConstants.settingsBox);
     _portfolioBox = await _openBoxWithRecovery(AppConstants.portfolioBox);
     _goalsBox = await _openBoxWithRecovery(AppConstants.goalsBox);
@@ -134,6 +153,76 @@ class LocalStorageService {
     } else {
       await _settingsBox.put(AppConstants.positionsFilterAssetTypeKey, value);
     }
+  }
+
+  // ==================== ROUTE RESTORE ====================
+
+  /// Whitelist of routes that are safe to restore after a cold start.
+  ///
+  /// We deliberately exclude form pages (add/edit/import/create) because their
+  /// in-memory state is gone and resuming on an empty form would surprise the
+  /// user more than landing on home.
+  static bool isRestorablePath(String path) {
+    final clean = path.split('?').first;
+
+    const exact = <String>{
+      RouteNames.home,
+      RouteNames.analysis,
+      RouteNames.aiChat,
+      RouteNames.settings,
+      RouteNames.guide,
+    };
+    if (exact.contains(clean)) return true;
+
+    // Position detail: /home/position/<id>  (but NOT /edit subroute).
+    final detail = RegExp(r'^/home/position/[^/]+$');
+    if (detail.hasMatch(clean)) return true;
+
+    return false;
+  }
+
+  /// Persist the last route the user was on, together with a timestamp.
+  ///
+  /// Intended to be called from the app's lifecycle observer when the OS is
+  /// about to background or detach the process.
+  static Future<void> saveLastRoute(String path) async {
+    if (!isRestorablePath(path)) return;
+    await _settingsBox.put(AppConstants.lastRouteKey, path);
+    await _settingsBox.put(
+      AppConstants.lastRouteTimestampKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  /// Return the last saved route if it was saved within
+  /// [AppConstants.routeRestoreWindow], otherwise null.
+  ///
+  /// A stale entry is silently dropped on read so the next session starts
+  /// clean.
+  static String? getLastRouteIfRecent() {
+    final path = _settingsBox.get(AppConstants.lastRouteKey);
+    final ts = _settingsBox.get(AppConstants.lastRouteTimestampKey);
+
+    if (path is! String || path.isEmpty || ts is! int) return null;
+
+    final saved = DateTime.fromMillisecondsSinceEpoch(ts);
+    final age = DateTime.now().difference(saved);
+
+    if (age.isNegative || age > AppConstants.routeRestoreWindow) {
+      // Best-effort cleanup; we don't await to keep this getter sync.
+      _settingsBox.delete(AppConstants.lastRouteKey);
+      _settingsBox.delete(AppConstants.lastRouteTimestampKey);
+      return null;
+    }
+
+    if (!isRestorablePath(path)) return null;
+    return path;
+  }
+
+  /// Forget the saved route (e.g. after successful restoration or on logout).
+  static Future<void> clearLastRoute() async {
+    await _settingsBox.delete(AppConstants.lastRouteKey);
+    await _settingsBox.delete(AppConstants.lastRouteTimestampKey);
   }
 
   /// Get base currency

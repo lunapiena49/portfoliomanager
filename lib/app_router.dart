@@ -254,7 +254,12 @@ class _SplashPageState extends State<SplashPage>
     }
 
     if (state is OnboardingCompleted) {
-      _pendingRoute = RouteNames.home;
+      // If the user backgrounded the app recently, drop them back on the page
+      // they were last viewing instead of always sending them to home.
+      // Restoration is best-effort: stale or non-whitelisted entries return
+      // null and we fall back to home.
+      _pendingRoute =
+          LocalStorageService.getLastRouteIfRecent() ?? RouteNames.home;
     } else if (state is OnboardingRequired) {
       _pendingRoute = RouteNames.onboarding;
     }

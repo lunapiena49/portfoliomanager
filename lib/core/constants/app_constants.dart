@@ -12,6 +12,9 @@ class AppConstants {
 
   // Storage Keys
   static const String onboardingCompleteKey = 'onboarding_complete';
+  static const String privacyDisclosureAcceptedKey = 'privacy_disclosure_v1';
+  static const String storageDisclosureAcceptedKey = 'storage_disclosure_v1';
+  static const String networkDisclosureAcceptedKey = 'network_disclosure_v1';
   static const String portfolioDataKey = 'portfolio_data';
   static const String settingsKey = 'settings';
   static const String geminiApiKeyKey = 'gemini_api_key';
@@ -25,6 +28,8 @@ class AppConstants {
       'positions_filter_asset_type';
   static const String currentPortfolioIdKey = 'current_portfolio_id';
   static const String rebalanceTargetsKey = 'rebalance_targets';
+  static const String lastRouteKey = 'last_route_path';
+  static const String lastRouteTimestampKey = 'last_route_timestamp_ms';
 
   // Hive Box Names
   static const String settingsBox = 'settings_box';
@@ -50,6 +55,11 @@ class AppConstants {
   static const Duration snackbarDuration = Duration(seconds: 3);
   static const Duration splashMinimumDuration = Duration(milliseconds: 4800);
   static const Duration splashTransitionDuration = Duration(milliseconds: 420);
+
+  // If the user returns within this window after a cold start, the splash will
+  // navigate back to the last route they were on (if it is restorable). Beyond
+  // this window we assume the session is "fresh" and route to home as usual.
+  static const Duration routeRestoreWindow = Duration(minutes: 10);
 
   // UI Constants
   static const double defaultPadding = 16.0;

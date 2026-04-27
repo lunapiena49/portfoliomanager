@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/app_localization.dart';
+import 'services/storage/disclosure_service.dart';
 import 'services/storage/local_storage_service.dart';
+import 'services/storage/storage_paths.dart';
 import 'features/portfolio/presentation/bloc/portfolio_bloc.dart';
 import 'features/settings/presentation/bloc/settings_bloc.dart';
 import 'features/onboarding/presentation/bloc/onboarding_bloc.dart';
@@ -20,13 +21,15 @@ import 'app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Hive for local storage
-  await Hive.initFlutter();
-  
+
+  // Resolve and create the "PortfolioManager" folder tree on disk before
+  // anything else touches the filesystem. Hive will be pinned to
+  // <docs>/PortfolioManager/data/ inside LocalStorageService.init().
+  await StoragePaths.init();
+
   // Initialize localization
   await EasyLocalization.ensureInitialized();
-  
+
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -34,9 +37,12 @@ void main() async {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-  
-  // Initialize local storage
+
+  // Initialize local storage (opens Hive boxes under data/)
   await LocalStorageService.init();
+
+  // Prepare disclosure service (reads consent flags from SharedPreferences)
+  await DisclosureService.init();
   
   // Sync saved language with EasyLocalization
   final savedLanguage = LocalStorageService.getLanguage();
@@ -53,8 +59,48 @@ void main() async {
   );
 }
 
-class PortfolioManagerApp extends StatelessWidget {
+class PortfolioManagerApp extends StatefulWidget {
   const PortfolioManagerApp({super.key});
+
+  @override
+  State<PortfolioManagerApp> createState() => _PortfolioManagerAppState();
+}
+
+class _PortfolioManagerAppState extends State<PortfolioManagerApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Persist the current location whenever the OS may be about to suspend or
+    // kill the process. `paused` covers normal background; `detached` covers
+    // imminent termination on Android (and aligns with iOS scene unbind).
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _saveCurrentRoute();
+    }
+  }
+
+  void _saveCurrentRoute() {
+    try {
+      final location =
+          AppRouter.router.routerDelegate.currentConfiguration.uri.toString();
+      // Fire-and-forget: lifecycle callbacks must return promptly.
+      LocalStorageService.saveLastRoute(location);
+    } catch (_) {
+      // Lifecycle hooks must never crash the app.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

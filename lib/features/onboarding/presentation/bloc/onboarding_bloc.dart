@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../../services/storage/disclosure_service.dart';
 import '../../../../services/storage/local_storage_service.dart';
 
 // ==================== EVENTS ====================
@@ -64,6 +66,17 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     CompleteOnboardingEvent event,
     Emitter<OnboardingState> emit,
   ) async {
+    // Defensive guard: the UI already disables the CTA until all three
+    // disclosures are accepted, but if the event is dispatched
+    // programmatically we must not bypass consent.
+    if (!DisclosureService.allAccepted()) {
+      debugPrint(
+        'OnboardingBloc: CompleteOnboardingEvent blocked -- '
+        'disclosures not all accepted',
+      );
+      emit(const OnboardingRequired());
+      return;
+    }
     await LocalStorageService.setOnboardingComplete(true);
     emit(OnboardingCompleted());
   }
@@ -73,6 +86,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     Emitter<OnboardingState> emit,
   ) async {
     await LocalStorageService.setOnboardingComplete(false);
+    await DisclosureService.resetAll();
     emit(const OnboardingRequired());
   }
 }
