@@ -4,14 +4,125 @@ import 'package:equatable/equatable.dart';
 /// cleared (e.g. `copyWith(completedAt: null)` to un-complete a goal).
 const Object _copyWithUnset = Object();
 
-/// Investment goal types
+/// Investment goal types organised in three experience tiers.
+///
+/// Tier mapping (used to group/filter goals in the UI and to choose sensible
+/// defaults when picking a template). Order matters for backward-compatible
+/// JSON deserialisation: existing values (retirement, education, house,
+/// emergency, travel, custom) keep their position; new types are appended.
 enum GoalType {
+  // Tier 1 -- pre-existing core goals
   retirement,
   education,
   house,
   emergency,
   travel,
   custom,
+
+  // Tier 1 (entry level) -- short-term, savings-style goals
+  savings,
+  debtRepayment,
+  bigPurchase,
+  wedding,
+  family,
+
+  // Tier 2 (intermediate) -- mid-horizon, structured goals
+  carPurchase,
+  passiveIncome,
+  portfolioGrowth,
+
+  // Tier 3 (expert) -- portfolio-construction & advanced planning
+  earlyRetirement,
+  dividendIncome,
+  diversification,
+  riskManagement,
+  taxOptimization,
+  estatePlanning,
+}
+
+/// Experience tier suggested for each [GoalType]. Used by the picker to group
+/// goals into Entry / Intermediate / Expert sections so beginners are not
+/// overwhelmed by FIRE / dividend-income / drawdown-target options.
+enum GoalTier {
+  entry,
+  intermediate,
+  expert,
+}
+
+extension GoalTypeMeta on GoalType {
+  /// Suggested experience tier for this goal type.
+  GoalTier get tier {
+    switch (this) {
+      case GoalType.emergency:
+      case GoalType.savings:
+      case GoalType.debtRepayment:
+      case GoalType.bigPurchase:
+      case GoalType.travel:
+      case GoalType.wedding:
+      case GoalType.family:
+      case GoalType.education:
+        return GoalTier.entry;
+      case GoalType.house:
+      case GoalType.carPurchase:
+      case GoalType.retirement:
+      case GoalType.passiveIncome:
+      case GoalType.portfolioGrowth:
+      case GoalType.custom:
+        return GoalTier.intermediate;
+      case GoalType.earlyRetirement:
+      case GoalType.dividendIncome:
+      case GoalType.diversification:
+      case GoalType.riskManagement:
+      case GoalType.taxOptimization:
+      case GoalType.estatePlanning:
+        return GoalTier.expert;
+    }
+  }
+
+  /// Suggested time horizon in months. Used as a hint when the user opens the
+  /// "new goal" form so the date picker pre-fills a reasonable target date.
+  /// Returns null when the goal type does not have a typical horizon
+  /// (e.g. portfolio-construction goals that are open-ended).
+  int? get suggestedHorizonMonths {
+    switch (this) {
+      case GoalType.emergency:
+        return 12;
+      case GoalType.savings:
+        return 24;
+      case GoalType.debtRepayment:
+        return 24;
+      case GoalType.bigPurchase:
+        return 18;
+      case GoalType.travel:
+        return 12;
+      case GoalType.wedding:
+        return 18;
+      case GoalType.family:
+        return 36;
+      case GoalType.education:
+        return 60;
+      case GoalType.carPurchase:
+        return 24;
+      case GoalType.house:
+        return 60;
+      case GoalType.retirement:
+        return 360; // ~30y
+      case GoalType.earlyRetirement:
+        return 240; // ~20y
+      case GoalType.passiveIncome:
+        return 120;
+      case GoalType.portfolioGrowth:
+        return 120;
+      case GoalType.dividendIncome:
+        return 180;
+      case GoalType.diversification:
+      case GoalType.riskManagement:
+      case GoalType.taxOptimization:
+      case GoalType.estatePlanning:
+      case GoalType.custom:
+        return null;
+    }
+  }
 }
 
 /// Goal status

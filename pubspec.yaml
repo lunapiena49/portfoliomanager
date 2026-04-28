@@ -83,10 +83,34 @@ dev_dependencies:
   hive_generator: ^2.0.1
   mocktail: ^1.0.1
   bloc_test: ^10.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/images/launcher_icon.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  background_color_ios: "#0A0E14"
+  adaptive_icon_background: "#0A0E14"
+  adaptive_icon_foreground: "assets/images/launcher_icon.png"
+  adaptive_icon_monochrome: "assets/images/launcher_icon.png"
+  web:
+    generate: true
+    image_path: "assets/images/launcher_icon.png"
+    background_color: "#0A0E14"
+    theme_color: "#3DF2A7"
+  windows:
+    generate: true
+    image_path: "assets/images/launcher_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/images/launcher_icon.png"
 
 flutter:
   uses-material-design: true
-  
+
   assets:
     - assets/translations/
     - assets/images/

@@ -888,10 +888,12 @@ class _RebalancingTabState extends State<RebalancingTab> {
               SizedBox(height: 12.h),
               Text(
                 diff > 0
-                    ? 'rebalancing.summary.over_allocated'
-                        .tr(args: [diff.toStringAsFixed(2)])
-                    : 'rebalancing.summary.under_allocated'
-                        .tr(args: [diff.abs().toStringAsFixed(2)]),
+                    ? 'rebalancing.summary.over_allocated'.tr(
+                        namedArgs: {'amount': diff.toStringAsFixed(2)},
+                      )
+                    : 'rebalancing.summary.under_allocated'.tr(
+                        namedArgs: {'amount': diff.abs().toStringAsFixed(2)},
+                      ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: diff > 0 ? AppTheme.errorColor : AppTheme.warningColor,
                   fontWeight: FontWeight.w600,

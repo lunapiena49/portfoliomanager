@@ -63,8 +63,9 @@
         "description": "Verfolgen Sie Positionspreise mit Quellen-Badges und Fallback-Logik: EODHD Echtzeit -> FMP -> taeglicher Snapshot."
       },
       "goals": {
-        "title": "Ziele und Rebalancing",
-        "description": "Setzen Sie Zielwerte, verfolgen Sie Fortschritt und nutzen Sie Rebalancing-Tools zum Vergleich von Ist- und Soll-Allokation."
+        "title": "Anlageziele",
+        "content": "Plane kurzfristige, mittelfristige und langfristige Finanzziele passend zu deinem Niveau.",
+        "details": "**Was Ziele sind**\nEin Ziel ist eine messbare finanzielle Vorgabe (Zielbetrag + Frist), die die App neben deinem echten Portfolio mitfuhrt. Nichts wird online gesendet: Jedes Ziel bleibt nur auf deinem Geraet.\n\n**Drei Erfahrungsstufen**\nDamit neue Nutzer nicht mit Finanzjargon ueberlastet werden, gruppiert die App die 20 Zielvorlagen in drei Stufen:\n\n- **Einsteiger (entry level)** â€” Notgroschen, Allgemeine Ersparnisse, Schuldentilgung, Grosse Anschaffung, Reisen, Hochzeit, Familie / Kinder, Ausbildung.\n- **Mittel** â€” Hauskauf, Autokauf, Ruhestand, Passives Einkommen, Portfolio-Wachstum, Individuell. Ziele mit laengerem Horizont, die monatliche Planung erfordern.\n- **Experte** â€” Vorzeitiger Ruhestand (FIRE), Dividendeneinkommen, Diversifikationsziel, Risikomanagement, Steueroptimierung, Nachlassplanung.\n\n**Status**\naktiv, abgeschlossen, pausiert, abgebrochen. Der Wechsel zu 'abgeschlossen' erfolgt automatisch beim Erreichen des Zielbetrags.\n\n**Formularfelder**\n- Typ (mit Horizont-Vorschlag)\n- Name und Beschreibung\n- Zielbetrag und Waehrung\n- Bereits gesparter Betrag\n- Zieldatum (optional, je nach Typ vorbelegt)\n- Monatlicher Beitrag (optional)\n\n**Berechnete Metriken**\n- Fortschrittsprozent und Restbetrag\n- Monate bis zum Zieldatum\n- Erforderlicher Monatsbeitrag fuer puenktliche Zielerreichung\n- Anzeige 'on-track', wenn aktueller Beitrag >= erforderlich\n\n**Datenschutz**\nZiele werden in der lokalen Hive-Box goals gespeichert. Kein Ziel wird je an externe Server gesendet. Datenreset loescht alle Ziele.\n\n**Empfohlener Workflow je Stufe**\n- *Einsteiger*: Beginne mit einem Notgroschen ueber 3-6 Monate Fixkosten. Ergaenze um ein Sparziel.\n- *Mittel*: Fuege Ruhestand und Hauskauf mit 5-30 Jahren Horizont hinzu. Definiere eine Zielallokation und verbinde sie mit dem Rebalancing-Modul.\n- *Experte*: Erstelle FIRE / Dividendeneinkommen / Diversifikation und nutze das Glossar fuer Toleranzbaender, max. Drawdown und 4%-Regel."
       },
       "market": {
         "title": "Globale Top-Mover kostenlos",
@@ -171,6 +172,13 @@
     "title": "Mein Portfolio",
     "total_value": "Gesamtwert",
     "total_pnl": "Gesamt-G&V",
+    "privacy": {
+      "show": "Werte anzeigen",
+      "hide": "Werte ausblenden"
+    },
+    "detail": {
+      "tooltip": "Detaillierte Analyse oeffnen"
+    },
     "positions": "Positionen",
     "position_count_one": "{count} Position",
     "position_count_other": "{count} Positionen",
@@ -532,8 +540,8 @@
       "total_target": "Gesamtziel",
       "remaining": "Rest bis 100%",
       "portfolio_value": "Portfoliowert",
-      "over_allocated": "Ueber-alloziert um {0}%",
-      "under_allocated": "Unter-alloziert um {0}%",
+      "over_allocated": "Ueber-alloziert um {amount}%",
+      "under_allocated": "Unter-alloziert um {amount}%",
       "balanced": "Portfolio ist ausbalanciert!"
     },
     "filter": {
@@ -790,9 +798,9 @@
         "details": "**Import-Probleme**\n- Prüfen Sie, ob das gewählte Broker-Profil das richtige ist (Auto-Erkennung trifft bei benutzerdefinierten CSV nicht immer).\n- Entfernen Sie doppelte Header-Zeilen, die manche Broker am Ende des Exports anhängen.\n- Prüfen Sie das Zahlenformat: 1.234,56 (EU) vs. 1,234.56 (US). Die App erkennt automatisch, gemischte Dateien können sie aber verwirren.\n- Bei PDFs: wenn möglich den CSV-Export verwenden; OCR von Scans wird nicht unterstützt.\n- Wenn die Vorschau leer ist: \"generisches CSV\" als letzten Ausweg versuchen.\n\n**Keine Live-Kurse**\n- Bestätigen Sie, dass Sie den EODHD- oder FMP-Schlüssel in den Einstellungen gespeichert haben.\n- Drücken Sie \"Verbindung testen\", um zu verifizieren, dass der Schlüssel akzeptiert wird.\n- Prüfen Sie das `exchange`-Mapping in den Positionsdetails: mehrdeutige Ticker (z. B. \"BMW\" an mehreren Börsen gelistet) benötigen ein explizites Suffix.\n- Nach einer Schlüssel-Aktualisierung manuell auffrischen.\n\n**Fehler bei der KI-Analyse**\n- Öffnen Sie Einstellungen → KI und drücken Sie \"Verbindung testen\", um den Gemini-Schlüssel zu validieren.\n- Prüfen Sie das Tageskontingent des Free-Tiers im Google AI Studio Dashboard.\n- Erneut versuchen mit einem kürzeren Prompt oder nicht wesentliche Slices im Transparenz-Panel deaktivieren.\n- Bleibt der Fehler bestehen, prüfen Sie Ihre Netzwerkverbindung und Unternehmens-Firewalls.\n\n**Unerwartetes UI-Verhalten**\n- App vollständig neu starten (komplett schließen + erneut öffnen).\n- Theme unter Einstellungen → Erscheinungsbild zurücksetzen, falls Sie inkonsistente Farben sehen.\n- Onboarding unter Einstellungen → Über erneut öffnen, wenn Sie die Tour wiederholen möchten.\n- Lokale Daten nur als letzten Ausweg löschen: nicht exportierte Portfolios und Anlageziele gehen verloren.\n\n**Web-spezifische Probleme**\n- Ist IndexedDB nicht verfügbar (Inkognito-Modus oder Quota überschritten), kann Hive nicht initialisieren. Verwenden Sie ein normales Fenster und schaffen Sie Speicherplatz frei.\n- Aggressive Werbeblocker können das Laden der Movers verhindern. Setzen Sie `*.github.io` auf die Whitelist.\n\n**Desktop-spezifische Probleme**\n- flutter_secure_storage erfordert auf Linux libsecret (`sudo apt install libsecret-1-dev` vor dem Build).\n- Unter Windows blockieren manche Unternehmensrichtlinien DPAPI: in dem Fall werden Schlüssel nicht persistiert und müssen bei jedem Start neu eingegeben werden."
       },
       "glossary": {
-        "title": "Investment-Glossar",
-        "content": "Definitionen der wichtigsten in der App und in den KI-Reports verwendeten Begriffe.",
-        "details": "**P&L** — Profit & Loss. Differenz zwischen aktuellem Wert und Einstandskosten, absolut oder in Prozent.\n\n**Cost Basis** — ursprünglich in die Position investiertes Kapital, vor Gebühren, sofern nicht anders angegeben.\n\n**Allokation** — prozentuales Gewicht einer Position am Gesamtportfoliowert.\n\n**Asset Class** — Instrumentenkategorie: Aktien, ETF, Anleihen, Krypto, Optionen, Futures, Rohstoffe, Cash.\n\n**Volatilität** — Maß für die Streuung der Renditen über die Zeit, typischerweise als annualisierte Standardabweichung ausgedrückt.\n\n**Drawdown** — prozentualer Rückgang von einem lokalen Hoch zum nachfolgenden Tief. Max drawdown ist der schlimmste historische Rückgang.\n\n**Sharpe Ratio** — Überrendite über dem risikofreien Zins, normiert auf die Gesamtvolatilität.\n\n**Sortino Ratio** — Variante der Sharpe Ratio, die im Nenner nur die Abwärtsvolatilität nutzt.\n\n**Beta** — Sensitivität der Position/des Portfolios gegenüber dem Benchmark.\n\n**Alpha** — Überrendite gegenüber dem, was angesichts des Beta zu erwarten gewesen wäre — also \"Mehrwert\" gegenüber passivem Engagement.\n\n**Diversifikation** — Verteilung des Risikos auf mehrere Vermögenswerte, Sektoren, Regionen und Währungen, um Konzentration zu verringern.\n\n**Herfindahl (HHI)** — Konzentrationsindex: Summe der quadrierten Anteile. 10.000 = einzelne Position.\n\n**Basiswährung** — Währung, in der die App Summen und P&L aggregiert. Konfiguriert unter Einstellungen → Allgemein.\n\n**FX Rate** — Wechselkurs, der auf Positionen in einer anderen Währung angewandt wird, um sie in der Basiswährung zu konsolidieren.\n\n**ISIN** — International Securities Identification Number, ein eindeutiger 12-stelliger Code für ein Finanzinstrument.\n\n**Ticker** — kurzes Instrumentensymbol (z. B. AAPL für Apple), börsenspezifisch.\n\n**Treemap** — hierarchische Visualisierung, in der die Fläche jedes Rechtecks proportional zur Größe des dargestellten Elements ist.\n\n**Squarified** — Treemap-Algorithmus, der die Seitenverhältnisse der Rechtecke zur besseren Lesbarkeit minimiert."
+        "title": "Anlage-Glossar",
+        "content": "Definitionen der wichtigsten Begriffe in App, KI-Reports und Zielebereich.",
+        "details": "**P&V (P&L)** â€” Profit & Loss. Differenz zwischen aktuellem Wert und Kostenbasis, absolut oder prozentual.\n\n**Kostenbasis** â€” Ursprunglich investiertes Kapital in der Position, vor Gebuehren wenn nicht anders angegeben.\n\n**Allokation** â€” Prozentualer Anteil einer Position am Gesamtportfoliowert.\n\n**Anlageklasse** â€” Instrumentenkategorie: Aktien, ETFs, Anleihen, Krypto, Optionen, Futures, Rohstoffe, Cash.\n\n**Asset Allocation** â€” Strategische Verteilung des Kapitals auf Anlageklassen, abhaengig von Horizont, Risikotoleranz und Zielen.\n\n**Volatilitaet** â€” Streuung der Renditen ueber Zeit, meist ausgedrueckt als annualisierte Standardabweichung.\n\n**Drawdown** â€” Prozentualer Rueckgang vom lokalen Hoch zum naechsten Tief. Max Drawdown ist der schlimmste historische Rueckgang.\n\n**Sharpe Ratio** â€” Ueberrendite gegenueber risikofrei, normalisiert durch Gesamtvolatilitaet.\n\n**Sortino Ratio** â€” Sharpe-Variante mit ausschliesslich Downside-Volatilitaet.\n\n**Beta** â€” Sensitivitaet der Position/des Portfolios gegenueber dem Benchmark.\n\n**Alpha** â€” Mehrrendite ueber das aufgrund Beta erwartete Niveau hinaus, 'Mehrwert' gegenueber passiv.\n\n**Diversifikation** â€” Risikostreuung ueber mehrere Assets, Sektoren, Regionen und Waehrungen.\n\n**Herfindahl (HHI)** â€” Konzentrationsindex: Summe der quadrierten Anteile. 10.000 = einzige Position.\n\n**Basiswaehrung** â€” Waehrung, in der die App Summen und P&V aggregiert.\n\n**FX-Kurs** â€” Wechselkurs fuer Positionen in Fremdwaehrung zur Konsolidierung in Basiswaehrung.\n\n**ISIN** â€” International Securities Identification Number, eindeutiger 12-Zeichen-Code eines Finanzinstruments.\n\n**Ticker** â€” Kurzkuerzel des Instruments (z. B. AAPL fuer Apple), boersenspezifisch.\n\n**Treemap** â€” Hierarchische Visualisierung, Flaeche jedes Rechtecks proportional zur Groesse des Elements.\n\n**Squarified** â€” Treemap-Algorithmus, der das Seitenverhaeltnis der Rechtecke fuer Lesbarkeit minimiert.\n\n**SMART-Ziel** â€” Spezifisch, Messbar, Erreichbar, Realistisch, Terminiert. Ein gutes Ziel erfuellt alle fuenf Kriterien.\n\n**Zeithorizont** â€” Zeit zwischen jetzt und dem Datum, an dem du das Kapital benoetigst. Bestimmt Risikotoleranz und Asset-Wahl.\n\n**Risikotoleranz** â€” Subjektive Faehigkeit, Wertschwankungen ohne Strategiewechsel zu ertragen. Konservativ, moderat, aggressiv.\n\n**Liquiditaet** â€” Geschwindigkeit, mit der ein Asset ohne signifikanten Wertverlust in Bargeld umgewandelt wird.\n\n**Zinseszins** â€” Rendite, die nicht nur auf das urspruengliche Kapital anfaellt, sondern auch auf zuvor angesammelte Renditen.\n\n**DCA (Dollar Cost Averaging)** â€” Einstiegsstrategie, die Investitionen in kleine wiederkehrende Tranchen zerlegt.\n\n**Lump Sum** â€” Gegenteil von DCA: Vollstaendiger Einsatz zu einem Zeitpunkt.\n\n**Notgroschen** â€” Liquiditaetsreserve (3-6 Monate Fixkosten) ausserhalb des investierten Portfolios.\n\n**FIRE (Financial Independence, Retire Early)** â€” Ziel, genug Kapital anzusammeln, sodass passives Einkommen die jaehrlichen Ausgaben uebersteigt.\n\n**Sichere Entnahmerate (4%-Regel)** â€” Historische Schaetzung der jaehrlich nachhaltigen Entnahme (~4%) aus einem diversifizierten Portfolio ueber 30 Jahre.\n\n**Dividendenrendite** â€” Jahresdividende pro Aktie geteilt durch aktuellen Preis.\n\n**Yield on Cost** â€” Jahresdividende geteilt durch deine persoenliche Kostenbasis statt aktuellem Marktpreis.\n\n**Total Return** â€” Gesamtrendite inklusive Kursgewinne und reinvestierte Dividenden.\n\n**Anleihenleiter** â€” Diversifikationstechnik mit gestaffelten Faelligkeiten, um Zinsrisiken zu mindern.\n\n**Inflationsschutz** â€” Vermoegenswerte, die vor Kaufkraftverlust schuetzen: Aktien, Immobilien, Gold, TIPS.\n\n**Tax-Loss Harvesting** â€” Verkauf verlustreicher Positionen zur Realisierung von Steuerverlusten.\n\n**Glide Path** â€” Kurve der Reduktion der Aktienquote bei Annaeherung an das Zieldatum.\n\n**Portfolio Drift** â€” Allmaehliche Abweichung der tatsaechlichen Gewichte vom Zielportfolio durch Marktbewegungen.\n\n**Rebalancing-Band** â€” Abweichungsschwelle (z. B. +/- 5%), ab der ein Rebalancing sinnvoll ist.\n\n**Nachlassplanung** â€” Instrumente (Testament, Trust, Versicherungen), um Vermoegen unter Steueroptimierung an Erben zu uebergeben."
       }
     }
   },
@@ -882,7 +890,53 @@
       "house": "Haus",
       "education": "Ausbildung",
       "travel": "Reise",
-      "custom": "Benutzerdefiniert"
+      "custom": "Benutzerdefiniert",
+      "savings": "Allgemeine Ersparnisse",
+      "debtRepayment": "Schuldentilgung",
+      "bigPurchase": "Grosse Anschaffung",
+      "wedding": "Hochzeit",
+      "family": "Familie / Kinder",
+      "carPurchase": "Autokauf",
+      "passiveIncome": "Passives Einkommen",
+      "portfolioGrowth": "Portfolio-Wachstum",
+      "earlyRetirement": "Vorzeitiger Ruhestand (FIRE)",
+      "dividendIncome": "Dividendeneinkommen",
+      "diversification": "Diversifikationsziel",
+      "riskManagement": "Risikomanagement",
+      "taxOptimization": "Steueroptimierung",
+      "estatePlanning": "Nachlassplanung"
+    },
+    "tiers": {
+      "entry": "Einsteiger",
+      "intermediate": "Mittel",
+      "expert": "Experte"
+    },
+    "form": {
+      "title_new": "Neues Ziel",
+      "title_edit": "Ziel bearbeiten",
+      "section_type": "Zieltyp",
+      "section_type_help": "Waehle eine Vorlage passend zu deinem Erfahrungsstand. Beeinflusst nur Symbole, Farbe und Vorschlaege.",
+      "section_basics": "Grundlagen",
+      "section_amount": "Betrag",
+      "section_plan": "Plan und Beitraege",
+      "name": "Zielname",
+      "name_hint": "z. B. Notgroschen, Strandhaus",
+      "name_required": "Bitte einen Namen eingeben",
+      "description": "Beschreibung (optional)",
+      "description_hint": "Persoenliche Notizen, Kontext oder Motivation",
+      "target_amount": "Zielbetrag",
+      "current_amount": "Bereits gespart",
+      "current_amount_help": "Lasse 0, wenn du noch nicht angefangen hast",
+      "amount_required": "Bitte einen Betrag eingeben",
+      "amount_invalid": "Bitte einen positiven Betrag eingeben",
+      "currency": "Waehrung",
+      "target_date": "Zieldatum (optional)",
+      "target_date_help": "Hilft beim Berechnen des vorgeschlagenen Monatsbeitrags",
+      "target_date_none": "Kein Datum",
+      "monthly": "Monatlicher Beitrag (optional)",
+      "monthly_help": "Wieviel du jeden Monat zuruecklegen moechtest",
+      "privacy_hint": "Alle Daten bleiben auf deinem Geraet: Ziele werden nie an externe Server gesendet.",
+      "create": "Ziel erstellen"
     },
     "status": {
       "active": "Aktiv",

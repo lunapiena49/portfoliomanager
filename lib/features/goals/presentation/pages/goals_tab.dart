@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../bloc/goals_bloc.dart';
+import '../widgets/goal_form_sheet.dart';
 import '../../domain/entities/goals_entities.dart';
 
 class GoalsTab extends StatefulWidget {
@@ -822,46 +823,33 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
   }
 
   void _showAddGoalSheet(BuildContext context) {
+    final bloc = context.read<GoalsBloc>();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (sheetContext) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.6,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.add, color: Theme.of(context).primaryColor),
-                  SizedBox(width: 8.w),
-                  Text(
-                    'goals.add.title'.tr(),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                'goals.add.coming_soon'.tr(),
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ],
-          ),
+      builder: (sheetContext) => BlocProvider.value(
+        value: bloc,
+        child: const GoalFormSheet(),
+      ),
+    );
+  }
+
+  void _showEditGoalSheet(BuildContext context, InvestmentGoal goal) {
+    final bloc = context.read<GoalsBloc>();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (sheetContext) => BlocProvider.value(
+        value: bloc,
+        child: GoalFormSheet(
+          existing: goal,
+          defaultCurrency: goal.currency,
         ),
       ),
     );
@@ -948,6 +936,14 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
                     ),
                   ),
                   _StatusChip(status: goal.status),
+                  IconButton(
+                    tooltip: 'common.edit'.tr(),
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _showEditGoalSheet(context, goal);
+                    },
+                  ),
                   IconButton(
                     tooltip: 'common.delete'.tr(),
                     icon: const Icon(Icons.delete_outline),
@@ -1062,6 +1058,34 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
         return Colors.orange;
       case GoalType.custom:
         return Colors.grey;
+      case GoalType.savings:
+        return Colors.teal;
+      case GoalType.debtRepayment:
+        return Colors.deepOrange;
+      case GoalType.bigPurchase:
+        return Colors.amber;
+      case GoalType.wedding:
+        return Colors.pink;
+      case GoalType.family:
+        return Colors.lightGreen;
+      case GoalType.carPurchase:
+        return Colors.indigo;
+      case GoalType.passiveIncome:
+        return Colors.cyan;
+      case GoalType.portfolioGrowth:
+        return Colors.deepPurple;
+      case GoalType.earlyRetirement:
+        return Colors.purpleAccent;
+      case GoalType.dividendIncome:
+        return Colors.lime;
+      case GoalType.diversification:
+        return Colors.brown;
+      case GoalType.riskManagement:
+        return Colors.redAccent;
+      case GoalType.taxOptimization:
+        return Colors.blueGrey;
+      case GoalType.estatePlanning:
+        return Colors.deepOrangeAccent;
     }
   }
 
@@ -1079,24 +1103,39 @@ class _GoalsTabState extends State<GoalsTab> with TickerProviderStateMixin {
         return Icons.flight;
       case GoalType.custom:
         return Icons.star;
+      case GoalType.savings:
+        return Icons.savings;
+      case GoalType.debtRepayment:
+        return Icons.credit_card_off;
+      case GoalType.bigPurchase:
+        return Icons.shopping_cart_checkout;
+      case GoalType.wedding:
+        return Icons.favorite;
+      case GoalType.family:
+        return Icons.family_restroom;
+      case GoalType.carPurchase:
+        return Icons.directions_car;
+      case GoalType.passiveIncome:
+        return Icons.payments;
+      case GoalType.portfolioGrowth:
+        return Icons.trending_up;
+      case GoalType.earlyRetirement:
+        return Icons.self_improvement;
+      case GoalType.dividendIncome:
+        return Icons.account_balance;
+      case GoalType.diversification:
+        return Icons.donut_large;
+      case GoalType.riskManagement:
+        return Icons.shield;
+      case GoalType.taxOptimization:
+        return Icons.receipt_long;
+      case GoalType.estatePlanning:
+        return Icons.gavel;
     }
   }
 
   String _getGoalTypeLabel(BuildContext context, GoalType type) {
-    switch (type) {
-      case GoalType.retirement:
-        return 'goals.types.retirement'.tr();
-      case GoalType.emergency:
-        return 'goals.types.emergency'.tr();
-      case GoalType.house:
-        return 'goals.types.house'.tr();
-      case GoalType.education:
-        return 'goals.types.education'.tr();
-      case GoalType.travel:
-        return 'goals.types.travel'.tr();
-      case GoalType.custom:
-        return 'goals.types.custom'.tr();
-    }
+    return 'goals.types.${type.name}'.tr();
   }
 
   String _getStatusLabel(BuildContext context, GoalStatus status) {

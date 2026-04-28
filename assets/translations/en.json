@@ -63,8 +63,9 @@
         "description": "Track position prices with source badges and fallback logic: EODHD real-time -> FMP -> daily snapshot."
       },
       "goals": {
-        "title": "Goals and rebalancing",
-        "description": "Set goal targets, follow progress, and use rebalancing tools to compare current allocation with desired weights."
+        "title": "Investment goals",
+        "content": "Plan short, medium and long-term financial goals tailored to your level.",
+        "details": "**What goals are**\nA goal is a measurable financial target (target amount + deadline) that the app tracks alongside your real portfolio. Nothing is sent online: every goal lives on your device only.\n\n**Three experience tiers**\nTo avoid overloading new users with finance jargon, the app groups the 20 goal templates into three tiers:\n\n- **Starter (entry level)** â€” Emergency fund, General savings, Debt repayment, Big-ticket purchase, Travel, Wedding, Family / kids, Education. Concrete short- to medium-term goals, ideal for users approaching structured saving for the first time.\n- **Intermediate** â€” House purchase, Car purchase, Retirement, Passive income, Portfolio growth, Custom. Longer-horizon goals that require steady monthly planning and benefit from compound returns.\n- **Expert** â€” Early retirement (FIRE), Dividend income, Diversification target, Risk management, Tax optimisation, Estate planning. Wealth-construction and protection goals aimed at advanced investors.\n\n**Goal states**\nactive, completed, paused, cancelled. Transition to 'completed' happens automatically when the saved amount reaches the target.\n\n**Form fields**\n- Type (with suggested time horizon hint)\n- Name and description\n- Target amount and currency\n- Already saved amount\n- Target date (optional, pre-filled based on type)\n- Monthly contribution (optional)\n\n**Computed metrics**\n- Progress percentage and remaining amount\n- Months left until target date\n- Required monthly contribution to land on time\n- 'On-track' flag if current contribution >= required contribution\n\n**Privacy**\nGoals are stored in the local goals Hive box. No goal is ever sent to external servers, not even to the active API keys. Resetting the app data also removes all goals.\n\n**Suggested workflow per tier**\n- *Starter*: Build an emergency fund equal to 3-6 months of fixed expenses first. Pair it with a Savings goal for specific projects. Patience matters: contribution regularity beats yield.\n- *Intermediate*: Add Retirement and House goals with 5-30 year horizons. Set a target asset allocation and link it to the Rebalancing module to stay aligned.\n- *Expert*: Create FIRE / Dividend income / Diversification goals and use the glossary to define tolerance bands, max acceptable drawdown and the 4% rule as your safe withdrawal rate."
       },
       "market": {
         "title": "Global market movers for free",
@@ -171,6 +172,13 @@
     "title": "My Portfolio",
     "total_value": "Total Value",
     "total_pnl": "Total P&L",
+    "privacy": {
+      "show": "Show values",
+      "hide": "Hide values"
+    },
+    "detail": {
+      "tooltip": "Open detailed analysis"
+    },
     "positions": "Positions",
     "position_count_one": "{count} position",
     "position_count_other": "{count} positions",
@@ -532,8 +540,8 @@
       "total_target": "Total Target",
       "remaining": "Remaining to 100%",
       "portfolio_value": "Portfolio Value",
-      "over_allocated": "Over-allocated by {0}%",
-      "under_allocated": "Under-allocated by {0}%",
+      "over_allocated": "Over-allocated by {amount}%",
+      "under_allocated": "Under-allocated by {amount}%",
       "balanced": "Portfolio is balanced!"
     },
     "filter": {
@@ -791,8 +799,8 @@
       },
       "glossary": {
         "title": "Investment glossary",
-        "content": "Definitions of the main terms used in the app and AI reports.",
-        "details": "**P&L** — Profit & Loss. Difference between current value and cost basis, in absolute terms or as a percentage.\n\n**Cost Basis** — Capital originally invested in the position, pre-fees unless otherwise specified.\n\n**Allocation** — Percentage weight of a position on total portfolio value.\n\n**Asset Class** — Instrument category: stocks, ETFs, bonds, crypto, options, futures, commodities, cash.\n\n**Volatility** — Measure of return dispersion over time, typically expressed as annualized standard deviation.\n\n**Drawdown** — Percentage decline from a local peak to the subsequent trough. Max drawdown is the worst historical drop.\n\n**Sharpe Ratio** — Excess return over risk-free, normalized by total volatility.\n\n**Sortino Ratio** — Sharpe variant using only downside volatility in the denominator.\n\n**Beta** — Sensitivity of the position/portfolio versus the benchmark.\n\n**Alpha** — Excess return over what was expected given the beta — i.e. \"value added\" over passive exposure.\n\n**Diversification** — Spreading risk across multiple assets, sectors, regions, and currencies to reduce concentration.\n\n**Herfindahl (HHI)** — Concentration index: sum of squared shares. 10,000 = single position.\n\n**Base Currency** — Currency in which the app aggregates totals and P&L. Configured in Settings → General.\n\n**FX Rate** — Exchange rate applied to positions in a different currency to consolidate them in the base currency.\n\n**ISIN** — International Securities Identification Number, a unique 12-character code for a financial instrument.\n\n**Ticker** — Short instrument symbol (e.g. AAPL for Apple), exchange-specific.\n\n**Treemap** — Hierarchical visualization in which the area of each rectangle is proportional to the size of the represented item.\n\n**Squarified** — Treemap algorithm that minimizes rectangle aspect ratios for readability."
+        "content": "Definitions for the main terms used in the app, AI reports and the goals section.",
+        "details": "**P&L** â€” Profit & Loss. Difference between current value and cost basis, absolute or percentage.\n\n**Cost Basis** â€” Capital originally invested in a position, pre-fees unless otherwise stated.\n\n**Allocation** â€” Percentage weight of a position over the total portfolio value.\n\n**Asset Class** â€” Instrument category: stocks, ETFs, bonds, crypto, options, futures, commodities, cash.\n\n**Asset Allocation** â€” Strategic distribution of capital across asset classes, decided based on time horizon, risk tolerance and goals.\n\n**Volatility** â€” Dispersion of returns over time, usually expressed as annualised standard deviation.\n\n**Drawdown** â€” Percentage drop from a local peak to the next trough. Max drawdown is the worst historical drop.\n\n**Sharpe Ratio** â€” Excess return over risk-free, normalised by total volatility.\n\n**Sortino Ratio** â€” Sharpe variant using only downside volatility in the denominator.\n\n**Beta** â€” Position/portfolio sensitivity vs. benchmark.\n\n**Alpha** â€” Extra return vs. expected given the beta, i.e. 'value added' over passive.\n\n**Diversification** â€” Spreading risk across more assets, sectors, regions and currencies to lower concentration.\n\n**Herfindahl (HHI)** â€” Concentration index: sum of squared shares. 10,000 = single position.\n\n**Base Currency** â€” Currency in which the app aggregates totals and P&L. Set in Settings > General.\n\n**FX Rate** â€” Exchange rate applied to non-base currency positions for consolidation in base currency.\n\n**ISIN** â€” International Securities Identification Number, 12-character unique code of a financial instrument.\n\n**Ticker** â€” Short symbol of the instrument (e.g. AAPL for Apple), exchange-specific.\n\n**Treemap** â€” Hierarchical visualisation where each rectangle's area is proportional to the represented element's size.\n\n**Squarified** â€” Treemap algorithm that minimises rectangle aspect ratio for readability.\n\n**SMART Goal** â€” Specific, Measurable, Achievable, Realistic, Time-bound. A well-defined goal should meet all five criteria.\n\n**Time Horizon** â€” Time between now and the date you'll need the capital. Drives risk tolerance and asset choice.\n\n**Risk Tolerance** â€” Subjective ability to bear value swings without changing strategy. Conservative, moderate, aggressive.\n\n**Liquidity** â€” Speed at which an asset converts to cash without significant loss of value.\n\n**Compound Interest** â€” Return earned not only on the initial principal but also on previously accrued returns. Main long-term growth engine.\n\n**DCA (Dollar Cost Averaging)** â€” Entry strategy that splits the investment into small recurring slices to dampen market-timing risk.\n\n**Lump Sum** â€” Opposite to DCA: deploy the full amount at one point in time.\n\n**Emergency Fund** â€” Liquidity reserve (3-6 months of fixed expenses) kept outside the invested portfolio for unexpected events.\n\n**FIRE (Financial Independence, Retire Early)** â€” Goal of accumulating enough capital so passive income exceeds annual expenses, freeing you from paid work.\n\n**Safe Withdrawal Rate (4% rule)** â€” Historical estimate of sustainable annual drawdown from a diversified portfolio (~4%) without depleting capital in 30 years.\n\n**Dividend Yield** â€” Annual dividend per share divided by current price. Immediate income measure of a stock/ETF.\n\n**Yield on Cost** â€” Annual dividend divided by your personal cost basis, not the market price. Shows actual yield on your purchase price.\n\n**Total Return** â€” Combined return including capital gains and reinvested dividends.\n\n**Bond Ladder** â€” Bond diversification technique with staggered maturities to reduce rate risk and keep steady liquidity.\n\n**Inflation Hedge** â€” Assets that protect against purchasing-power decline: real-asset stocks, real estate, gold, TIPS.\n\n**Tax-Loss Harvesting** â€” Selling losing positions to realise tax losses that offset gains elsewhere.\n\n**Glide Path** â€” Curve of equity exposure reduction as the target date approaches.\n\n**Portfolio Drift** â€” Gradual deviation of actual weights from the target allocation due to market moves.\n\n**Rebalancing Band** â€” Deviation threshold (e.g. +/- 5%) beyond which it pays to rebalance back to target.\n\n**Estate Planning** â€” Set of tools (will, trust, insurance) for transferring wealth to heirs while minimising taxes."
       }
     }
   },
@@ -882,7 +890,53 @@
       "house": "House",
       "education": "Education",
       "travel": "Travel",
-      "custom": "Custom"
+      "custom": "Custom",
+      "savings": "General savings",
+      "debtRepayment": "Debt repayment",
+      "bigPurchase": "Big-ticket purchase",
+      "wedding": "Wedding",
+      "family": "Family / kids",
+      "carPurchase": "Car purchase",
+      "passiveIncome": "Passive income",
+      "portfolioGrowth": "Portfolio growth",
+      "earlyRetirement": "Early retirement (FIRE)",
+      "dividendIncome": "Dividend income",
+      "diversification": "Diversification target",
+      "riskManagement": "Risk management",
+      "taxOptimization": "Tax optimisation",
+      "estatePlanning": "Estate planning"
+    },
+    "tiers": {
+      "entry": "Starter",
+      "intermediate": "Intermediate",
+      "expert": "Expert"
+    },
+    "form": {
+      "title_new": "New goal",
+      "title_edit": "Edit goal",
+      "section_type": "Goal type",
+      "section_type_help": "Pick a template that matches your experience level. Only affects icons, colour and suggestions.",
+      "section_basics": "Basics",
+      "section_amount": "Amount",
+      "section_plan": "Plan and contributions",
+      "name": "Goal name",
+      "name_hint": "e.g. Emergency fund, Beach house",
+      "name_required": "Please enter a name",
+      "description": "Description (optional)",
+      "description_hint": "Personal notes, context or motivation",
+      "target_amount": "Target amount",
+      "current_amount": "Already saved",
+      "current_amount_help": "Leave 0 if you have not started yet",
+      "amount_required": "Please enter an amount",
+      "amount_invalid": "Please enter a positive amount",
+      "currency": "Currency",
+      "target_date": "Target date (optional)",
+      "target_date_help": "Helps compute the suggested monthly contribution",
+      "target_date_none": "No date set",
+      "monthly": "Monthly contribution (optional)",
+      "monthly_help": "How much you plan to set aside each month",
+      "privacy_hint": "All data stays on your device: goals are never sent to external servers.",
+      "create": "Create goal"
     },
     "status": {
       "active": "Active",

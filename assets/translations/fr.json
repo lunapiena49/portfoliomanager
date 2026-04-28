@@ -63,8 +63,9 @@
         "description": "Suivez les prix des positions avec badges de source et logique de secours : EODHD temps reel -> FMP -> snapshot quotidien."
       },
       "goals": {
-        "title": "Objectifs et reequilibrage",
-        "description": "Definissez des cibles, suivez la progression et utilisez le reequilibrage pour comparer allocation actuelle et poids cibles."
+        "title": "Objectifs d'investissement",
+        "content": "Planifiez des objectifs financiers court, moyen et long terme adaptes a votre niveau.",
+        "details": "**Que sont les objectifs**\nUn objectif est une cible financiere mesurable (montant + echeance) que l'app suit en parallele de votre portefeuille reel. Rien n'est envoye en ligne : chaque objectif reste sur votre appareil.\n\n**Trois niveaux d'experience**\nPour ne pas submerger les nouveaux utilisateurs, l'app regroupe les 20 modeles d'objectifs en trois niveaux :\n\n- **Debutant (entry level)** â€” Fonds d'urgence, Epargne generale, Remboursement de dettes, Gros achat, Voyages, Mariage, Famille / enfants, Education. Objectifs concrets a court-moyen terme.\n- **Intermediaire** â€” Achat d'une maison, Achat de voiture, Retraite, Revenu passif, Croissance du portefeuille, Personnalise. Objectifs a horizon plus long necessitant une planification mensuelle reguliere.\n- **Expert** â€” Retraite anticipee (FIRE), Revenu de dividendes, Objectif de diversification, Gestion du risque, Optimisation fiscale, Planification successorale.\n\n**Etats**\nactif, termine, en pause, annule. La transition vers 'termine' est automatique a l'atteinte de la cible.\n\n**Champs du formulaire**\n- Type (avec horizon suggere)\n- Nom et description\n- Montant cible et devise\n- Montant deja epargne\n- Date cible (facultatif, pre-remplie selon le type)\n- Contribution mensuelle (facultatif)\n\n**Metriques calculees**\n- Pourcentage de progres et montant restant\n- Mois restants jusqu'a la date cible\n- Contribution mensuelle requise pour arriver a temps\n- Indicateur 'on-track' si la contribution actuelle >= la requise\n\n**Confidentialite**\nLes objectifs sont stockes dans la box Hive locale goals. Aucun objectif n'est envoye sur des serveurs externes. La reinitialisation des donnees efface aussi tous les objectifs.\n\n**Flux recommande par niveau**\n- *Debutant* : Creez d'abord un Fonds d'urgence de 3-6 mois de depenses. Ajoutez un objectif d'Epargne pour des projets specifiques.\n- *Intermediaire* : Ajoutez Retraite et Maison sur 5-30 ans. Definissez une allocation cible et connectez le module Reequilibrage.\n- *Expert* : Creez FIRE / Revenu de dividendes / Diversification et utilisez le glossaire pour definir bandes de tolerance, drawdown max et la regle des 4%."
       },
       "market": {
         "title": "Top movers mondiaux gratuits",
@@ -171,6 +172,13 @@
     "title": "Mon Portefeuille",
     "total_value": "Valeur Totale",
     "total_pnl": "P&L Total",
+    "privacy": {
+      "show": "Afficher les valeurs",
+      "hide": "Masquer les valeurs"
+    },
+    "detail": {
+      "tooltip": "Ouvrir l'analyse detaillee"
+    },
     "positions": "Positions",
     "position_count_one": "{count} position",
     "position_count_other": "{count} positions",
@@ -532,8 +540,8 @@
       "total_target": "Objectif Total",
       "remaining": "Restant jusqu'a 100%",
       "portfolio_value": "Valeur du Portefeuille",
-      "over_allocated": "Sur-alloue de {0}%",
-      "under_allocated": "Sous-alloue de {0}%",
+      "over_allocated": "Sur-alloue de {amount}%",
+      "under_allocated": "Sous-alloue de {amount}%",
       "balanced": "Le portefeuille est equilibre!"
     },
     "filter": {
@@ -790,9 +798,9 @@
         "details": "**Problèmes d'import**\n- Vérifiez que le profil broker sélectionné est le bon (l'auto-détection ne réussit pas toujours sur les CSV personnalisés).\n- Supprimez les lignes d'en-tête dupliquées que certains brokers ajoutent en bas de l'export.\n- Vérifiez le format numérique : 1.234,56 (EU) vs 1,234.56 (US). L'application auto-détecte, mais les fichiers mixtes peuvent la troubler.\n- Pour les PDF : utilisez l'export CSV quand disponible ; l'OCR de scans n'est pas pris en charge.\n- Si l'aperçu est vide : essayez le \"CSV générique\" en dernier recours.\n\n**Pas de prix en direct**\n- Confirmez que vous avez sauvegardé la clé EODHD ou FMP dans Paramètres.\n- Appuyez sur \"Tester la connexion\" pour vérifier que la clé est acceptée.\n- Vérifiez le mapping `exchange` dans les détails de position : les tickers ambigus (par ex. \"BMW\" coté sur plusieurs places) ont besoin d'un suffixe explicite.\n- Rafraîchissez manuellement après mise à jour des clés.\n\n**Erreurs d'analyse IA**\n- Ouvrez Paramètres → IA et appuyez sur \"Tester la connexion\" pour valider la clé Gemini.\n- Vérifiez le quota quotidien du free tier sur le dashboard Google AI Studio.\n- Réessayez avec un prompt plus court ou désactivez les tranches non essentielles dans le panneau de transparence.\n- Si l'erreur persiste, vérifiez votre connexion réseau et les pare-feu d'entreprise.\n\n**Comportement UI inattendu**\n- Forcez le redémarrage de l'application (fermeture complète + réouverture).\n- Réinitialisez le thème depuis Paramètres → Apparence si vous voyez des couleurs incohérentes.\n- Rouvrez l'onboarding depuis Paramètres → À propos si vous voulez revoir le tour.\n- Effacez les données locales seulement en dernier recours : vous perdrez les portefeuilles et objectifs non exportés.\n\n**Problèmes spécifiques au Web**\n- Si IndexedDB est indisponible (mode incognito ou quota dépassé), Hive ne peut pas s'initialiser. Utilisez une fenêtre normale et libérez de l'espace.\n- Les bloqueurs de pubs agressifs peuvent empêcher le chargement des movers. Mettez `*.github.io` en liste blanche.\n\n**Problèmes spécifiques au Desktop**\n- flutter_secure_storage sur Linux requiert libsecret (`sudo apt install libsecret-1-dev` avant build).\n- Sur Windows, certaines politiques d'entreprise bloquent DPAPI : dans ce cas, les clés ne sont pas persistées et vous devez les ressaisir à chaque lancement."
       },
       "glossary": {
-        "title": "Glossaire de l'investissement",
-        "content": "Définitions des principaux termes utilisés dans l'application et les rapports IA.",
-        "details": "**P&L** — Profit & Loss. Différence entre la valeur actuelle et le prix de revient, en termes absolus ou en pourcentage.\n\n**Cost Basis** — Capital initialement investi dans la position, hors frais sauf indication contraire.\n\n**Allocation** — Poids en pourcentage d'une position sur la valeur totale du portefeuille.\n\n**Asset Class** — Catégorie d'instrument : actions, ETF, obligations, crypto, options, futures, matières premières, cash.\n\n**Volatilité** — Mesure de la dispersion des rendements dans le temps, typiquement exprimée en écart-type annualisé.\n\n**Drawdown** — Baisse en pourcentage depuis un sommet local jusqu'au creux suivant. Le max drawdown est la pire chute historique.\n\n**Sharpe Ratio** — Excès de rendement sur le sans-risque, normalisé par la volatilité totale.\n\n**Sortino Ratio** — Variante du Sharpe utilisant uniquement la volatilité baissière au dénominateur.\n\n**Beta** — Sensibilité de la position/du portefeuille face au benchmark.\n\n**Alpha** — Excès de rendement par rapport à ce qui était attendu compte tenu du beta — c'est-à-dire la \"valeur ajoutée\" par rapport à l'exposition passive.\n\n**Diversification** — Répartition du risque sur plusieurs actifs, secteurs, régions et devises pour réduire la concentration.\n\n**Herfindahl (HHI)** — Indice de concentration : somme des carrés des parts. 10 000 = position unique.\n\n**Devise de base** — Devise dans laquelle l'application agrège les totaux et le P&L. Configurée dans Paramètres → Général.\n\n**Taux FX** — Taux de change appliqué aux positions dans une devise différente pour les consolider en devise de base.\n\n**ISIN** — International Securities Identification Number, code unique de 12 caractères pour un instrument financier.\n\n**Ticker** — Symbole court d'instrument (par ex. AAPL pour Apple), spécifique à la place de cotation.\n\n**Treemap** — Visualisation hiérarchique dans laquelle l'aire de chaque rectangle est proportionnelle à la taille de l'élément représenté.\n\n**Squarified** — Algorithme de treemap qui minimise les ratios d'aspect des rectangles pour la lisibilité."
+        "title": "Glossaire des investissements",
+        "content": "Definitions des principaux termes utilises dans l'app, les rapports IA et la section objectifs.",
+        "details": "**P&L** â€” Profit & Loss. Difference entre valeur actuelle et cout de base, absolu ou en pourcentage.\n\n**Cout de Base** â€” Capital initialement investi dans la position, hors frais sauf mention contraire.\n\n**Allocation** â€” Poids en pourcentage d'une position sur la valeur totale du portefeuille.\n\n**Classe d'Actif** â€” Categorie d'instrument : actions, ETF, obligations, crypto, options, futures, matieres premieres, liquidites.\n\n**Asset Allocation** â€” Distribution strategique du capital entre classes d'actifs, decidee selon horizon, tolerance au risque et objectifs.\n\n**Volatilite** â€” Dispersion des rendements dans le temps, generalement exprimee comme ecart-type annualise.\n\n**Drawdown** â€” Baisse en pourcentage d'un sommet local au creux suivant. Le max drawdown est la pire baisse historique.\n\n**Sharpe Ratio** â€” Rendement excedentaire au taux sans risque, normalise par la volatilite totale.\n\n**Sortino Ratio** â€” Variante du Sharpe utilisant uniquement la volatilite negative.\n\n**Beta** â€” Sensibilite de la position/portefeuille au benchmark.\n\n**Alpha** â€” Rendement supplementaire vs. l'attendu donne le beta, 'valeur ajoutee' au-dela du passif.\n\n**Diversification** â€” Repartition du risque entre plusieurs actifs, secteurs, regions et devises.\n\n**Herfindahl (HHI)** â€” Indice de concentration : somme des carres des parts. 10 000 = une seule position.\n\n**Devise de Base** â€” Devise dans laquelle l'app agrege les totaux et le P&L.\n\n**FX Rate** â€” Taux de change applique aux positions en devise differente pour la consolidation.\n\n**ISIN** â€” International Securities Identification Number, code unique a 12 caracteres d'un instrument financier.\n\n**Ticker** â€” Sigle court de l'instrument (ex. AAPL pour Apple), specifique a la place de cotation.\n\n**Treemap** â€” Visualisation hierarchique ou l'aire de chaque rectangle est proportionnelle a la taille de l'element.\n\n**Squarified** â€” Algorithme de treemap qui minimise l'aspect ratio des rectangles pour la lisibilite.\n\n**Objectif SMART** â€” Specifique, Mesurable, Atteignable, Realiste, Temporise. Un bon objectif respecte les cinq criteres.\n\n**Horizon Temporel** â€” Temps entre maintenant et la date a laquelle vous aurez besoin du capital. Determine la tolerance au risque.\n\n**Tolerance au Risque** â€” Capacite subjective a supporter les oscillations sans changer de strategie. Conservatrice, moderee, agressive.\n\n**Liquidite** â€” Vitesse a laquelle un actif se convertit en cash sans perte significative.\n\n**Interets Composes** â€” Rendement genere non seulement par le capital initial mais aussi par les rendements accumules.\n\n**DCA (Dollar Cost Averaging)** â€” Strategie d'entree qui fragmente l'investissement en petites tranches recurrentes.\n\n**Lump Sum** â€” Strategie opposee au DCA : investir tout le capital en une seule fois.\n\n**Fonds d'Urgence** â€” Reserve de liquidite (3-6 mois de depenses fixes) hors portefeuille investi.\n\n**FIRE (Financial Independence, Retire Early)** â€” Objectif d'accumuler assez de capital pour que le revenu passif depasse les depenses annuelles.\n\n**Taux de Retrait Sur (regle des 4%)** â€” Estimation historique du retrait annuel soutenable (~4%) d'un portefeuille diversifie sur 30 ans.\n\n**Dividend Yield** â€” Dividende annuel par action divise par le prix actuel.\n\n**Yield on Cost** â€” Dividende annuel divise par votre cout de base personnel.\n\n**Total Return** â€” Rendement total incluant plus-values et dividendes reinvestis.\n\n**Echelle Obligataire** â€” Technique de diversification avec echeances etagees pour reduire le risque de taux.\n\n**Couverture Inflation** â€” Actifs proteges contre la perte de pouvoir d'achat : actions, immobilier, or, TIPS.\n\n**Tax-Loss Harvesting** â€” Vente de positions perdantes pour realiser des moins-values fiscales.\n\n**Glide Path** â€” Courbe de reduction de l'exposition aux actions en approchant de la date cible.\n\n**Portfolio Drift** â€” Deviation progressive des poids reels par rapport a l'allocation cible.\n\n**Bande de Reequilibrage** â€” Seuil de deviation (ex. +/- 5%) au-dela duquel il convient de reequilibrer.\n\n**Planification Successorale** â€” Ensemble d'instruments (testament, trust, assurances) pour transmettre le patrimoine."
       }
     }
   },
@@ -882,7 +890,53 @@
       "house": "Maison",
       "education": "Education",
       "travel": "Voyage",
-      "custom": "Personnalise"
+      "custom": "Personnalise",
+      "savings": "Epargne generale",
+      "debtRepayment": "Remboursement de dettes",
+      "bigPurchase": "Gros achat",
+      "wedding": "Mariage",
+      "family": "Famille / enfants",
+      "carPurchase": "Achat de voiture",
+      "passiveIncome": "Revenu passif",
+      "portfolioGrowth": "Croissance du portefeuille",
+      "earlyRetirement": "Retraite anticipee (FIRE)",
+      "dividendIncome": "Revenu de dividendes",
+      "diversification": "Objectif de diversification",
+      "riskManagement": "Gestion du risque",
+      "taxOptimization": "Optimisation fiscale",
+      "estatePlanning": "Planification successorale"
+    },
+    "tiers": {
+      "entry": "Debutant",
+      "intermediate": "Intermediaire",
+      "expert": "Expert"
+    },
+    "form": {
+      "title_new": "Nouvel objectif",
+      "title_edit": "Modifier l'objectif",
+      "section_type": "Type d'objectif",
+      "section_type_help": "Choisissez un modele selon votre niveau. Affecte seulement icones, couleur et suggestions.",
+      "section_basics": "Informations de base",
+      "section_amount": "Montant",
+      "section_plan": "Plan et contributions",
+      "name": "Nom de l'objectif",
+      "name_hint": "ex. Fonds d'urgence, Maison de plage",
+      "name_required": "Saisissez un nom",
+      "description": "Description (facultatif)",
+      "description_hint": "Notes personnelles, contexte ou motivation",
+      "target_amount": "Montant cible",
+      "current_amount": "Deja epargne",
+      "current_amount_help": "Laissez 0 si vous n'avez pas encore commence",
+      "amount_required": "Saisissez un montant",
+      "amount_invalid": "Saisissez un montant positif",
+      "currency": "Devise",
+      "target_date": "Date cible (facultatif)",
+      "target_date_help": "Aide a calculer la contribution mensuelle suggeree",
+      "target_date_none": "Aucune date",
+      "monthly": "Contribution mensuelle (facultatif)",
+      "monthly_help": "Combien vous prevoyez de mettre de cote chaque mois",
+      "privacy_hint": "Toutes les donnees restent sur votre appareil : les objectifs ne sont jamais envoyes a des serveurs externes.",
+      "create": "Creer l'objectif"
     },
     "status": {
       "active": "Actif",

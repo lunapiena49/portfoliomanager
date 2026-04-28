@@ -63,8 +63,9 @@
         "description": "Acompanhe precos das posicoes com badges de fonte e logica de fallback: EODHD tempo real -> FMP -> snapshot diario."
       },
       "goals": {
-        "title": "Objetivos e rebalanceamento",
-        "description": "Defina metas, acompanhe o progresso e use ferramentas de rebalanceamento para comparar alocacao atual e pesos desejados."
+        "title": "Objetivos de investimento",
+        "content": "Planeje objetivos financeiros de curto, medio e longo prazo adaptados ao seu nivel.",
+        "details": "**O que sao objetivos**\nUm objetivo e uma meta financeira mensuravel (valor alvo + prazo) que a app acompanha em paralelo a sua carteira real. Nada e enviado online: cada objetivo permanece somente no seu dispositivo.\n\n**Tres niveis de experiencia**\nPara nao sobrecarregar novos usuarios com jargao financeiro, a app agrupa os 20 modelos de objetivo em tres niveis:\n\n- **Iniciante (entry level)** â€” Fundo de emergencia, Poupanca geral, Quitacao de dividas, Compra grande, Viagens, Casamento, Familia / filhos, Educacao.\n- **Intermediario** â€” Compra de imovel, Compra de carro, Aposentadoria, Renda passiva, Crescimento da carteira, Personalizado.\n- **Avancado** â€” Aposentadoria antecipada (FIRE), Renda de dividendos, Meta de diversificacao, Gestao de risco, Otimizacao fiscal, Planejamento sucessorio.\n\n**Estados**\nativo, concluido, em pausa, cancelado. A transicao para 'concluido' acontece automaticamente ao alcancar o valor alvo.\n\n**Campos do formulario**\n- Tipo (com sugestao de horizonte)\n- Nome e descricao\n- Valor alvo e moeda\n- Valor ja poupado\n- Data alvo (opcional, pre-preenchida segundo o tipo)\n- Contribuicao mensal (opcional)\n\n**Metricas calculadas**\n- Percentual de progresso e valor restante\n- Meses ate a data alvo\n- Contribuicao mensal necessaria para chegar a tempo\n- Indicador 'on-track' se a contribuicao atual >= a necessaria\n\n**Privacidade**\nOs objetivos ficam na box Hive local goals. Nenhum objetivo e enviado a servidores externos. Restaurar dados elimina todos os objetivos.\n\n**Fluxo recomendado por nivel**\n- *Iniciante*: Crie primeiro um Fundo de emergencia de 3-6 meses de despesas. Adicione um objetivo de Poupanca para projetos.\n- *Intermediario*: Adicione Aposentadoria e Imovel com horizontes 5-30 anos. Defina alocacao alvo e ligue ao modulo de Rebalanceamento.\n- *Avancado*: Crie FIRE / Renda de dividendos / Diversificacao e use o glossario para definir bandas de tolerancia, drawdown maximo e regra dos 4%."
       },
       "market": {
         "title": "Top movers globais gratis",
@@ -171,6 +172,13 @@
     "title": "Minha Carteira",
     "total_value": "Valor Total",
     "total_pnl": "L&P Total",
+    "privacy": {
+      "show": "Mostrar valores",
+      "hide": "Ocultar valores"
+    },
+    "detail": {
+      "tooltip": "Abrir analise detalhada"
+    },
     "positions": "Posicoes",
     "position_count_one": "{count} posicao",
     "position_count_other": "{count} posicoes",
@@ -532,8 +540,8 @@
       "total_target": "Meta Total",
       "remaining": "Restante ate 100%",
       "portfolio_value": "Valor do Portfolio",
-      "over_allocated": "Super-alocado em {0}%",
-      "under_allocated": "Sub-alocado em {0}%",
+      "over_allocated": "Super-alocado em {amount}%",
+      "under_allocated": "Sub-alocado em {amount}%",
       "balanced": "O portfolio esta balanceado!"
     },
     "filter": {
@@ -790,9 +798,9 @@
         "details": "**Problemas de importação**\n- Verifique se o perfil de corretora selecionado é o correto (a auto-deteção nem sempre acerta em CSV personalizados).\n- Remova linhas de cabeçalho duplicadas que algumas corretoras adicionam no fundo da exportação.\n- Verifique o formato numérico: 1.234,56 (UE) vs 1,234.56 (US). A aplicação auto-deteta, mas ficheiros mistos podem confundi-la.\n- Para PDF: use a exportação CSV quando disponível; OCR de digitalizações não é suportado.\n- Se a pré-visualização estiver vazia: tente o \"CSV genérico\" como último recurso.\n\n**Sem preços em tempo real**\n- Confirme que guardou a chave EODHD ou FMP em Definições.\n- Pressione \"Testar conexão\" para verificar que a chave é aceite.\n- Verifique o mapeamento de `exchange` nos detalhes da posição: tickers ambíguos (ex.: \"BMW\" listado em várias bolsas) precisam de um sufixo explícito.\n- Faça refresh manual após atualizar as chaves.\n\n**Erros de análise IA**\n- Abra Definições → IA e pressione \"Testar conexão\" para validar a chave Gemini.\n- Verifique a quota diária do tier gratuito no painel do Google AI Studio.\n- Tente novamente com um prompt mais curto ou desative slices não essenciais no painel de transparência.\n- Se o erro persistir, verifique a sua conexão de rede e firewalls corporativas.\n\n**Comportamento UI inesperado**\n- Force o reinício da aplicação (fecho completo + reabertura).\n- Reponha o tema em Definições → Aparência se vir cores inconsistentes.\n- Reabra o onboarding em Definições → Sobre se quiser rever a visita guiada.\n- Limpe os dados locais apenas como último recurso: perderá carteiras e objetivos não exportados.\n\n**Problemas específicos da Web**\n- Se o IndexedDB não estiver disponível (modo incógnito ou quota excedida), o Hive não consegue inicializar. Use uma janela normal e liberte espaço.\n- Ad-blockers agressivos podem impedir o carregamento dos movers. Faça whitelist de `*.github.io`.\n\n**Problemas específicos do Desktop**\n- O flutter_secure_storage no Linux requer libsecret (`sudo apt install libsecret-1-dev` antes da build).\n- No Windows, algumas políticas corporativas bloqueiam o DPAPI: nesse caso as chaves não são persistidas e tem de as voltar a introduzir a cada arranque."
       },
       "glossary": {
-        "title": "Glossário de investimento",
-        "content": "Definições dos principais termos utilizados na aplicação e nos relatórios de IA.",
-        "details": "**P&L** — Profit & Loss. Diferença entre valor atual e cost basis, em termos absolutos ou em percentagem.\n\n**Cost Basis** — Capital originalmente investido na posição, antes de comissões salvo indicação em contrário.\n\n**Alocação** — Peso percentual de uma posição sobre o valor total da carteira.\n\n**Asset Class** — Categoria de instrumento: ações, ETF, obrigações, cripto, opções, futuros, matérias-primas, liquidez.\n\n**Volatilidade** — Medida da dispersão de retornos ao longo do tempo, tipicamente expressa como desvio padrão anualizado.\n\n**Drawdown** — Declínio percentual de um pico local para o trough subsequente. O max drawdown é a pior queda histórica.\n\n**Sharpe Ratio** — Excesso de retorno sobre o risk-free, normalizado pela volatilidade total.\n\n**Sortino Ratio** — Variante do Sharpe que usa apenas a volatilidade negativa no denominador.\n\n**Beta** — Sensibilidade da posição/carteira face ao benchmark.\n\n**Alpha** — Retorno em excesso face ao esperado dado o beta — ou seja, \"valor acrescentado\" face à exposição passiva.\n\n**Diversificação** — Distribuição do risco por múltiplos ativos, setores, regiões e moedas para reduzir a concentração.\n\n**Herfindahl (HHI)** — Índice de concentração: soma dos quadrados das quotas. 10.000 = posição única.\n\n**Moeda Base** — Moeda em que a aplicação agrega totais e P&L. Configurada em Definições → Geral.\n\n**FX Rate** — Taxa de câmbio aplicada a posições em moeda diferente para as consolidar na moeda base.\n\n**ISIN** — International Securities Identification Number, código único de 12 caracteres para um instrumento financeiro.\n\n**Ticker** — Símbolo curto do instrumento (ex.: AAPL para a Apple), específico da bolsa.\n\n**Treemap** — Visualização hierárquica em que a área de cada retângulo é proporcional à dimensão do item representado.\n\n**Squarified** — Algoritmo de treemap que minimiza os aspect ratios dos retângulos para legibilidade."
+        "title": "Glossario de investimentos",
+        "content": "Definicoes dos principais termos usados na app, relatorios IA e secao de objetivos.",
+        "details": "**L&P (P&L)** â€” Profit & Loss. Diferenca entre valor atual e custo base, absoluta ou em percentual.\n\n**Custo Base** â€” Capital originalmente investido na posicao, antes de comissoes salvo mencao contraria.\n\n**Alocacao** â€” Peso percentual de uma posicao no valor total da carteira.\n\n**Classe de Ativo** â€” Categoria do instrumento: acoes, ETFs, titulos, crypto, opcoes, futuros, commodities, caixa.\n\n**Asset Allocation** â€” Distribuicao estrategica do capital entre classes de ativos, decidida segundo horizonte, tolerancia ao risco e objetivos.\n\n**Volatilidade** â€” Dispersao dos retornos no tempo, expressa como desvio padrao anualizado.\n\n**Drawdown** â€” Queda percentual de um pico local ao minimo seguinte. Max drawdown e a pior queda historica.\n\n**Sharpe Ratio** â€” Retorno acima do risk-free, normalizado pela volatilidade total.\n\n**Sortino Ratio** â€” Variante do Sharpe usando apenas a volatilidade negativa.\n\n**Beta** â€” Sensibilidade da posicao/carteira em relacao ao benchmark.\n\n**Alpha** â€” Retorno extra alem do esperado dado o beta, 'valor agregado' versus passivo.\n\n**Diversificacao** â€” Distribuicao do risco em varios ativos, setores, regioes e moedas.\n\n**Herfindahl (HHI)** â€” Indice de concentracao: soma dos quadrados das cotas. 10.000 = uma unica posicao.\n\n**Moeda Base** â€” Moeda em que a app agrega totais e L&P.\n\n**Taxa FX** â€” Taxa de cambio aplicada a posicoes em moeda diferente para consolidacao.\n\n**ISIN** â€” International Securities Identification Number, codigo unico de 12 caracteres.\n\n**Ticker** â€” Sigla do instrumento (ex. AAPL para Apple), especifica de cada bolsa.\n\n**Treemap** â€” Visualizacao hierarquica em que a area de cada retangulo e proporcional ao tamanho do elemento.\n\n**Squarified** â€” Algoritmo de treemap que minimiza o aspect ratio para legibilidade.\n\n**Objetivo SMART** â€” Especifico, Mensuravel, Atingivel, Realista, Temporal. Um bom objetivo cumpre os cinco criterios.\n\n**Horizonte Temporal** â€” Tempo entre agora e a data em que precisara do capital. Determina tolerancia ao risco e escolha de ativos.\n\n**Tolerancia ao Risco** â€” Capacidade subjetiva de suportar oscilacoes sem alterar a estrategia. Conservadora, moderada, agressiva.\n\n**Liquidez** â€” Velocidade com que um ativo se converte em dinheiro sem perda significativa.\n\n**Juros Compostos** â€” Retorno gerado nao so pelo capital inicial mas tambem pelos retornos acumulados.\n\n**DCA (Dollar Cost Averaging)** â€” Estrategia de entrada que fragmenta o investimento em pequenas parcelas recorrentes.\n\n**Lump Sum** â€” Estrategia oposta ao DCA: investir todo o capital de uma vez.\n\n**Fundo de Emergencia** â€” Reserva de liquidez (3-6 meses de despesas fixas) fora da carteira investida.\n\n**FIRE (Financial Independence, Retire Early)** â€” Objetivo de acumular capital suficiente para que a renda passiva supere as despesas anuais.\n\n**Taxa Segura de Retirada (regra dos 4%)** â€” Estimativa historica de retirada anual sustentavel (~4%) de carteira diversificada por 30 anos.\n\n**Dividend Yield** â€” Dividendo anual por acao dividido pelo preco atual.\n\n**Yield on Cost** â€” Dividendo anual dividido pelo seu custo base pessoal.\n\n**Total Return** â€” Retorno total incluindo ganhos de capital e dividendos reinvestidos.\n\n**Escada de Titulos** â€” Tecnica de diversificacao com vencimentos escalonados para reduzir risco de juros.\n\n**Hedge contra Inflacao** â€” Ativos que protegem do poder de compra: acoes, imoveis, ouro, TIPS.\n\n**Tax-Loss Harvesting** â€” Venda de posicoes perdedoras para realizar perdas fiscais.\n\n**Glide Path** â€” Curva de reducao da exposicao em renda variavel ao se aproximar da data alvo.\n\n**Portfolio Drift** â€” Desvio progressivo dos pesos reais da alocacao alvo.\n\n**Banda de Rebalanceamento** â€” Limite de desvio (ex. +/- 5%) a partir do qual vale rebalancear.\n\n**Planejamento Sucessorio** â€” Conjunto de instrumentos (testamento, trust, seguros) para transmitir patrimonio."
       }
     }
   },
@@ -882,7 +890,53 @@
       "house": "Casa",
       "education": "Educacao",
       "travel": "Viagem",
-      "custom": "Personalizado"
+      "custom": "Personalizado",
+      "savings": "Poupanca geral",
+      "debtRepayment": "Quitacao de dividas",
+      "bigPurchase": "Compra grande",
+      "wedding": "Casamento",
+      "family": "Familia / filhos",
+      "carPurchase": "Compra de carro",
+      "passiveIncome": "Renda passiva",
+      "portfolioGrowth": "Crescimento da carteira",
+      "earlyRetirement": "Aposentadoria antecipada (FIRE)",
+      "dividendIncome": "Renda de dividendos",
+      "diversification": "Meta de diversificacao",
+      "riskManagement": "Gestao de risco",
+      "taxOptimization": "Otimizacao fiscal",
+      "estatePlanning": "Planejamento sucessorio"
+    },
+    "tiers": {
+      "entry": "Iniciante",
+      "intermediate": "Intermediario",
+      "expert": "Avancado"
+    },
+    "form": {
+      "title_new": "Novo objetivo",
+      "title_edit": "Editar objetivo",
+      "section_type": "Tipo de objetivo",
+      "section_type_help": "Escolha um modelo de acordo com o seu nivel. Afeta apenas icones, cor e sugestoes.",
+      "section_basics": "Dados basicos",
+      "section_amount": "Valor",
+      "section_plan": "Plano e contribuicoes",
+      "name": "Nome do objetivo",
+      "name_hint": "ex. Fundo de emergencia, Casa de praia",
+      "name_required": "Insira um nome",
+      "description": "Descricao (opcional)",
+      "description_hint": "Notas pessoais, contexto ou motivacao",
+      "target_amount": "Valor alvo",
+      "current_amount": "Ja poupado",
+      "current_amount_help": "Deixe 0 se ainda nao comecou",
+      "amount_required": "Insira um valor",
+      "amount_invalid": "Insira um valor positivo",
+      "currency": "Moeda",
+      "target_date": "Data alvo (opcional)",
+      "target_date_help": "Ajuda a calcular a contribuicao mensal sugerida",
+      "target_date_none": "Sem data",
+      "monthly": "Contribuicao mensal (opcional)",
+      "monthly_help": "Quanto pretende reservar a cada mes",
+      "privacy_hint": "Todos os dados ficam no seu dispositivo: os objetivos nunca sao enviados a servidores externos.",
+      "create": "Criar objetivo"
     },
     "status": {
       "active": "Ativo",

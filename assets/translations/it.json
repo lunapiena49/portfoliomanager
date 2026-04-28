@@ -63,8 +63,9 @@
         "description": "Monitora prezzi posizioni con badge fonte e logica di fallback: EODHD real-time -> FMP -> snapshot giornaliero."
       },
       "goals": {
-        "title": "Obiettivi e ribilanciamento",
-        "description": "Imposta target, segui i progressi e usa il ribilanciamento per confrontare allocazione attuale e pesi desiderati."
+        "title": "Obiettivi di investimento",
+        "content": "Pianifica obiettivi finanziari di breve, medio e lungo termine adatti al tuo livello.",
+        "details": "**Cosa sono gli obiettivi**\nUn obiettivo e' un traguardo finanziario monetizzabile (importo target + scadenza) che l'app tiene tracciato accanto al portafoglio reale. Niente viene inviato online: tutti gli obiettivi vivono solo sul tuo dispositivo.\n\n**Tre livelli di esperienza**\nPer non sovraccaricare i nuovi utenti con il gergo finanziario, l'app raggruppa i 20 modelli di obiettivo in tre livelli:\n\n- **Base (entry level)** â€” Fondo emergenza, Risparmio generico, Estinzione debiti, Grande acquisto, Viaggi, Matrimonio, Famiglia / figli, Istruzione. Obiettivi concreti di breve-medio termine, ideali per chi si avvicina al risparmio strutturato per la prima volta.\n- **Intermedio** â€” Casa, Auto, Pensione, Rendita passiva, Crescita portafoglio, Personalizzato. Obiettivi a piu lungo orizzonte che richiedono pianificazione mensile costante e composizione del rendimento.\n- **Esperto** â€” Pensione anticipata (FIRE), Reddito da dividendi, Target diversificazione, Gestione rischio, Ottimizzazione fiscale, Pianificazione successoria. Obiettivi di costruzione e protezione del patrimonio per investitori avanzati.\n\n**Stati di un obiettivo**\nattivo, completato, in pausa, annullato. La transizione a 'completato' avviene automaticamente quando l'importo accumulato raggiunge il target.\n\n**Campi del form**\n- Tipo (con suggerimento di orizzonte temporale)\n- Nome e descrizione\n- Importo target e valuta\n- Importo gia accumulato\n- Data target (opzionale, pre-compilata in base al tipo)\n- Contributo mensile (opzionale)\n\n**Metriche calcolate**\n- Percentuale di progresso e importo residuo\n- Mesi mancanti alla data target\n- Contributo mensile richiesto per arrivare in tempo\n- Flag 'on-track' se contributo attuale >= contributo richiesto\n\n**Privacy**\nGli obiettivi sono salvati nella Hive box locale goals. Nessun obiettivo viene mai inviato a server esterni, nemmeno alle chiavi API attive. Il reset dati elimina anche tutti gli obiettivi.\n\n**Workflow consigliato per ogni livello**\n- *Base*: Crea per primo un Fondo emergenza pari a 3-6 mesi di spese fisse. Affianca un obiettivo di Risparmio per progetti specifici. Abbi pazienza: la regolarita' del contributo mensile conta piu' del rendimento.\n- *Intermedio*: Aggiungi obiettivi di Pensione e Casa con orizzonte 5-30 anni. Imposta un'allocazione target e collega il modulo Ribilanciamento per allinearti.\n- *Esperto*: Crea obiettivi FIRE / Reddito da dividendi / Diversificazione e usa il glossario per definire bande di tolleranza, max drawdown ammesso e regola del 4% per il safe withdrawal rate."
       },
       "market": {
         "title": "Top mover globali gratis",
@@ -171,6 +172,13 @@
     "title": "Il Mio Portafoglio",
     "total_value": "Valore Totale",
     "total_pnl": "P&L Totale",
+    "privacy": {
+      "show": "Mostra valori",
+      "hide": "Nascondi valori"
+    },
+    "detail": {
+      "tooltip": "Apri analisi dettagliata"
+    },
     "positions": "Posizioni",
     "position_count_one": "{count} posizione",
     "position_count_other": "{count} posizioni",
@@ -532,8 +540,8 @@
       "total_target": "Target Totale",
       "remaining": "Rimanente al 100%",
       "portfolio_value": "Valore Portafoglio",
-      "over_allocated": "Sovra-allocato di {0}%",
-      "under_allocated": "Sotto-allocato di {0}%",
+      "over_allocated": "Sovra-allocato di {amount}%",
+      "under_allocated": "Sotto-allocato di {amount}%",
       "balanced": "Il portafoglio e bilanciato!"
     },
     "filter": {
@@ -791,8 +799,8 @@
       },
       "glossary": {
         "title": "Glossario degli investimenti",
-        "content": "Definizioni dei termini principali usati nell'app e nei report AI.",
-        "details": "**P&L** — Profit & Loss. Differenza tra valore corrente e costo base, in assoluto o in percentuale.\n\n**Costo Base** — Capitale originariamente investito nella posizione, pre-commissioni se non diversamente specificato.\n\n**Allocazione** — Peso percentuale di una posizione sul valore totale del portafoglio.\n\n**Asset Class** — Categoria di strumento: azioni, ETF, obbligazioni, crypto, opzioni, future, materie prime, liquidità.\n\n**Volatilità** — Misura della dispersione dei rendimenti nel tempo, di solito espressa come deviazione standard annualizzata.\n\n**Drawdown** — Discesa percentuale dal picco locale al minimo successivo. Il max drawdown è il peggior calo storico.\n\n**Sharpe Ratio** — Rendimento eccedente il risk-free, normalizzato per volatilità totale.\n\n**Sortino Ratio** — Variante dello Sharpe con sola volatilità negativa al denominatore.\n\n**Beta** — Sensibilità della posizione/portafoglio rispetto al benchmark.\n\n**Alpha** — Extra-rendimento rispetto a quello atteso dato il beta, ovvero \"valore aggiunto\" rispetto al passivo.\n\n**Diversificazione** — Distribuzione del rischio su più asset, settori, regioni e valute per ridurre la concentrazione.\n\n**Herfindahl (HHI)** — Indice di concentrazione: somma dei quadrati delle quote. 10.000 = una sola posizione.\n\n**Valuta Base** — Valuta in cui l'app aggrega totali e P&L. Configurata in Impostazioni → Generali.\n\n**FX Rate** — Tasso di cambio applicato alle posizioni in valuta diversa per il consolidamento in valuta base.\n\n**ISIN** — International Securities Identification Number, codice univoco a 12 caratteri di uno strumento finanziario.\n\n**Ticker** — Sigla breve dello strumento (es. AAPL per Apple), specifico per borsa.\n\n**Treemap** — Visualizzazione gerarchica in cui l'area di ogni rettangolo è proporzionale alla grandezza dell'elemento rappresentato.\n\n**Squarified** — Algoritmo di treemap che minimizza l'aspect ratio dei rettangoli per leggibilità."
+        "content": "Definizioni dei termini principali usati nell'app, nei report AI e nella sezione obiettivi.",
+        "details": "**P&L** â€” Profit & Loss. Differenza tra valore corrente e costo base, in assoluto o in percentuale.\n\n**Costo Base** â€” Capitale originariamente investito nella posizione, pre-commissioni se non diversamente specificato.\n\n**Allocazione** â€” Peso percentuale di una posizione sul valore totale del portafoglio.\n\n**Asset Class** â€” Categoria di strumento: azioni, ETF, obbligazioni, crypto, opzioni, future, materie prime, liquidita'.\n\n**Asset Allocation** â€” Distribuzione strategica del capitale fra asset class diverse, decisa in funzione di orizzonte temporale, tolleranza al rischio e obiettivi.\n\n**Volatilita'** â€” Misura della dispersione dei rendimenti nel tempo, di solito espressa come deviazione standard annualizzata.\n\n**Drawdown** â€” Discesa percentuale dal picco locale al minimo successivo. Il max drawdown e' il peggior calo storico.\n\n**Sharpe Ratio** â€” Rendimento eccedente il risk-free, normalizzato per volatilita' totale.\n\n**Sortino Ratio** â€” Variante dello Sharpe con sola volatilita' negativa al denominatore.\n\n**Beta** â€” Sensibilita' della posizione/portafoglio rispetto al benchmark.\n\n**Alpha** â€” Extra-rendimento rispetto a quello atteso dato il beta, ovvero 'valore aggiunto' rispetto al passivo.\n\n**Diversificazione** â€” Distribuzione del rischio su piu' asset, settori, regioni e valute per ridurre la concentrazione.\n\n**Herfindahl (HHI)** â€” Indice di concentrazione: somma dei quadrati delle quote. 10.000 = una sola posizione.\n\n**Valuta Base** â€” Valuta in cui l'app aggrega totali e P&L. Configurata in Impostazioni > Generali.\n\n**FX Rate** â€” Tasso di cambio applicato alle posizioni in valuta diversa per il consolidamento in valuta base.\n\n**ISIN** â€” International Securities Identification Number, codice univoco a 12 caratteri di uno strumento finanziario.\n\n**Ticker** â€” Sigla breve dello strumento (es. AAPL per Apple), specifico per borsa.\n\n**Treemap** â€” Visualizzazione gerarchica in cui l'area di ogni rettangolo e' proporzionale alla grandezza dell'elemento.\n\n**Squarified** â€” Algoritmo di treemap che minimizza l'aspect ratio dei rettangoli per leggibilita'.\n\n**Obiettivo SMART** â€” Specifico, Misurabile, Achievable (raggiungibile), Realistico, Temporizzato. Una buona definizione di obiettivo deve rispettare i 5 criteri.\n\n**Orizzonte temporale** â€” Tempo che separa il momento attuale dalla data in cui ti servira' il capitale. Influenza la tolleranza al rischio e la scelta degli asset.\n\n**Tolleranza al rischio** â€” Capacita' soggettiva di sopportare oscillazioni di valore senza modificare la strategia. Conservativa, moderata, aggressiva.\n\n**Liquidita'** â€” Velocita' con cui un asset si converte in contanti senza perdita significativa di valore.\n\n**Interesse composto** â€” Rendimento generato non solo dal capitale iniziale, ma anche dai rendimenti accumulati nel tempo. Motore principale della crescita di lungo periodo.\n\n**DCA (Dollar Cost Averaging)** â€” Strategia di ingresso che frammenta l'investimento in piccole quote ricorrenti per attenuare l'effetto del market timing.\n\n**Lump Sum** â€” Strategia opposta al DCA: investi tutto il capitale in un unico momento.\n\n**Fondo di emergenza** â€” Riserva di liquidita' (3-6 mesi di spese fisse) tenuta fuori dal portafoglio investito, pensata per eventi inattesi.\n\n**FIRE (Financial Independence, Retire Early)** â€” Obiettivo di accumulare capitale tale che la rendita passiva superi le spese annuali, smettendo di dipendere dal lavoro retribuito.\n\n**Safe Withdrawal Rate (regola del 4%)** â€” Stima storica del prelievo annuale sostenibile da un portafoglio diversificato (~4%) senza esaurire il capitale in 30 anni.\n\n**Dividend Yield** â€” Rapporto fra dividendo annuo per azione e prezzo corrente. Misura di rendita immediata da una azione/ETF.\n\n**Yield on Cost** â€” Dividendo annuo diviso per il costo base personale, non per il prezzo di mercato. Mostra la rendita effettiva sul prezzo a cui hai comprato.\n\n**Total Return** â€” Rendimento complessivo che include sia plusvalenze sia dividendi reinvestiti.\n\n**Bond Ladder** â€” Tecnica di diversificazione obbligazionaria con scadenze scaglionate per ridurre il rischio tasso e mantenere liquidita' costante.\n\n**Inflation Hedge** â€” Asset che proteggono dal calo del potere d'acquisto: azioni reali, immobili, oro, TIPS.\n\n**Tax-Loss Harvesting** â€” Vendita di posizioni in perdita per realizzare minusvalenze fiscali, compensando plusvalenze altrove.\n\n**Glide Path** â€” Curva di riduzione dell'esposizione azionaria man mano che ci si avvicina alla data obiettivo.\n\n**Portfolio Drift** â€” Scostamento progressivo dei pesi reali rispetto all'allocazione target dovuto ai movimenti di mercato.\n\n**Banda di Ribilanciamento** â€” Soglia di scostamento (es. +/- 5%) oltre la quale conviene ribilanciare per riportarsi al target.\n\n**Pianificazione successoria** â€” Insieme di strumenti (testamento, trust, polizze) per trasferire il patrimonio agli eredi minimizzando le imposte."
       }
     }
   },
@@ -882,7 +890,53 @@
       "house": "Casa",
       "education": "Istruzione",
       "travel": "Viaggi",
-      "custom": "Personalizzato"
+      "custom": "Personalizzato",
+      "savings": "Risparmio generico",
+      "debtRepayment": "Estinzione debiti",
+      "bigPurchase": "Grande acquisto",
+      "wedding": "Matrimonio",
+      "family": "Famiglia / figli",
+      "carPurchase": "Acquisto auto",
+      "passiveIncome": "Rendita passiva",
+      "portfolioGrowth": "Crescita portafoglio",
+      "earlyRetirement": "Pensione anticipata (FIRE)",
+      "dividendIncome": "Reddito da dividendi",
+      "diversification": "Target diversificazione",
+      "riskManagement": "Gestione del rischio",
+      "taxOptimization": "Ottimizzazione fiscale",
+      "estatePlanning": "Pianificazione successoria"
+    },
+    "tiers": {
+      "entry": "Base",
+      "intermediate": "Intermedio",
+      "expert": "Esperto"
+    },
+    "form": {
+      "title_new": "Nuovo obiettivo",
+      "title_edit": "Modifica obiettivo",
+      "section_type": "Tipo di obiettivo",
+      "section_type_help": "Scegli un modello in base al tuo livello di esperienza. Influisce solo su icone, colore e suggerimenti.",
+      "section_basics": "Informazioni di base",
+      "section_amount": "Importo",
+      "section_plan": "Piano e contributi",
+      "name": "Nome obiettivo",
+      "name_hint": "es. Fondo emergenza, Casa al mare",
+      "name_required": "Inserisci un nome",
+      "description": "Descrizione (opzionale)",
+      "description_hint": "Note personali, contesto o motivazione",
+      "target_amount": "Importo target",
+      "current_amount": "Importo gia accumulato",
+      "current_amount_help": "Lascia 0 se non hai ancora iniziato",
+      "amount_required": "Inserisci un importo",
+      "amount_invalid": "Inserisci un importo positivo",
+      "currency": "Valuta",
+      "target_date": "Data obiettivo (opzionale)",
+      "target_date_help": "Aiuta a calcolare il contributo mensile suggerito",
+      "target_date_none": "Nessuna data",
+      "monthly": "Contributo mensile (opzionale)",
+      "monthly_help": "Quanto pensi di accantonare ogni mese",
+      "privacy_hint": "Tutti i dati restano sul tuo dispositivo: nessun obiettivo viene inviato a server esterni.",
+      "create": "Crea obiettivo"
     },
     "status": {
       "active": "Attivo",
