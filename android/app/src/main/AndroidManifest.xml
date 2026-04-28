@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for release builds: the snapshot pipeline (top_movers,
+         prices_index) and the optional EODHD/FMP/Gemini API calls all go over
+         HTTPS. Without this permission release APKs cannot reach the network
+         and the Market tab silently shows "Snapshot non disponibile" / empty
+         lists. The debug+profile manifests inject INTERNET on their own, but
+         release builds use only this main manifest. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
         android:label="portfolio_manager"
         android:name="${applicationName}"
