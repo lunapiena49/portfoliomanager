@@ -1,0 +1,24 @@
+# Portfolio Manager -- public data repo .gitignore
+
+# Heavy / regenerated market-data outputs (CI rebuilds them on Pages).
+# Only top_movers.json is checked in as proof-of-freshness.
+/dist/logs/
+/dist/market-data/*
+!/dist/market-data/top_movers.json
+!/dist/market-data/.gitkeep
+
+# Python pipeline local state
+scripts/eodhd/.venv/
+scripts/eodhd/__pycache__/
+scripts/eodhd/*.pyc
+scripts/eodhd/output/
+
+# Webapp local previews
+/app/.dart_tool/
+/app/build/
+
+# Misc
+.DS_Store
+*.log
+*.tmp
+*.swp
