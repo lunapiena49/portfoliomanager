@@ -47,9 +47,14 @@ class AppConstants {
   static const double geminiTemperature = 0.7;
   static const String fmpBaseUrl = 'https://financialmodelingprep.com/stable';
   static const String eodhdBaseUrl = 'https://eodhd.com/api';
+  // Public market-data backend (GitHub Pages of the data repo).
+  // Override at build time:
+  //   --dart-define=MARKET_SNAPSHOT_BASE_URL=https://example.org
+  // The default points at the public companion repo "portfoliomanager-data";
+  // see scripts/release/repo_split_templates/data/README.md.
   static const String marketSnapshotBaseUrl = String.fromEnvironment(
     'MARKET_SNAPSHOT_BASE_URL',
-    defaultValue: 'https://lunapiena49.github.io/portfoliomanager',
+    defaultValue: 'https://lunapiena49.github.io/portfoliomanager-data',
   );
 
   // Timeouts
