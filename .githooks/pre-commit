@@ -1,0 +1,64 @@
+#!/bin/sh
+# Portfolio Manager pre-commit hook
+# Runs gitleaks protect on the staged diff to block any committed secret.
+#
+# Enabled by: git config core.hooksPath .githooks
+# (idempotent: re-run anytime; see scripts/security/install_hooks.ps1)
+#
+# Exit codes:
+#   0 = no leaks staged -> allow commit
+#   1 = leaks staged    -> block commit
+#   2 = gitleaks not installed (advisory, do NOT block; install later)
+#
+# NOTE: NO `set -e` here. We need to capture the powershell exit code on every
+# branch, including the advisory exit 2 which must NOT abort the commit. With
+# set -e, status=$? would never run and the script would propagate the error
+# code unconditionally, inverting the advisory contract.
+
+# Skip when no staged changes.
+if git diff --cached --quiet; then
+    exit 0
+fi
+
+# Resolve project root (hook always runs in repo root, but be defensive).
+ROOT="$(git rev-parse --show-toplevel)"
+if [ -z "$ROOT" ]; then
+    echo "[pre-commit] not in a git repo, skipping." >&2
+    exit 0
+fi
+
+SCRIPT="$ROOT/scripts/security/gitleaks_scan.ps1"
+if [ ! -f "$SCRIPT" ]; then
+    echo "[pre-commit] gitleaks_scan.ps1 missing, skipping secret scan." >&2
+    exit 0
+fi
+
+# Run via PowerShell. On Windows + Git Bash, powershell.exe is on PATH.
+powershell -NoProfile -ExecutionPolicy Bypass -File "$SCRIPT" -StagedOnly
+status=$?
+
+case "$status" in
+    0)
+        # Clean: allow the commit.
+        exit 0
+        ;;
+    1)
+        # Real leak: block.
+        echo "" >&2
+        echo "[pre-commit] gitleaks blocked the commit -- secret detected." >&2
+        echo "  Review the report and remove the secret, or add an allowlist" >&2
+        echo "  entry in .gitleaks.toml if it is a confirmed false positive." >&2
+        exit 1
+        ;;
+    2)
+        # gitleaks not installed: advisory only, do NOT block.
+        echo "[pre-commit] gitleaks not installed -- secret scan skipped." >&2
+        echo "  Install with: winget install --id Gitleaks.Gitleaks" >&2
+        exit 0
+        ;;
+    *)
+        # Anything else: surface the failure but do not block authoring.
+        echo "[pre-commit] gitleaks_scan.ps1 returned unexpected exit $status." >&2
+        exit 0
+        ;;
+esac

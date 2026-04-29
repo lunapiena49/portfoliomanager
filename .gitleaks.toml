@@ -1,0 +1,103 @@
+# Gitleaks config for Portfolio Manager
+# Extends the built-in default ruleset (gitleaks v8) with project-specific rules
+# for the API providers actually wired in lib/services/api/.
+#
+# Usage:
+#   gitleaks detect --source . --config .gitleaks.toml --redact \
+#       --report-path .claude/plan/output/gitleaks_report.json \
+#       --report-format json
+#
+# Pre-commit (staged diff only):
+#   gitleaks protect --staged --config .gitleaks.toml --redact
+
+# Inherit gitleaks built-in rules (generic AWS, Slack, GitHub PAT, JWT, etc.)
+[extend]
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Custom rules: providers actually used by this app
+# ---------------------------------------------------------------------------
+
+[[rules]]
+id = "google-gemini-api-key"
+description = "Google API key (used for Gemini, also matches generic Google API keys)"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+keywords = ["AIza"]
+tags = ["key", "google", "gemini"]
+
+[[rules]]
+id = "eodhd-api-token"
+description = "EODHD API token in URL parameter (api_token=...)"
+# EODHD tokens are usually long alphanumerics with dots; tighten to >=20 chars
+# attached to the api_token query parameter. Require an explicit assignment
+# delimiter (= or :) immediately after the keyword to avoid PascalCase false
+# positives (e.g. ApiToken in BLoC state names).
+regex = '''(?i)api[_-]?token["']?\s*[:=]\s*["']?([A-Za-z0-9.\-_]{20,80})'''
+keywords = ["api_token", "apitoken"]
+tags = ["key", "eodhd"]
+
+[[rules]]
+id = "fmp-api-key"
+description = "Financial Modeling Prep apikey query parameter"
+# FMP keys are typically 32 alphanumeric chars, often hex-style.
+# Require an explicit assignment delimiter (= or :) immediately after the
+# keyword to avoid PascalCase false positives (e.g. AwaitingApiKey in events).
+regex = '''(?i)apikey["']?\s*[:=]\s*["']?([A-Za-z0-9]{20,64})'''
+keywords = ["apikey"]
+tags = ["key", "fmp"]
+
+[[rules]]
+id = "generic-bearer-token"
+description = "Bearer token in Authorization header"
+regex = '''(?i)bearer\s+([A-Za-z0-9._\-]{20,})'''
+keywords = ["bearer"]
+tags = ["token"]
+
+# ---------------------------------------------------------------------------
+# Allowlist: false-positive paths and string patterns
+# ---------------------------------------------------------------------------
+
+[allowlist]
+description = "Global allowlist for Portfolio Manager"
+
+# Paths excluded from scanning entirely
+paths = [
+    '''(?i)build/''',
+    '''(?i)\.dart_tool/''',
+    '''(?i)\.flutter-plugins-dependencies''',
+    '''(?i)pubspec\.lock''',
+    '''(?i)dist/market-data/''',
+    '''(?i)\.gitleaks\.toml''',
+    '''(?i)\.claude/plan/output/''',
+    '''(?i)docs/archive/''',
+    # Internal planning markdown is not distributed and contains BLoC state
+    # names that look like PascalCase API keys; scan release docs only.
+    '''(?i)docs/PLAN_.*\.md''',
+    # Generated assets and translations are user content, not code
+    '''(?i)assets/translations/''',
+]
+
+# Regex matched against the secret value itself: skips placeholders / docs
+regexes = [
+    '''YOUR[_-]?API[_-]?KEY''',
+    '''AIzaSyEXAMPLE''',
+    '''<api[_-]?token>''',
+    '''<apikey>''',
+    '''xxx+''',
+    '''(?i)example''',
+    '''(?i)placeholder''',
+    '''(?i)dummy''',
+    '''(?i)demo''',
+]
+
+# Stopwords: substring match against the matched line. Keep these specific
+# enough that a real secret on a "// for testing" comment line is still
+# caught (avoid generic words like "test").
+stopwords = [
+    "example",
+    "placeholder",
+    "dummy",
+    "your_key_here",
+    "fake_token",
+    "test_api_key",
+]
