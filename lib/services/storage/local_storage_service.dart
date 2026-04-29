@@ -8,6 +8,7 @@ import '../../core/constants/market_data_providers.dart';
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
 import '../../features/goals/domain/entities/goals_entities.dart';
 import '../../features/rebalancing/domain/entities/rebalancing_entities.dart';
+import 'hive_encryption.dart';
 import 'storage_paths.dart';
 
 /// Service for local data persistence.
@@ -41,6 +42,15 @@ class LocalStorageService {
   ///    created under the visible, user-inspectable path
   ///    `<docs>/PortfolioManager/data/` instead of the anonymous default
   ///    `app_flutter/` root.
+  ///
+  /// Native platforms: every box is opened with an AES-256 cipher whose
+  /// key lives in flutter_secure_storage (see [HiveEncryption]). On first
+  /// launch after upgrading from a plaintext build, [_migratePlaintextBoxes]
+  /// transparently re-encrypts the data; this happens once and is gated
+  /// by a SharedPreferences flag.
+  ///
+  /// Web: Hive uses IndexedDB and the encryption cipher is intentionally
+  /// disabled (see [HiveEncryption.getCipher]).
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
 
@@ -54,11 +64,88 @@ class LocalStorageService {
       Hive.init(StoragePaths.dataDir);
     }
 
-    _settingsBox = await _openBoxWithRecovery(AppConstants.settingsBox);
-    _portfolioBox = await _openBoxWithRecovery(AppConstants.portfolioBox);
-    _goalsBox = await _openBoxWithRecovery(AppConstants.goalsBox);
+    final cipher = await HiveEncryption.getCipher();
+
+    if (cipher != null) {
+      await _migratePlaintextBoxes(cipher);
+    }
+
+    _settingsBox = await _openBoxWithRecovery(
+      AppConstants.settingsBox,
+      cipher: cipher,
+    );
+    _portfolioBox = await _openBoxWithRecovery(
+      AppConstants.portfolioBox,
+      cipher: cipher,
+    );
+    _goalsBox = await _openBoxWithRecovery(
+      AppConstants.goalsBox,
+      cipher: cipher,
+    );
     await _migrateApiKeysToSecureStorage();
     await _loadApiKeysCache();
+  }
+
+  /// One-shot migration: read every box opened in plaintext (pre-2A.6
+  /// builds), copy its entries into a new encrypted box, and delete the
+  /// originals from disk.
+  ///
+  /// Gated by a SharedPreferences flag so it runs at most once per
+  /// install. The flag is set even if the migration finds no plaintext
+  /// data, otherwise every fresh install would pay the open/close cost
+  /// at every launch.
+  static Future<void> _migratePlaintextBoxes(HiveAesCipher cipher) async {
+    const flagKey = 'hive_encrypted_migration_v1_done';
+    if (_prefs.getBool(flagKey) == true) return;
+
+    const boxes = <String>[
+      AppConstants.settingsBox,
+      AppConstants.portfolioBox,
+      AppConstants.goalsBox,
+    ];
+
+    for (final name in boxes) {
+      Box? plaintext;
+      try {
+        plaintext = await Hive.openBox(name);
+      } catch (_) {
+        // Box already encrypted with the current cipher (possible when
+        // the install previously crashed mid-migration). Skip and let
+        // the regular open path handle it.
+        if (Hive.isBoxOpen(name)) {
+          await Hive.box(name).close();
+        }
+        continue;
+      }
+
+      final entries = <dynamic, dynamic>{};
+      for (final key in plaintext.keys) {
+        entries[key] = plaintext.get(key);
+      }
+      await plaintext.close();
+
+      if (entries.isEmpty) {
+        // Nothing to migrate -- but we still delete the empty plaintext
+        // file so the next openBox call lands on a fresh encrypted store.
+        try {
+          await Hive.deleteBoxFromDisk(name);
+        } catch (_) {}
+        continue;
+      }
+
+      // Move plaintext data into the encrypted store.
+      try {
+        await Hive.deleteBoxFromDisk(name);
+      } catch (_) {}
+      final encrypted =
+          await Hive.openBox(name, encryptionCipher: cipher);
+      for (final entry in entries.entries) {
+        await encrypted.put(entry.key, entry.value);
+      }
+      await encrypted.close();
+    }
+
+    await _prefs.setBool(flagKey, true);
   }
 
   /// Open a Hive box, recovering from corruption by deleting and reopening.
@@ -68,16 +155,19 @@ class LocalStorageService {
   /// loss for the affected box instead of refusing to start -- user data
   /// integrity beyond this box is preserved because each domain sits in a
   /// dedicated box.
-  static Future<Box> _openBoxWithRecovery(String name) async {
+  static Future<Box> _openBoxWithRecovery(
+    String name, {
+    HiveAesCipher? cipher,
+  }) async {
     try {
-      return await Hive.openBox(name);
+      return await Hive.openBox(name, encryptionCipher: cipher);
     } catch (_) {
       try {
         await Hive.deleteBoxFromDisk(name);
       } catch (_) {
         // If deletion also fails, surface the original error on retry below.
       }
-      return await Hive.openBox(name);
+      return await Hive.openBox(name, encryptionCipher: cipher);
     }
   }
 

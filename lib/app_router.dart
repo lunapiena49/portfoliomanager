@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/constants/app_constants.dart';
+import 'core/security/secure_screen.dart';
 import 'core/widgets/pluri_logo.dart';
 import 'services/api/market_snapshot_service.dart';
 import 'services/storage/local_storage_service.dart';
@@ -22,6 +23,8 @@ import 'features/analysis/presentation/pages/analysis_page.dart';
 import 'features/analysis/presentation/pages/ai_chat_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/onboarding/presentation/pages/guide_page.dart';
+import 'features/onboarding/presentation/pages/legal_documents_page.dart';
+import 'features/onboarding/presentation/pages/legal_disclaimer_page.dart';
 
 /// Application router configuration using go_router
 class AppRouter {
@@ -123,12 +126,13 @@ class AppRouter {
       GoRoute(
         path: RouteNames.home,
         pageBuilder: (context, state) =>
-            _fadeTransitionPage(state, const HomePage()),
+            _fadeTransitionPage(state, const SecureScreen(child: HomePage())),
         routes: [
           // Import Portfolio
           GoRoute(
             path: 'import',
-            builder: (context, state) => const ImportPage(),
+            builder: (context, state) =>
+                const SecureScreen(child: ImportPage()),
           ),
 
           // Position Detail
@@ -136,7 +140,9 @@ class AppRouter {
             path: 'position/:id',
             builder: (context, state) {
               final positionId = state.pathParameters['id'] ?? '';
-              return PositionDetailPage(positionId: positionId);
+              return SecureScreen(
+                child: PositionDetailPage(positionId: positionId),
+              );
             },
           ),
 
@@ -145,18 +151,22 @@ class AppRouter {
             path: 'position/:id/edit',
             builder: (context, state) {
               final positionId = state.pathParameters['id'] ?? '';
-              return EditPositionPage(positionId: positionId);
+              return SecureScreen(
+                child: EditPositionPage(positionId: positionId),
+              );
             },
           ),
 		  // ADD POSITION
 		  GoRoute(
 		    path: 'add-position',
-			builder: (context, state) => const AddPositionPage(),
+			builder: (context, state) =>
+			    const SecureScreen(child: AddPositionPage()),
 		  ),
           // CREATE PORTFOLIO
           GoRoute(
             path: 'create-portfolio',
-            builder: (context, state) => const CreatePortfolioPage(),
+            builder: (context, state) =>
+                const SecureScreen(child: CreatePortfolioPage()),
           ),
         ],
       ),
@@ -164,16 +174,19 @@ class AppRouter {
       // Analysis
       GoRoute(
         path: RouteNames.analysis,
-        builder: (context, state) => const AnalysisPage(),
+        builder: (context, state) =>
+            const SecureScreen(child: AnalysisPage()),
       ),
 
       // AI Chat
       GoRoute(
         path: RouteNames.aiChat,
-        builder: (context, state) => const AIChatPage(),
+        builder: (context, state) =>
+            const SecureScreen(child: AIChatPage()),
       ),
 
-      // Settings
+      // Settings (no SecureScreen: contains keys but the user must be
+      // able to take a screenshot of the about/version section for support).
       GoRoute(
         path: RouteNames.settings,
         builder: (context, state) => const SettingsPage(),
@@ -183,6 +196,20 @@ class AppRouter {
       GoRoute(
         path: RouteNames.guide,
         builder: (context, state) => const GuidePage(),
+      ),
+
+      // Legal documents (Privacy Policy / ToS / Disclaimer landing).
+      GoRoute(
+        path: RouteNames.legalDocuments,
+        builder: (context, state) => const LegalDocumentsPage(),
+      ),
+
+      // Re-show the financial disclaimer with full text + bumped consent
+      // tracking. Reachable from Settings > Legal documents.
+      GoRoute(
+        path: RouteNames.legalDisclaimer,
+        builder: (context, state) =>
+            const LegalDisclaimerPage(reviewMode: true),
       ),
     ],
     errorBuilder: (context, state) => ErrorPage(error: state.error.toString()),

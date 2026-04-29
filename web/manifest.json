@@ -1,11 +1,11 @@
 {
-    "name": "portfolio_manager",
-    "short_name": "portfolio_manager",
+    "name": "Portfolio Manager",
+    "short_name": "Portfolio Manager",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0A0E14",
     "theme_color": "#3DF2A7",
-    "description": "A new Flutter project.",
+    "description": "Portfolio Manager by PluriFin - multi-platform investment tracking and AI-powered analysis.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

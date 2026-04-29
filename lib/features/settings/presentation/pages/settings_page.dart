@@ -140,6 +140,12 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               _buildAboutTile(
                 context,
+                icon: Icons.gavel_outlined,
+                title: 'settings.about.legal_documents'.tr(),
+                onTap: () => context.push(RouteNames.legalDocuments),
+              ),
+              _buildAboutTile(
+                context,
                 icon: Icons.replay,
                 title: 'settings.about.review_onboarding'.tr(),
                 onTap: () => _resetOnboarding(context),

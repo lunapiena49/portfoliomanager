@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Auto Backup rules (Android 6+, applies when allowBackup="true").
+
+    The manifest sets allowBackup="false" so this file is mostly defensive:
+    if a future maintainer flips the flag, every persistence surface that
+    contains user data or secrets stays excluded by default.
+
+    Categories:
+      * Hive boxes lived in app-internal files until v1.0; later versions
+        store them under <docs>/PortfolioManager/data/. Both shapes are
+        excluded.
+      * SharedPreferences holds disclosure consent flags + last-route
+        memory; not sensitive but tied to onboarding state.
+      * Secure storage (flutter_secure_storage / EncryptedSharedPreferences)
+        holds API keys -- never include in any backup.
+-->
+<full-backup-content>
+    <exclude domain="file" path="PortfolioManager/" />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="FlutterSharedPreferences.xml" />
+    <exclude domain="sharedpref" path="VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIHNlY3VyZSBzdG9yYWdlCg.xml" />
+    <exclude domain="sharedpref" path="flutter_secure_storage.xml" />
+</full-backup-content>

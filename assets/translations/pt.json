@@ -710,6 +710,7 @@
       "title": "Sobre",
       "version": "Versao",
       "review_onboarding": "Rever onboarding",
+      "legal_documents": "Documentos legais",
       "onboarding_reset_message": "Onboarding redefinido. O app vai reabrir o fluxo de onboarding."
     }
   },
@@ -976,6 +977,61 @@
     "invalid_key": {
       "title": "Chave API invalida",
       "body": "{provider} rejeitou a chave (HTTP 401/403). Va em Configuracoes > Dados de mercado e verifique ou gire a chave."
+    }
+  },
+  "legal": {
+    "banner": {
+      "ai_disclaimer": "O conteudo de IA nao e aconselhamento financeiro. Decisoes e responsabilidade sao suas."
+    },
+    "disclaimer": {
+      "title": "Aviso financeiro",
+      "intro": "Leia com atencao antes de usar o app. Confirme que entendeu cada ponto.",
+      "cta_accept": "Aceito e quero continuar",
+      "sections": {
+        "no_advice": {
+          "title": "Nao e aconselhamento financeiro",
+          "body": "O Portfolio Manager e uma ferramenta informativa. O conteudo e as analises mostradas no app nao constituem aconselhamento financeiro, fiscal ou juridico segundo o TUF (D.Lgs. 58/1998 italiano) ou normas equivalentes. Decida sempre com um profissional habilitado."
+        },
+        "ai_warning": {
+          "title": "Limites da analise IA",
+          "body": "As respostas da IA podem conter erros, dados desatualizados ou alucinacoes. Verifique sempre numeros, precos e recomendacoes com fontes oficiais. O app nao garante a precisao do Gemini."
+        },
+        "no_fiduciary": {
+          "title": "Sem relacao fiduciaria",
+          "body": "O uso do app nao cria nenhuma relacao de aconselhamento, gestao ou intermediacao entre voce e a PluriFin. Nao recebemos mandato, nao gerimos capital, nao executamos ordens em seu nome."
+        },
+        "risk": {
+          "title": "Risco de mercado",
+          "body": "Investimentos podem perder valor. Performance passada nao garante resultados futuros. Exposicao a instrumentos complexos (derivativos, alavancagem, cripto) pode causar perda total do capital."
+        }
+      },
+      "checks": {
+        "not_advice": "Entendo que o app nao fornece aconselhamento financeiro.",
+        "not_fiduciary": "Entendo que a PluriFin nao gere meu capital.",
+        "own_responsibility": "Assumo a responsabilidade pelas minhas decisoes de investimento."
+      }
+    },
+    "documents": {
+      "title": "Documentos legais",
+      "copy": "Copiar link",
+      "url_copied": "Link copiado para a area de transferencia.",
+      "privacy": {
+        "title": "Politica de Privacidade",
+        "description": "Que dados o app coleta, onde ficam e como exercer seus direitos LGPD/RGPD."
+      },
+      "terms": {
+        "title": "Termos de servico",
+        "description": "Condicoes de uso do app, incluindo limitacoes de responsabilidade."
+      },
+      "disclaimer": {
+        "title": "Aviso financeiro",
+        "description": "Releia o texto do aviso aceito durante o onboarding."
+      },
+      "licenses": {
+        "title": "Licencas open source",
+        "description": "Lista das bibliotecas de terceiros incluidas no app.",
+        "legalese": "Portfolio Manager (PluriFin) - Copyright (C) 2026 Filippo Salemi."
+      }
     }
   }
 }

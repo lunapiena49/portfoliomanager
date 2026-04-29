@@ -4,10 +4,14 @@ import '../../features/analysis/domain/analysis_preset.dart';
 import '../../features/analysis/domain/analysis_prompt_builder.dart';
 import '../../features/portfolio/domain/entities/portfolio_entities.dart';
 import 'api_quota_alert_service.dart';
+import 'gemini_client.dart';
 import 'retry_interceptor.dart';
 
-/// Service for interacting with Google Gemini API
-class GeminiService {
+/// Default in-process [IGeminiClient] used in v1.0: hits Google's
+/// generativelanguage.googleapis.com directly with the user-provided
+/// key. The same class still works as the legacy `GeminiService` so the
+/// callers that have not migrated to [IGeminiClient] yet keep compiling.
+class GeminiService implements IGeminiClient {
   final Dio _dio;
   String? _apiKey;
 
@@ -19,15 +23,15 @@ class GeminiService {
     _dio.interceptors.add(RetryInterceptor(dio: _dio));
   }
 
-  /// Set API key
+  @override
   void setApiKey(String? apiKey) {
     _apiKey = apiKey;
   }
 
-  /// Check if API key is set
+  @override
   bool get hasApiKey => _apiKey != null && _apiKey!.isNotEmpty;
 
-  /// Test API connection
+  @override
   Future<bool> testConnection() async {
     if (!hasApiKey) return false;
 
@@ -62,6 +66,7 @@ class GeminiService {
   /// to [AnalysisPresets.fullReview]). The user-facing transparency UI is
   /// expected to provide the same [slices] it shows, so the prompt and the
   /// preview match exactly.
+  @override
   Future<String> analyzePortfolio({
     required Portfolio portfolio,
     String? customPrompt,
@@ -208,6 +213,7 @@ class GeminiService {
   }
 
   /// Chat with AI about portfolio
+  @override
   Future<String> chat({
     required Portfolio portfolio,
     required String userMessage,

@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/ai_disclaimer_banner.dart';
 import '../../../portfolio/domain/portfolio_metrics.dart';
 import '../../../portfolio/presentation/bloc/portfolio_bloc.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
@@ -96,6 +97,9 @@ class _AnalysisPageState extends State<AnalysisPage> {
       appBar: AppBar(
         title: Text('analysis.title'.tr()),
         actions: _buildAppBarActions(context),
+      ),
+      bottomNavigationBar: AiDisclaimerBanner(
+        onTap: () => context.push(RouteNames.legalDisclaimer),
       ),
       body: BlocBuilder<PortfolioBloc, PortfolioState>(
         builder: (context, portfolioState) {

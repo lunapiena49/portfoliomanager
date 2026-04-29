@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +9,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'core/localization/app_localization.dart';
+import 'core/security/integrity_check.dart';
+import 'core/services/consent_service.dart';
 import 'core/widgets/api_quota_alert_listener.dart';
 import 'services/storage/disclosure_service.dart';
 import 'services/storage/local_storage_service.dart';
@@ -42,9 +46,18 @@ void main() async {
   // Initialize local storage (opens Hive boxes under data/)
   await LocalStorageService.init();
 
+  // Audit-trail Hive box for legal consents.
+  await ConsentService.init();
+
   // Prepare disclosure service (reads consent flags from SharedPreferences)
   await DisclosureService.init();
-  
+
+  // Best-effort device integrity probe: fills the cache so any later UI
+  // gate (banner, AI feature lock) can read [IntegrityCheck.isCompromised]
+  // synchronously without re-running the platform call.
+  // Result is advisory only -- never blocks bootstrap.
+  unawaited(IntegrityCheck.evaluate());
+
   // Sync saved language with EasyLocalization
   final savedLanguage = LocalStorageService.getLanguage();
   

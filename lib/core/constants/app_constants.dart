@@ -144,4 +144,6 @@ class RouteNames {
   static const String positionDetail = '/position/:id';
   static const String guide = '/guide';
   static const String aiChat = '/ai-chat';
+  static const String legalDocuments = '/legal/documents';
+  static const String legalDisclaimer = '/legal/disclaimer';
 }

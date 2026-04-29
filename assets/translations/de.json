@@ -710,6 +710,7 @@
       "title": "Ueber",
       "version": "Version",
       "review_onboarding": "Onboarding erneut anzeigen",
+      "legal_documents": "Rechtliche Dokumente",
       "onboarding_reset_message": "Onboarding wurde zurueckgesetzt. Die App oeffnet den Onboarding-Flow erneut."
     }
   },
@@ -976,6 +977,61 @@
     "invalid_key": {
       "title": "Ungueltiger API-Schluessel",
       "body": "{provider} hat den Schluessel abgelehnt (HTTP 401/403). Gehen Sie in Einstellungen > Marktdaten und pruefen oder erneuern Sie den Schluessel."
+    }
+  },
+  "legal": {
+    "banner": {
+      "ai_disclaimer": "KI-Inhalte sind keine Finanzberatung. Entscheidungen und Verantwortung liegen bei dir."
+    },
+    "disclaimer": {
+      "title": "Finanzhinweis",
+      "intro": "Bitte sorgfaeltig lesen, bevor du die App nutzt. Bestaetige, dass du jeden Punkt verstanden hast.",
+      "cta_accept": "Ich akzeptiere und moechte fortfahren",
+      "sections": {
+        "no_advice": {
+          "title": "Keine Finanzberatung",
+          "body": "Portfolio Manager ist ein Informationswerkzeug. Inhalte und Analysen in der App sind keine Finanz-, Steuer- oder Rechtsberatung gemaess TUF (italienisches D.Lgs. 58/1998) oder vergleichbaren Vorschriften. Entscheide stets mit einem zugelassenen Fachmann."
+        },
+        "ai_warning": {
+          "title": "Grenzen der KI-Analyse",
+          "body": "KI-Antworten koennen Fehler, veraltete Daten oder Halluzinationen enthalten. Pruefe Zahlen, Preise und Empfehlungen immer mit offiziellen Quellen. Die App garantiert die Genauigkeit von Gemini in keiner Weise."
+        },
+        "no_fiduciary": {
+          "title": "Kein Treuhandverhaeltnis",
+          "body": "Die Nutzung der App begruendet kein Berater-, Vermoegensverwaltungs- oder Vermittlungsverhaeltnis zwischen dir und PluriFin. Wir nehmen keine Auftraege an, verwalten kein Kapital und fuehren keine Auftraege aus."
+        },
+        "risk": {
+          "title": "Marktrisiko",
+          "body": "Investitionen koennen an Wert verlieren. Frueheres Verhalten ist keine Garantie fuer die Zukunft. Komplexe Instrumente (Derivate, Hebel, Krypto) koennen zum Totalverlust des Kapitals fuehren."
+        }
+      },
+      "checks": {
+        "not_advice": "Mir ist klar, dass die App keine Finanzberatung bietet.",
+        "not_fiduciary": "Mir ist klar, dass PluriFin mein Kapital nicht verwaltet.",
+        "own_responsibility": "Ich uebernehme die Verantwortung fuer meine Anlageentscheidungen."
+      }
+    },
+    "documents": {
+      "title": "Rechtliche Dokumente",
+      "copy": "Link kopieren",
+      "url_copied": "Link in die Zwischenablage kopiert.",
+      "privacy": {
+        "title": "Datenschutzerklaerung",
+        "description": "Welche Daten die App erhebt, wo sie liegen und wie du deine DSGVO-Rechte ausuebst."
+      },
+      "terms": {
+        "title": "Nutzungsbedingungen",
+        "description": "Bedingungen fuer die Nutzung der App, einschliesslich Haftungsbeschraenkungen."
+      },
+      "disclaimer": {
+        "title": "Finanzhinweis",
+        "description": "Lies den Hinweistext, den du beim Onboarding akzeptiert hast, erneut nach."
+      },
+      "licenses": {
+        "title": "Open-Source-Lizenzen",
+        "description": "Liste der in der App enthaltenen Drittanbieter-Bibliotheken.",
+        "legalese": "Portfolio Manager (PluriFin) - Copyright (C) 2026 Filippo Salemi."
+      }
     }
   }
 }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/ai_disclaimer_banner.dart';
 import '../../../portfolio/presentation/bloc/portfolio_bloc.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../bloc/ai_chat_bloc.dart';
@@ -138,6 +139,9 @@ class _AIChatPageState extends State<AIChatPage> {
               onPressed: () => context.push(RouteNames.guide),
             ),
           ],
+        ),
+        bottomNavigationBar: AiDisclaimerBanner(
+          onTap: () => context.push(RouteNames.legalDisclaimer),
         ),
         body: BlocConsumer<AIChatBloc, AIChatState>(
           listenWhen: (previous, current) =>

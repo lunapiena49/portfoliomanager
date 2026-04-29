@@ -45,5 +45,21 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- App Transport Security: reject any plaintext HTTP traffic and
+	     refuse to fall back to weak TLS. NSAllowsArbitraryLoads is
+	     deliberately absent so the App Store reviewer does not need a
+	     justification for the broad exception. Every endpoint we contact
+	     supports modern TLS. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsArbitraryLoadsForMedia</key>
+		<false/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<false/>
+	</dict>
 </dict>
 </plist>
